@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # 1. Spring Boot 앱 설정
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      # [핵심] 내 컴퓨터의 빌드된 결과물(jar/class)을 도커 내부와 동기화
+      - ./build/classes/java/main:/app/classes
+      - ./build/resources/main:/app/resources
+    environment:
+      # 위 application.properties에서 지정한 변수들을 여기서 채워줍니다.
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/portfolio_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=password
+        # (선택) DevTools가 변화를 감지하도록 하는 옵션
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+    depends_on:
+      - db # db 서비스가 먼저 뜬 다음에 앱을 실행함
+
+  # 2. MySQL DB 설정
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_DATABASE=portfolio_db
+      - MYSQL_ROOT_PASSWORD=password
+    ports:
+      - "3306:3306"
+    volumes:
+      # [현업 핵심] 내 컴퓨터의 'mysql_data' 폴더와 도커의 DB 폴더를 연결하여 데이터 보존
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data: # 여기에 데이터가 안전하게 보관됩니다.
