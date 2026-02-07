@@ -5,6 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.finance.finportfolio.infrastructure.FileHandler;
 
+// FileServiceImpl - 파일 서비스 구현체 (docker 버전)
 @Service
 public class FileServiceImpl implements FileService {
     private final FileHandler fileHandler;
@@ -15,7 +16,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String store(MultipartFile file) {
-        // 현재는 로컬/온프레미스 방식인 FileHandler를 사용
+        // 현재는 docker 방식인 FileHandler를 사용
         return fileHandler.uploadFile(file);
     }
 }

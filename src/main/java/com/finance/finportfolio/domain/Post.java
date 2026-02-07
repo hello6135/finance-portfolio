@@ -20,6 +20,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+// Post - 게시글 엔티티 구조
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 빌더를 쓰려면 기본 생성자 필수, 외부호출 금지
@@ -27,18 +28,17 @@ import lombok.NoArgsConstructor;
 @Builder // 빌더
 @EntityListeners(AuditingEntityListener.class) // 시간 감시자
 public class Post {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String author;
 
-    private String title; // 프로젝트명/활동명
-    @Column(columnDefinition = "TEXT")
-    private String content; // 상세 설명
-    private String author; // 작성자
-    // private String imageUrl; // CKEditor방식으로 변경
+    private String title;
+    @Column(columnDefinition = "TEXT") // CKEditor : HTML 문자열로 저장
+    private String content;
 
-    // private LocalDateTime createdAt = LocalDateTime.now(); // JPA방식으로 변경
     @CreatedDate // 생성 시 자동 저장
-    @Column(updatable = false) // 생성 후 수정 불가 (금융 보안 원칙)
+    @Column(updatable = false) // 생성 후 수정 불가
     private LocalDateTime createdAt;
 }

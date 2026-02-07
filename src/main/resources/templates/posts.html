@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>나의 커리어 게시판</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 
-    <!-- CKEditor5 설정 -->
+    <!-- CKEditor5 연결 -->
     <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
     <style>
         .ck-editor__editable {
@@ -15,18 +16,15 @@
             margin-bottom: 10px;
         }
     </style>
+
 </head>
 
 <body class="container mt-5">
-    <h2>🚀 나의 커리어 게시f판 (CRUD)</h2>
+    <h2>🚀 나만의 임시 게시판! (CRUD)</h2>
 
     <div class="card p-3 mb-4">
+        <!-- 게시글 업로드 -->
         <form action="/posts/save" method="post" enctype="multipart/form-data">
-            <!-- CKEditor 방식으로 변경 -->
-            <!-- <input type="text" name="title" class="form-control mb-2" placeholder="제목 (예: 투운사 자격증 취득)" required>
-            <textarea name="content" class="form-control mb-2" placeholder="내용을 입력하세요" required></textarea>
-            <input type="file" name="image" class="form-control mb-2" accept="image/*">
-            <button type="submit" class="btn btn-primary">게시글 올리기</button> -->
             <div>
                 <label for="title">제목</label>
                 <input type="text" id="title" name="title" required>
@@ -41,6 +39,7 @@
         </form>
     </div>
 
+    <!-- 게시글 목록 -->
     <table class="table table-striped">
         <thead>
             <tr>
@@ -54,17 +53,6 @@
         <tbody>
             <tr th:each="post : ${posts}">
                 <td th:text="${post.id}"></td>
-                <!-- <td>
-                    <div th:if="${post.imageUrl != null}">
-                        <a th:href="@{|/images/${post.imageUrl}|}" target="_blank">
-                            <img th:src="@{|/images/${post.imageUrl}|}" alt="이미지"
-                                style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
-                        </a>
-                    </div>
-                    <div th:unless="${post.imageUrl != null}">
-                        <span class="text-muted" style="font-size: 0.8rem;">noImg</span>
-                    </div>
-                </td> CKEditor방식으로 변경-->
                 <td th:text="${post.title}"></td>
                 <td th:utext="${post.content}"></td>
                 <td th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd / HH:mm')}"></td>
@@ -76,21 +64,20 @@
             </tr>
         </tbody>
     </table>
-    <!-- CKEditor5 설정 -->
+
+    <!-- CKEditor5 스크립트 -->
     <script>
         ClassicEditor
             .create(document.querySelector('#editor'), {
-                // 이미지 업로드 핸들러 (나중에 Controller와 맞출 부분)
+                // 이미지 업로드 핸들러 Controller와 연결
                 ckfinder: {
                     uploadUrl: '/api/image/upload'
                 },
-                // 폰트 크기, 볼드 등 툴바 설정 (필요시 커스텀)
                 toolbar: ['heading', '|', 'bold', 'italic', 'link',
                     'bulletedList', 'numberedList', 'blockQuote', 'insertTable',
                     'imageUpload', 'undo', 'redo']
             })
             .then(editor => {
-                //console.log('Editor was initialized', editor); 브라우저 로그 지양
             })
             .catch(error => {
                 console.error(error);

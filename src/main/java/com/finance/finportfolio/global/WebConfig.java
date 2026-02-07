@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
+    // 이미지 업로드 경로 주소 환경변수로 받아옴
     @Value("${file.upload-dir:upload_images}")
     private String uploadDir;
 

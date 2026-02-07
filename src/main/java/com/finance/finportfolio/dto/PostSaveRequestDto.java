@@ -4,21 +4,19 @@ import com.finance.finportfolio.domain.Post;
 
 import lombok.Builder;
 
+// PostSaveRequestDto - Post 엔티티 Set 용 DTO
 @Builder
 public record PostSaveRequestDto(
+        String author,
         String title,
-        String content,
-        String author
-// String imageUrl // CKEditor방식으로 변경
-) {
+        String content) {
 
     // DTO -> Entity 변환 (DB 저장용)
     public Post toEntity() {
-        return Post.builder() // Post 엔티티에 @Builder가 있다고 가정 (없으면 일반 생성자 사용)
+        return Post.builder()
+                .author(author)
                 .title(title)
                 .content(content)
-                .author(author)
-                // .imageUrl(imageUrl) // CKEditor방식으로 변경
                 .build();
     }
 }
