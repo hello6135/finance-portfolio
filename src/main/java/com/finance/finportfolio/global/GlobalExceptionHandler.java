@@ -10,10 +10,10 @@ import com.finance.finportfolio.dto.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@ControllerAdvice // 모든 컨트롤러의 예외를 여기서 가로챕니다.
+@ControllerAdvice // 모든 컨트롤러의 예외를 여기서 캐치
 public class GlobalExceptionHandler {
 
-    // 1. 우리가 직접 던지는 IllegalArgumentException 처리 (예: 게시글 없음)
+    // 내가 직접 던지는 IllegalArgumentException 처리 (예: 게시글 없음)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
         log.error("잘못된 인자 유입: {}", e.getMessage());
@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    // 2. 그 외 예상치 못한 모든 에러(500) 처리
+    // 그 외 예상치 못한 모든 에러(500) 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllException(Exception e) {
         log.error("서버 내부 에러 발생!", e); // 스택 트레이스 전체 로그 기록
