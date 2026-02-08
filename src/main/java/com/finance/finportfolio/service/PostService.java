@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+// 의존성
 import com.finance.finportfolio.domain.Post;
 import com.finance.finportfolio.domain.PostRepository;
 import com.finance.finportfolio.dto.PostResponseDto;
@@ -48,6 +49,7 @@ public class PostService {
      */
     @Transactional
     public Long savePost(PostSaveRequestDto requestDto) {
+
         Post post = Post.builder()
                 .title(requestDto.title())
                 .content(requestDto.content())

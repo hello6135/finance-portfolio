@@ -1,4 +1,4 @@
-package com.finance.portfolio_server;
+package com.finance.finportfolio;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
