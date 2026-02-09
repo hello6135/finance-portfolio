@@ -13,7 +13,6 @@ import com.finance.finportfolio.domain.Post;
 import com.finance.finportfolio.domain.PostRepository;
 import com.finance.finportfolio.dto.PostResponseDto;
 import com.finance.finportfolio.dto.PostSaveRequestDto;
-import com.finance.finportfolio.infrastructure.FileHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,7 @@ public class PostService {
 
     // 의존성 주입
     private final PostRepository postRepository;
-    private final FileHandler fileHandler;
+    private final FileService fileService;
 
     /**
      * 모든 게시글 조회
@@ -81,17 +80,17 @@ public class PostService {
      */
     @Transactional
     public void deletePost(Long id) {
-        // DB에서 게시글 조회
+        // 게시글 조회
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("삭제하려는 게시글이 존재하지 않습니다. id=" + id));
 
-        // 해당 게시글 content에서 이미지 파일명들 추출 후 물리적 삭제
+        // 이미지 삭제: 해당 게시글 content에서 이미지 파일명들 추출 후 물리적 삭제
         List<String> fileNames = extractFileNamesFromContent(post.getContent());
         for (String fileName : fileNames) {
-            fileHandler.deleteFile(fileName);
+            fileService.deleteFile(fileName);
         }
 
-        // DB에서도 게시글 삭제 (엔티티 객체로 삭제)
+        // 게시글 삭제
         postRepository.delete(post);
     }
 

@@ -55,7 +55,7 @@
                 <td th:text="${post.id}"></td>
                 <td th:text="${post.title}"></td>
                 <td th:utext="${post.content}"></td>
-                <td th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd / HH:mm')}"></td>
+                <td th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd / HH:mm:ss')}"></td>
                 <td>
                     <form th:action="@{/posts/{id}(id=${post.id})}" th:method="delete">
                         <button type="submit">삭제</button>
