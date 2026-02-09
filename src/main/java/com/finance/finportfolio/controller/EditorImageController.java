@@ -10,14 +10,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.finance.finportfolio.service.FileService;
 
-@RestController // 반드시 추가!
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequiredArgsConstructor
 public class EditorImageController {
 
     private final FileService fileService;
-
-    public EditorImageController(FileService fileService) {
-        this.fileService = fileService;
-    } // RequiredArgsConstructor 어노테이션으로 생략 가능, 생성자 주입 과정
 
     @PostMapping("/api/image/upload")
     public Map<String, Object> upload(@RequestParam("upload") MultipartFile file) {
@@ -25,7 +24,7 @@ public class EditorImageController {
 
         try {
             // 1. 파일을 저장하고 저장된 파일명을 받아옴
-            String savedFileName = fileService.store(file);
+            String savedFileName = fileService.uploadFile(file);
 
             // 2. CKEditor 5 전용 성공 응답 규격
             response.put("uploaded", true);
