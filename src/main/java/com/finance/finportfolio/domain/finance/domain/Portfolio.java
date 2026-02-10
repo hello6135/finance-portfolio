@@ -1,4 +1,4 @@
-package com.finance.finportfolio.domain;
+package com.finance.finportfolio.domain.finance.domain;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

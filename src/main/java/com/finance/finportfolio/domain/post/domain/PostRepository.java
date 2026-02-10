@@ -1,4 +1,4 @@
-package com.finance.finportfolio.domain;
+package com.finance.finportfolio.domain.post.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
