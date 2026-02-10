@@ -1,4 +1,4 @@
-package com.finance.finportfolio.controller;
+package com.finance.finportfolio.domain.finance.controller;
 
 import java.util.List;
 
@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.finance.finportfolio.domain.Portfolio;
-import com.finance.finportfolio.service.PortfolioService;
+import com.finance.finportfolio.domain.finance.domain.Portfolio;
+import com.finance.finportfolio.domain.finance.service.PortfolioService;
 
 import lombok.RequiredArgsConstructor;
 

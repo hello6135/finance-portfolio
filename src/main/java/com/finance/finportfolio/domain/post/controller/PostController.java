@@ -1,4 +1,4 @@
-package com.finance.finportfolio.controller;
+package com.finance.finportfolio.domain.post.controller;
 
 import java.util.List;
 
@@ -12,10 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-// 의존성 주입
-import com.finance.finportfolio.dto.PostResponseDto;
-import com.finance.finportfolio.dto.PostSaveRequestDto;
-import com.finance.finportfolio.service.PostService;
+import com.finance.finportfolio.domain.post.dto.PostResponseDto;
+import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
+import com.finance.finportfolio.domain.post.service.PostService;
 
 // 롬복
 import lombok.RequiredArgsConstructor;

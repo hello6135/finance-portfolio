@@ -1,12 +1,12 @@
-package com.finance.finportfolio.service;
+package com.finance.finportfolio.domain.finance.service;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.finance.finportfolio.domain.Portfolio;
-import com.finance.finportfolio.domain.PortfolioRepository;
+import com.finance.finportfolio.domain.finance.domain.Portfolio;
+import com.finance.finportfolio.domain.finance.domain.PortfolioRepository;
 
 import lombok.RequiredArgsConstructor;
 

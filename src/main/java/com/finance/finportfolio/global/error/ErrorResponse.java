@@ -1,4 +1,4 @@
-package com.finance.finportfolio.dto;
+package com.finance.finportfolio.global.error;
 
 import lombok.Builder;
 import lombok.Getter;

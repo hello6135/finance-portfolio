@@ -1,4 +1,4 @@
-package com.finance.finportfolio.infrastructure;
+package com.finance.finportfolio.infrastructure.file;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.finance.finportfolio.global;
+package com.finance.finportfolio.global.config;
 
 import java.io.File;
 import java.nio.file.Paths;
