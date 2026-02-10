@@ -1,4 +1,4 @@
-package com.finance.finportfolio.controller;
+package com.finance.finportfolio.domain.post.controller;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.finance.finportfolio.service.FileService;
+import com.finance.finportfolio.infrastructure.file.FileService;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,8 +1,8 @@
-package com.finance.finportfolio.dto;
+package com.finance.finportfolio.domain.post.dto;
 
 import java.time.LocalDateTime;
 
-import com.finance.finportfolio.domain.Post;
+import com.finance.finportfolio.domain.post.domain.Post;
 
 import lombok.Getter;
 

@@ -1,20 +1,20 @@
-package com.finance.finportfolio.service;
+package com.finance.finportfolio.infrastructure.file;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.finance.finportfolio.infrastructure.LocalFileHandler;
-
 import lombok.RequiredArgsConstructor;
 
-// FileServiceImpl - 파일 서비스 구현체 (docker 버전)
+// LocalFileServiceImpl - 파일 서비스 구현체 (docker 버전)
 @Service
 @RequiredArgsConstructor
+@Profile("dev")
 public class LocalFileServiceImpl implements FileService {
     private final LocalFileHandler localFileHandler;
 
