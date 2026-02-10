@@ -1,4 +1,4 @@
-package com.finance.finportfolio.service;
+package com.finance.finportfolio.domain.post.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,11 +8,11 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// 의존성
-import com.finance.finportfolio.domain.Post;
-import com.finance.finportfolio.domain.PostRepository;
-import com.finance.finportfolio.dto.PostResponseDto;
-import com.finance.finportfolio.dto.PostSaveRequestDto;
+import com.finance.finportfolio.domain.post.domain.Post;
+import com.finance.finportfolio.domain.post.domain.PostRepository;
+import com.finance.finportfolio.domain.post.dto.PostResponseDto;
+import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
+import com.finance.finportfolio.infrastructure.file.FileService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
