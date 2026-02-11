@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 // LocalFileServiceImpl - 파일 서비스 구현체 (docker 버전)
 @Service
 @RequiredArgsConstructor
-@Profile("dev")
+@Profile("local")
 public class LocalFileServiceImpl implements FileService {
     private final LocalFileHandler localFileHandler;
 
@@ -46,6 +46,9 @@ public class LocalFileServiceImpl implements FileService {
 
     @Override
     public void deleteFile(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return;
+        }
 
         localFileHandler.deleteFile(fileName);
     }

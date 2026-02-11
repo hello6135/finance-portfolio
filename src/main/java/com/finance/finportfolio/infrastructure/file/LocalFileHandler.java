@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component // 스프링 빈으로 등록하여 Service에서 가져다 쓸 수 있게 함
+@Profile("local")
 public class LocalFileHandler {
 
     @Value("${file.upload-dir:upload_images}")
@@ -24,10 +26,7 @@ public class LocalFileHandler {
 
     // 물리적 이미지 파일 저장
     public void uploadFile(MultipartFile file, String savedFileName) {
-        // 방어 코드: 파일이 아예 없거나(null) 비어있는 경우 처리
-        if (file == null || file.isEmpty()) {
-            return;
-        }
+
         String uploadPath = getFullPath();
 
         log.info("게시글 이미지 파일 저장 시작! 대상 경로, 이름: {}, {}", uploadPath, savedFileName);
@@ -49,22 +48,19 @@ public class LocalFileHandler {
     }
 
     // 물리적 이미지 파일 삭제
-    public void deleteFile(String savedFileName) {
-        if (savedFileName == null || savedFileName.isEmpty()) {
-            return;
-        }
+    public void deleteFile(String fileName) {
 
         String uploadPath = getFullPath();
-        File file = new File(uploadPath, savedFileName);
+        File file = new File(uploadPath, fileName);
 
         if (file.exists()) {
             if (file.delete()) {
-                log.info("게시글 이미지 파일 삭제 성공: {}", savedFileName);
+                log.info("게시글 이미지 파일 삭제 성공: {}", fileName);
             } else {
-                log.warn("게시글 이미지 파일 삭제 실패: {}", savedFileName);
+                log.warn("게시글 이미지 파일 삭제 실패: {}", fileName);
             }
         } else {
-            log.info("게시글 이미지 파일이 존재하지 않습니다: {}", savedFileName);
+            log.info("게시글 이미지 파일이 존재하지 않습니다: {}", fileName);
         }
     }
 }
