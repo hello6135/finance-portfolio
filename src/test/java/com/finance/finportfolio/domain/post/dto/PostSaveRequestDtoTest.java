@@ -1,4 +1,4 @@
-package com.finance.finportfolio.dto;
+package com.finance.finportfolio.domain.post.dto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.finance.finportfolio.domain.post.domain.Post;
-import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
 
 class PostSaveRequestDtoTest {
 
