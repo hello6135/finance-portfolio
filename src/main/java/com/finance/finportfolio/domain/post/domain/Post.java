@@ -41,4 +41,9 @@ public class Post {
     @CreatedDate // 생성 시 자동 저장
     @Column(updatable = false) // 생성 후 수정 불가
     private LocalDateTime createdAt;
+
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
 }
