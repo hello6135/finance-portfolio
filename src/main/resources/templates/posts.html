@@ -3,44 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>나의 커리어 게시판</title>
+    <title>postsPage</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-
-    <!-- CKEditor5 연결 -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
-    <style>
-        .ck-editor__editable {
-            min-height: 300px;
-            margin-bottom: 10px;
-        }
-    </style>
-
+    <link rel="stylesheet" th:href="@{/css/postsStyle.css}">
 </head>
 
 <body class="container mt-5">
-    <h2>🚀 나만의 임시 게시판! (CRUD)</h2>
 
-    <div class="card p-3 mb-4">
-        <!-- 게시글 업로드 -->
-        <form action="/posts/save" method="post" enctype="multipart/form-data">
-            <div>
-                <label for="title">제목</label>
-                <input type="text" id="title" name="title" required>
-            </div>
+    <h2>게시글 목록</h2>
 
-            <div>
-                <label for="editor">내용</label>
-                <textarea id="editor" name="content"></textarea>
-            </div>
-
-            <button type="submit">저장하기</button>
-        </form>
-    </div>
-
-    <!-- 게시글 목록 -->
     <table class="table table-striped">
+        <a th:href="@{/posts/editor}" class="btn btn-primary">글 쓰기</a>
         <thead>
             <tr>
                 <th>ID</th>
@@ -60,29 +34,12 @@
                     <form th:action="@{/posts/{id}(id=${post.id})}" th:method="delete">
                         <button type="submit">삭제</button>
                     </form>
+                    <a th:href="@{/posts/editor/{id}(id=${post.id})}" class="btn btn-warning">수정</a>
                 </td>
             </tr>
         </tbody>
     </table>
 
-    <!-- CKEditor5 스크립트 -->
-    <script>
-        ClassicEditor
-            .create(document.querySelector('#editor'), {
-                // 이미지 업로드 핸들러 Controller와 연결
-                ckfinder: {
-                    uploadUrl: '/api/image/upload'
-                },
-                toolbar: ['heading', '|', 'bold', 'italic', 'link',
-                    'bulletedList', 'numberedList', 'blockQuote', 'insertTable',
-                    'imageUpload', 'undo', 'redo']
-            })
-            .then(editor => {
-            })
-            .catch(error => {
-                console.error(error);
-            });
-    </script>
 </body>
 
 </html>

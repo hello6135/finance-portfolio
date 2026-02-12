@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
+import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
 import com.finance.finportfolio.domain.post.service.PostService;
 
 // 롬복
@@ -41,7 +42,36 @@ public class PostController {
         return "posts";
     }
 
-    @PostMapping("/save")
+    // post-editor 페이지로 (new Posting)
+    @GetMapping("/editor")
+    public String posting(Model model) {
+        model.addAttribute("post", null);
+        return "post-editor";
+    }
+
+    // post-editor 페이지로 (Update)
+    @GetMapping("/editor/{id}")
+    public String updateForm(@PathVariable Long id, Model model) {
+        PostResponseDto dto = postService.getPostById(id); // 기존에 만든 상세조회 활용
+
+        log.info("게시글 수정 페이지로 - 제목: {}", dto.getTitle());
+
+        model.addAttribute("post", dto);
+        return "post-editor";
+    }
+
+    // Update
+    @PostMapping("/editor/{id}")
+    public String update(@PathVariable Long id, @ModelAttribute PostUpdateRequestDto requestDto) {
+
+        log.info("게시글 수정 시도 - 제목: {}", requestDto.title());
+
+        postService.update(id, requestDto);
+        return "redirect:/posts"; // 수정 후 목록으로 리다이렉트
+    }
+
+    // Create
+    @PostMapping("/editor/save")
     public String save(@ModelAttribute PostSaveRequestDto requestDto) {
 
         log.info("게시글 저장 시도 - 제목: {}", requestDto.title());

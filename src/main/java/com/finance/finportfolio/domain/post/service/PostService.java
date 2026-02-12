@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +14,7 @@ import com.finance.finportfolio.domain.post.domain.Post;
 import com.finance.finportfolio.domain.post.domain.PostRepository;
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
+import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
 import com.finance.finportfolio.infrastructure.file.FileService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @RequiredArgsConstructor
 public class PostService {
+
+    // jsoup 커스텀 설정 본문용(utext)
+    private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
+            .addAttributes("img", "style", "alt", "width", "height") // 이미지 관련 속성 허용
+            .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
 
     // 의존성 주입
     private final PostRepository postRepository;
@@ -41,25 +49,6 @@ public class PostService {
     }
 
     /**
-     * 게시글 저장
-     * 
-     * @param post 저장할 게시글 객체
-     * @return 저장된 게시글
-     */
-    @Transactional
-    public Long savePost(PostSaveRequestDto requestDto) {
-
-        Post post = Post.builder()
-                .title(requestDto.title())
-                .content(requestDto.content())
-                .author(requestDto.author())
-                .build();
-
-        // Repository를 통해 DB 저장 후 ID 반환
-        return postRepository.save(post).getId();
-    }
-
-    /**
      * ID로 게시글 조회 (나중에 상세보기 기능에 사용)
      * 
      * @param id 조회할 게시글의 ID
@@ -71,6 +60,42 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
         return new PostResponseDto(post);
+    }
+
+    // Jsoup 소독 메서드
+    private String cleanText(String text) {
+        return (text == null) ? "" : Jsoup.clean(text, Safelist.none());
+    }
+
+    private String cleanHtml(String text) {
+        return (text == null) ? "" : Jsoup.clean(text, HTML_SAFE_LIST);
+    }
+
+    /**
+     * 게시글 저장
+     * 
+     * @param post 저장할 게시글 객체
+     * @return 저장된 게시글
+     */
+    @Transactional
+    public Long savePost(PostSaveRequestDto requestDto) {
+
+        Post post = Post.builder()
+                .author(cleanText(requestDto.author()))
+                .title(cleanText(requestDto.title()))
+                .content(cleanHtml(requestDto.content()))
+                .build();
+
+        // Repository를 통해 DB 저장 후 ID 반환
+        return postRepository.save(post).getId();
+    }
+
+    @Transactional
+    public void update(Long id, PostUpdateRequestDto requestDto) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
+
+        post.update(cleanText(requestDto.title()), cleanHtml(requestDto.content()));
     }
 
     /**
