@@ -1,0 +1,31 @@
+/* style.css */
+
+/* 1. 전체 배경색 변경 */
+body {
+    background-color: #272727;
+    color: antiquewhite;
+    /* 부트스트랩 기본보다 조금 더 밝은 회색 */
+}
+
+.table {
+    background-color: #272727;
+    color: antiquewhite;
+}
+
+/* 2. 부트스트랩 버튼 색상이 맘에 안 들 때 덮어쓰기 */
+.btn-primary {
+    background-color: #4e73df !important;
+    /* !important는 최후의 수단으로 사용 */
+    border-color: #4e73df;
+    border-radius: 10px;
+    /* 조금 더 둥글게 */
+}
+
+/* 3. 나만의 새로운 클래스 만들기 */
+.post-card {
+    padding: 20px;
+    border-left: 5px solid #4e73df;
+    background: white;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
