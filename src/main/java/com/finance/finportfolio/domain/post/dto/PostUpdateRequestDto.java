@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record PostUpdateRequestDto(
-        String title,
-        String content) {
+                String title,
+                String content,
+                Boolean hasImage) {
 }

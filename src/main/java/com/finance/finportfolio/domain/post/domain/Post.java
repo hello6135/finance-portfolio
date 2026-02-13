@@ -38,12 +38,16 @@ public class Post {
     @Column(columnDefinition = "TEXT") // CKEditor : HTML 문자열로 저장
     private String content;
 
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean hasImage = false;
+
     @CreatedDate // 생성 시 자동 저장
     @Column(updatable = false) // 생성 후 수정 불가
     private LocalDateTime createdAt;
 
-    public void update(String title, String content) {
+    public void update(String title, String content, boolean hasImage) {
         this.title = title;
         this.content = content;
+        this.hasImage = hasImage;
     }
 }

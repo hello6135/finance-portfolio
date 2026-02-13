@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>postsPage</title>
+    <title>posts</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" th:href="@{/css/postsStyle.css}">
@@ -19,23 +19,17 @@
             <tr>
                 <th>ID</th>
                 <th>제목</th>
-                <th>내용</th>
                 <th>시간</th>
-                <th>관리</th>
             </tr>
         </thead>
         <tbody>
             <tr th:each="post : ${posts}">
                 <td th:text="${post.id}"></td>
-                <td th:text="${post.title}"></td>
-                <td th:utext="${post.content}"></td>
-                <td th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd / HH:mm:ss')}"></td>
                 <td>
-                    <form th:action="@{/posts/{id}(id=${post.id})}" th:method="delete">
-                        <button type="submit">삭제</button>
-                    </form>
-                    <a th:href="@{/posts/editor/{id}(id=${post.id})}" class="btn btn-warning">수정</a>
-                </td>
+                    <span th:if="${post.hasImage}" class="badge bg-info">📷</span>
+                    <a th:href="@{/posts/detail/{id}(id=${post.id})}" th:text="${post.title}"
+                        style="text-decoration: none; color: black;"></a>
+                <td th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd / HH:mm')}"></td>
             </tr>
         </tbody>
     </table>
