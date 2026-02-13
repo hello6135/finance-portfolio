@@ -13,6 +13,7 @@ public class PostResponseDto {
     private final String author;
     private final String title;
     private final String content;
+    private final boolean hasImage;
     private final LocalDateTime createdAt;
 
     // Entity -> DTO 변환을 위한 생성자
@@ -21,6 +22,7 @@ public class PostResponseDto {
         this.author = post.getAuthor();
         this.title = post.getTitle();
         this.content = post.getContent();
+        this.hasImage = post.isHasImage();
         this.createdAt = post.getCreatedAt();
     }
 }

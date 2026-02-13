@@ -32,7 +32,7 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping
-    public String list(Model model) {
+    public String postList(Model model) {
 
         // 서비스는 Post 엔티티가 아닌 PostResponseDto 리스트를 반환
         List<PostResponseDto> posts = postService.getAllPosts();
@@ -42,37 +42,29 @@ public class PostController {
         return "posts";
     }
 
-    // post-editor 페이지로 (new Posting)
-    @GetMapping("/editor")
-    public String posting(Model model) {
-        model.addAttribute("post", null);
-        return "post-editor";
-    }
+    // post-detail.html return
+    @GetMapping("/detail/{id}")
+    public String toDetailHtml(@PathVariable Long id, Model model) {
+        PostResponseDto dto = postService.getPostById(id);
 
-    // post-editor 페이지로 (Update)
-    @GetMapping("/editor/{id}")
-    public String updateForm(@PathVariable Long id, Model model) {
-        PostResponseDto dto = postService.getPostById(id); // 기존에 만든 상세조회 활용
-
-        log.info("게시글 수정 페이지로 - 제목: {}", dto.getTitle());
+        log.info("게시글 상세 페이지로 - 제목: {}", dto.getTitle());
 
         model.addAttribute("post", dto);
+        return "post-detail";
+    }
+
+    // post-editor.html return (with no ID: new Post)
+    @GetMapping("/editor")
+    public String toEditorHtml(Model model) {
+        model.addAttribute("post", null);
+
+        log.info("게시글 작성 페이지로(with no ID)");
+
         return "post-editor";
     }
 
-    // Update
-    @PostMapping("/editor/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute PostUpdateRequestDto requestDto) {
-
-        log.info("게시글 수정 시도 - 제목: {}", requestDto.title());
-
-        postService.update(id, requestDto);
-        return "redirect:/posts"; // 수정 후 목록으로 리다이렉트
-    }
-
-    // Create
-    @PostMapping("/editor/save")
-    public String save(@ModelAttribute PostSaveRequestDto requestDto) {
+    @PostMapping("/editor/create")
+    public String createPost(@ModelAttribute PostSaveRequestDto requestDto) {
 
         log.info("게시글 저장 시도 - 제목: {}", requestDto.title());
 
@@ -82,8 +74,28 @@ public class PostController {
         return "redirect:/posts";
     }
 
-    @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
+    // post-editor html return (with ID: update)
+    @GetMapping("/editor/{id}")
+    public String toEditorWithID(@PathVariable Long id, Model model) {
+        PostResponseDto dto = postService.getPostById(id); // 기존에 만든 상세조회 활용
+
+        log.info("게시글 수정 페이지로 - 제목: {}", dto.getTitle());
+
+        model.addAttribute("post", dto);
+        return "post-editor";
+    }
+
+    @PostMapping("/editor/{id}")
+    public String updatePost(@PathVariable Long id, @ModelAttribute PostUpdateRequestDto requestDto) {
+
+        log.info("게시글 수정 시도 - 제목: {}", requestDto.title());
+
+        postService.updatePost(id, requestDto);
+        return "redirect:/posts"; // 수정 후 목록으로 리다이렉트
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public String deletePost(@PathVariable Long id) {
         postService.deletePost(id);
         log.info("게시글 삭제 완료 - ID: {}", id);
         return "redirect:/posts";

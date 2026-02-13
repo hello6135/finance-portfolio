@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +72,15 @@ public class PostService {
         return (text == null) ? "" : Jsoup.clean(text, HTML_SAFE_LIST);
     }
 
+    private boolean checkImage(String htmlContent) {
+        if (htmlContent == null || htmlContent.isEmpty())
+            return false;
+
+        Document doc = Jsoup.parseBodyFragment(htmlContent);
+        // 실제 <img> 태그가 1개 이상 존재하는지 "객체" 단위로 확인
+        return !doc.select("img").isEmpty();
+    }
+
     /**
      * 게시글 저장
      * 
@@ -79,11 +89,14 @@ public class PostService {
      */
     @Transactional
     public Long savePost(PostSaveRequestDto requestDto) {
+        String cleanedContent = cleanHtml(requestDto.content());
+        boolean hasImage = checkImage(cleanedContent);
 
         Post post = Post.builder()
                 .author(cleanText(requestDto.author()))
                 .title(cleanText(requestDto.title()))
-                .content(cleanHtml(requestDto.content()))
+                .content(cleanedContent)
+                .hasImage(hasImage)
                 .build();
 
         // Repository를 통해 DB 저장 후 ID 반환
@@ -91,11 +104,14 @@ public class PostService {
     }
 
     @Transactional
-    public void update(Long id, PostUpdateRequestDto requestDto) {
+    public void updatePost(Long id, PostUpdateRequestDto requestDto) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
-        post.update(cleanText(requestDto.title()), cleanHtml(requestDto.content()));
+        String cleanedContent = cleanHtml(requestDto.content());
+        boolean hasImage = checkImage(cleanedContent);
+
+        post.update(cleanText(requestDto.title()), cleanedContent, hasImage);
     }
 
     /**
