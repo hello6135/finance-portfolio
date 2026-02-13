@@ -9,14 +9,16 @@ import lombok.Builder;
 public record PostSaveRequestDto(
                 String author,
                 String title,
-                String content) {
+                String content,
+                Boolean hasImage) {
 
         // DTO -> Entity 변환 (DB 저장용)
         public Post toEntity() {
                 return Post.builder()
                                 .author(author)
                                 .title(title)
-                                .content(content) // Jsoup XSS 살균
+                                .content(content)
+                                .hasImage(hasImage)
                                 .build();
         }
 }
