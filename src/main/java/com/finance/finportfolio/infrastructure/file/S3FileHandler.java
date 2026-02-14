@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -12,8 +13,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,33 +56,28 @@ public class S3FileHandler {
         }
     }
 
-    public void deleteFile(String fileUrl) {
-
-        // URL에서 S3 Key(경로)만 추출 (예: post/uuid_filename.jpg)
-        // URL 형식이 https://버킷명.s3.리전.amazonaws.com/경로 이므로 마지막 '/' 이후가 아니라 버킷명 이후 전체가
-        // key입니다.
-
+    public void deleteFile(String urlKey) {
         try {
-            // 2. URI 파싱 (JDK 21 권장 방식)
-            URI uri = new URI(fileUrl);
-            String path = uri.getPath();
-
-            if (path == null || path.length() <= 1) {
-                return;
-            }
-
-            // 3. S3 Key 추출 및 디코딩
-            String key = URLDecoder.decode(path.substring(1), StandardCharsets.UTF_8);
-
-            // 4. S3 삭제 요청
-            amazonS3.deleteObject(bucket, key);
-            log.info("S3 파일 삭제 성공: {}", key);
-
-        } catch (URISyntaxException e) {
-            log.error("잘못된 URL 형식입니다: {}", fileUrl);
+            amazonS3.deleteObject(bucket, urlKey);
+            log.info("S3 파일 삭제 성공: {}", urlKey);
         } catch (Exception e) {
             log.error("S3 파일 삭제 중 예기치 못한 오류 발생: {}", e.getMessage());
-            // 필요에 따라 예외를 던지거나 로그만 남김
+            throw new RuntimeException("파일 삭제 실패");
         }
+    }
+
+    // 다중 삭제
+    public void deleteFiles(List<String> urlKeys) {
+        // DeleteObjectsRequest: S3에 요청을 하나씩 주고 받으면 네트워크 비효율이 심해 상자에 담아서 한번에 요청
+        DeleteObjectsRequest request = new DeleteObjectsRequest(bucket)
+                .withKeys(urlKeys.toArray(new String[0]));
+        amazonS3.deleteObjects(request);
+    }
+
+    // S3버킷 모든 파일 키만 리스트로 반환
+    public List<String> getS3ObjectKeys() {
+        return amazonS3.listObjects(bucket).getObjectSummaries().stream()
+                .map(S3ObjectSummary::getKey)
+                .toList();
     }
 }
