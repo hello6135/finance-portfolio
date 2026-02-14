@@ -24,8 +24,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 빌더를 쓰려면 기본 생성자 필수, 외부호출 금지
-@AllArgsConstructor // 빌더를 쓰려면 전체 생성자도 필수
-@Builder // 빌더
 @EntityListeners(AuditingEntityListener.class) // 시간 감시자
 public class Post {
 
@@ -44,6 +42,14 @@ public class Post {
     @CreatedDate // 생성 시 자동 저장
     @Column(updatable = false) // 생성 후 수정 불가
     private LocalDateTime createdAt;
+
+    @Builder
+    private Post(String author, String title, String content, boolean hasImage) {
+        this.author = author;
+        this.title = title;
+        this.content = content;
+        this.hasImage = hasImage;
+    }
 
     public void update(String title, String content, boolean hasImage) {
         this.title = title;
