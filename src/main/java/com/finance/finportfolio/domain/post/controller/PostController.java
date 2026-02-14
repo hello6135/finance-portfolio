@@ -1,7 +1,10 @@
 package com.finance.finportfolio.domain.post.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 // 스프링 어노테이션
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
@@ -101,4 +105,24 @@ public class PostController {
         return "redirect:/posts";
     }
 
+    @PostMapping("/cleanup")
+    public String cleanUpOrphanFiles(RedirectAttributes redirectAttributes) {
+
+        List<String> deletedFiles = postService.cleanUpOrphanFiles();
+
+        if (deletedFiles.isEmpty()) {
+            log.info("[CLEANUP] 정리할 고아 파일이 없습니다.");
+        } else {
+            log.info("[CLEANUP] 비참조 파일 정리 완료. 삭제 개수: {}개", deletedFiles.size());
+            log.info("[CLEANUP] 삭제된 파일 목록: {}", deletedFiles);
+        }
+
+        return "redirect:/posts";
+    }
+
+    @GetMapping("/showLog")
+    public String showLog() {
+        log.info("구분용 로그");
+        return "redirect:/posts";
+    }
 }

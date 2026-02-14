@@ -3,6 +3,8 @@ package com.finance.finportfolio.infrastructure.file;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.context.annotation.Profile;
@@ -51,5 +53,12 @@ public class LocalFileServiceImpl implements FileService {
         }
 
         localFileHandler.deleteFile(fileName);
+    }
+
+    @Override
+    public List<String> cleanUpOrphanFiles(List<String> allPostContents) {
+        List<String> aaa = new ArrayList<>();
+        return aaa;
+        // fileName을 List화 시키고 LocalFileHandler에 다중삭제 로직 추가 필요
     }
 }
