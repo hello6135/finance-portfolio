@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface FileService {
     String uploadFile(MultipartFile file);
 
-    void deleteFile(String content);
+    void deleteFiles(String content);
 
-    List<String> cleanUpOrphanFiles(List<String> allPostContents);
+    void cleanUpOrphanFiles(List<String> allPostContents);
 }

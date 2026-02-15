@@ -12,8 +12,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsResult;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
@@ -56,22 +59,32 @@ public class S3FileHandler {
         }
     }
 
-    public void deleteFile(String urlKey) {
-        try {
-            amazonS3.deleteObject(bucket, urlKey);
-            log.info("S3 파일 삭제 성공: {}", urlKey);
-        } catch (Exception e) {
-            log.error("S3 파일 삭제 중 예기치 못한 오류 발생: {}", e.getMessage());
-            throw new RuntimeException("파일 삭제 실패");
-        }
-    }
-
     // 다중 삭제
     public void deleteFiles(List<String> urlKeys) {
+        if (urlKeys == null || urlKeys.isEmpty()) {
+            return;
+        }
+
         // DeleteObjectsRequest: S3에 요청을 하나씩 주고 받으면 네트워크 비효율이 심해 상자에 담아서 한번에 요청
-        DeleteObjectsRequest request = new DeleteObjectsRequest(bucket)
-                .withKeys(urlKeys.toArray(new String[0]));
-        amazonS3.deleteObjects(request);
+        try {
+            DeleteObjectsRequest request = new DeleteObjectsRequest(bucket)
+                    .withKeys(urlKeys.toArray(new String[0]))
+                    .withQuiet(false); // 성공 내역까지 보고, true: 에러 내역만 보고
+
+            // quiet 모드를 false(기본값)로 두면 상세한 결과 수신 가능
+            DeleteObjectsResult result = amazonS3.deleteObjects(request);
+            log.info("S3 객체 삭제 완료: {} 건", result.getDeletedObjects().size());
+
+        } catch (AmazonServiceException e) {
+            // AWS 서버 측 에러 (권한 부족, 잘못된 버킷명 등)
+            log.error("AWS S3 서비스 에러 발생: {}", e.getErrorMessage());
+            // 서비스 로직에 따라 Custom Exception을 던지거나 로그만 남김
+        } catch (SdkClientException e) {
+            // 클라이언트 측 에러 (네트워크 연결 끊김 등)
+            log.error("S3 연결 실패: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("S3 삭제 중 예상치 못한 에러: {}", e.getMessage());
+        }
     }
 
     // S3버킷 모든 파일 키만 리스트로 반환

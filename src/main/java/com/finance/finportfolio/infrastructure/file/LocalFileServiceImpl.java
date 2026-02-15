@@ -6,6 +6,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -47,18 +49,44 @@ public class LocalFileServiceImpl implements FileService {
     }
 
     @Override
-    public void deleteFile(String fileName) {
-        if (fileName == null || fileName.isEmpty()) {
-            return;
-        }
+    public void deleteFiles(String content) {
 
-        localFileHandler.deleteFile(fileName);
+        if (content == null || content.isBlank())
+            return;
+
+        // 1. 본문에서 URL 추출 및 S3 Key로 변환
+        List<String> fileNameToDelete = extractFileNamesFromContent(content);
+
+        // 2. 추출된 키가 있다면 다중 삭제 로직 하나로 처리
+        if (!fileNameToDelete.isEmpty()) {
+            localFileHandler.deleteFiles(fileNameToDelete);
+        }
+    }
+
+    // HTML 본문에서 URL/파일명 리스트를 추출하는 정규식 로직
+    private List<String> extractFileNamesFromContent(String content) {
+        List<String> fileNames = new ArrayList<>();
+        if (content == null || content.isBlank())
+            return fileNames;
+
+        Pattern pattern = Pattern.compile(
+                "/images/([^\"'>\\s]+)|(https://[a-zA-Z0-9.-]+\\.s3\\.[a-zA-Z0-9-]+\\.amazonaws\\.com/[^\"'>\\s]+)");
+        Matcher matcher = pattern.matcher(content);
+
+        while (matcher.find()) {
+            String localFileName = matcher.group(1);
+            String s3FullUrl = matcher.group(2);
+
+            if (localFileName != null)
+                fileNames.add(localFileName);
+            else if (s3FullUrl != null)
+                fileNames.add(s3FullUrl);
+        }
+        return fileNames;
     }
 
     @Override
-    public List<String> cleanUpOrphanFiles(List<String> allPostContents) {
-        List<String> aaa = new ArrayList<>();
-        return aaa;
+    public void cleanUpOrphanFiles(List<String> allPostContents) {
         // fileName을 List화 시키고 LocalFileHandler에 다중삭제 로직 추가 필요
     }
 }

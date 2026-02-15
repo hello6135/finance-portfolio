@@ -105,24 +105,17 @@ public class PostController {
         return "redirect:/posts";
     }
 
+    // 미참조 이미지 파일 삭제 - 버튼 식(차후 정기 실행으로 변경)
     @PostMapping("/cleanup")
-    public String cleanUpOrphanFiles(RedirectAttributes redirectAttributes) {
-
-        List<String> deletedFiles = postService.cleanUpOrphanFiles();
-
-        if (deletedFiles.isEmpty()) {
-            log.info("[CLEANUP] 정리할 고아 파일이 없습니다.");
-        } else {
-            log.info("[CLEANUP] 비참조 파일 정리 완료. 삭제 개수: {}개", deletedFiles.size());
-            log.info("[CLEANUP] 삭제된 파일 목록: {}", deletedFiles);
-        }
+    public String cleanUpOrphanFiles() {
+        postService.cleanUpOrphanFiles();
 
         return "redirect:/posts";
     }
 
     @GetMapping("/showLog")
     public String showLog() {
-        log.info("구분용 로그");
+        log.info("수동 로그");
         return "redirect:/posts";
     }
 }
