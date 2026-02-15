@@ -129,25 +129,25 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("삭제하려는 게시글이 존재하지 않습니다. id=" + id));
 
         log.info("파일 삭제 요청 id: {}", id);
-        // 이미지 삭제: 해당 게시글 content에서 이미지 파일명들 추출 후 물리적 삭제
-        fileService.deleteFile(post.getContent());
+        // S3 이미지 삭제
+        fileService.deleteFiles(post.getContent());
 
-        // 게시글 삭제
+        // DB 게시글 삭제
         postRepository.delete(post);
     }
 
     // HTML 문자열에서 파일명만 추출하는 메서드
 
-    // 비참조 파일 삭제 요청(Local환경은 버튼, AWS 환경에서는 정시 반복으로 구현 예정)
+    // 미참조 이미지 파일 삭제 - 버튼 식(차후 정기 실행으로 변경)
     @Transactional(readOnly = true)
-    public List<String> cleanUpOrphanFiles() { // 리턴 타입을 List로 변경
+    public void cleanUpOrphanFiles() {
+        // DB에서 post의 모든 content 넘김
         List<String> allPostContents = postRepository.findAll().stream()
                 .map(Post::getContent)
                 .filter(Objects::nonNull)
                 .toList();
 
-        // fileService가 삭제한 목록을 받아서 그대로 컨트롤러에 전달
-        return fileService.cleanUpOrphanFiles(allPostContents);
+        fileService.cleanUpOrphanFiles(allPostContents);
     }
 
 }
