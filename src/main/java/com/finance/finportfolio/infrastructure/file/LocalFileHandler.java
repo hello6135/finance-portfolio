@@ -3,6 +3,7 @@ package com.finance.finportfolio.infrastructure.file;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -48,19 +49,31 @@ public class LocalFileHandler {
     }
 
     // 물리적 이미지 파일 삭제
-    public void deleteFile(String fileName) {
+    public void deleteFiles(List<String> fileNames) {
+        if (fileNames == null || fileNames.isEmpty())
+            return;
 
-        String uploadPath = getFullPath();
-        File file = new File(uploadPath, fileName);
+        String uploadPath = getFullPath(); // 파일 저장 기본 경로
 
-        if (file.exists()) {
-            if (file.delete()) {
-                log.info("게시글 이미지 파일 삭제 성공: {}", fileName);
-            } else {
-                log.warn("게시글 이미지 파일 삭제 실패: {}", fileName);
+        for (String fileName : fileNames) {
+            try {
+                // 파일 객체 생성
+                File file = new File(uploadPath, fileName);
+
+                if (file.exists()) {
+                    if (file.delete()) {
+                        log.info("[LOCAL] 파일 삭제 성공: {}", fileName);
+                    } else {
+                        log.warn("[LOCAL] 파일 삭제 실패 (권한 문제 등): {}", fileName);
+                    }
+                } else {
+                    log.info("[LOCAL] 삭제할 파일이 존재하지 않습니다: {}", fileName);
+                }
+            } catch (SecurityException e) {
+                log.error("[LOCAL] 파일 삭제 중 보안 예외 발생: {}", e.getMessage());
+            } catch (Exception e) {
+                log.error("[LOCAL] 알 수 없는 삭제 에러: {}", e.getMessage());
             }
-        } else {
-            log.info("게시글 이미지 파일이 존재하지 않습니다: {}", fileName);
         }
     }
 }
