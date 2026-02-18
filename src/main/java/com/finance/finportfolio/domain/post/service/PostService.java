@@ -1,12 +1,7 @@
 package com.finance.finportfolio.domain.post.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -36,13 +31,6 @@ public class PostService {
     private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
             .addAttributes("img", "style", "alt", "width", "height") // 이미지 관련 속성 허용
             .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
-
-    // local에서 /images/ 감지 시 jsoup가 img srs를 살균해버리는 것 방지
-    private static final Safelist LOCAL_SAFE_LIST = Safelist.relaxed()
-            .addAttributes("img", "style", "alt", "width", "height")
-            .addTags("hr", "br")
-            .preserveRelativeLinks(true)
-            .addProtocols("img", "src", "http", "https", "/");
 
     @Value("${spring.profiles.active:local}") // 기본값 local
     private String activeProfile;

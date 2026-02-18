@@ -1,7 +1,6 @@
 package com.finance.finportfolio.infrastructure.file;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -13,7 +12,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,9 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 public class S3FileServiceImpl implements FileService {
 
     private final S3FileHandler s3FileHandler;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
 
     @Override
     public String uploadFile(MultipartFile file) {
