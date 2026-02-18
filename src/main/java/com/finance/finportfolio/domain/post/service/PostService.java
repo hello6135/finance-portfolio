@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,16 @@ public class PostService {
     private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
             .addAttributes("img", "style", "alt", "width", "height") // 이미지 관련 속성 허용
             .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
+
+    // local에서 /images/ 감지 시 jsoup가 img srs를 살균해버리는 것 방지
+    private static final Safelist LOCAL_SAFE_LIST = Safelist.relaxed()
+            .addAttributes("img", "style", "alt", "width", "height")
+            .addTags("hr", "br")
+            .preserveRelativeLinks(true)
+            .addProtocols("img", "src", "http", "https", "/");
+
+    @Value("${spring.profiles.active:local}") // 기본값 local
+    private String activeProfile;
 
     // 의존성 주입
     private final PostRepository postRepository;
@@ -72,7 +83,14 @@ public class PostService {
     }
 
     private String cleanHtml(String text) {
-        return (text == null) ? "" : Jsoup.clean(text, HTML_SAFE_LIST);
+        if (text == null)
+            return "";
+
+        if ("local".equals(activeProfile)) {
+            return text;
+        }
+
+        return Jsoup.clean(text, HTML_SAFE_LIST);
     }
 
     private boolean checkImage(String htmlContent) {
@@ -135,8 +153,6 @@ public class PostService {
         // DB 게시글 삭제
         postRepository.delete(post);
     }
-
-    // HTML 문자열에서 파일명만 추출하는 메서드
 
     // 미참조 이미지 파일 삭제 - 버튼 식(차후 정기 실행으로 변경)
     @Transactional(readOnly = true)

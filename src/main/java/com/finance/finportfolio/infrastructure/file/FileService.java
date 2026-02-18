@@ -12,4 +12,5 @@ public interface FileService {
     void deleteFiles(String content);
 
     void cleanUpOrphanFiles(List<String> allPostContents);
+
 }
