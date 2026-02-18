@@ -2,8 +2,12 @@ package com.finance.finportfolio.infrastructure.file;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -74,6 +78,28 @@ public class LocalFileHandler {
             } catch (Exception e) {
                 log.error("[LOCAL] 알 수 없는 삭제 에러: {}", e.getMessage());
             }
+        }
+    }
+
+    public List<String> getLocalFileNames() {
+        try {
+            Path uploadPath = Paths.get(getFullPath());
+
+            // 디렉토리가 없으면 빈 리스트 반환 (방어 코드)
+            if (!Files.exists(uploadPath)) {
+                return Collections.emptyList();
+            }
+
+            // Files.list는 Stream을 반환하며, 사용 후 닫아주는게 좋으므로 try-with-resources 사용
+            try (Stream<Path> stream = Files.list(uploadPath)) {
+                return stream
+                        .filter(Files::isRegularFile) // 디렉토리가 아닌 '파일'만 추출
+                        .map(path -> path.getFileName().toString()) // 파일명만 추출 (uuid.png)
+                        .toList();
+            }
+        } catch (IOException e) {
+            log.error("로컬 파일 목록 조회 중 오류 발생: {}", e.getMessage());
+            return Collections.emptyList();
         }
     }
 }
