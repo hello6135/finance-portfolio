@@ -11,7 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.finance.finportfolio.infrastructure.file.FileService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class EditorImageController {

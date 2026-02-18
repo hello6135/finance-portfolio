@@ -5,17 +5,22 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 // LocalFileServiceImpl - 파일 서비스 구현체 (docker 버전)
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Profile("local")
@@ -87,6 +92,26 @@ public class LocalFileServiceImpl implements FileService {
 
     @Override
     public void cleanUpOrphanFiles(List<String> allPostContents) {
-        // fileName을 List화 시키고 LocalFileHandler에 다중삭제 로직 추가 필요
+        Set<String> usedKeys = allPostContents.stream()
+                // (수정) extractKeyFromUrl 대신 정규식 추출 메서드 사용
+                .flatMap(content -> extractFileNamesFromContent(content).stream())
+                .map(path -> {
+                    if (path.startsWith("http")) {
+                        return path.substring(path.lastIndexOf("/") + 1);
+                    }
+                    return path; // 로컬은 이미 파일명임
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        List<String> s3Keys = localFileHandler.getLocalFileNames();
+
+        List<String> orphanKeys = s3Keys.stream()
+                .filter(key -> !usedKeys.contains(key))
+                .toList();
+
+        if (!orphanKeys.isEmpty()) {
+            localFileHandler.deleteFiles(orphanKeys);
+        }
     }
 }
