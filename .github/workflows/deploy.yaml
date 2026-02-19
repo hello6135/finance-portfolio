@@ -67,4 +67,7 @@ jobs:
           sudo fuser -k 8080/tcp || true
           
           # 기존 앱 삭제 후 새 파일 실행 (경로 확인 필수)
-          nohup java -jar /home/ubuntu/app/*.jar --spring.profiles.active=prod > /home/ubuntu/app/app.log 2>&1 &
+          nohup java -jar /home/ubuntu/app/*.jar \
+            --spring.profiles.active=prod \
+            --AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --AWS_SECRET_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} > /home/ubuntu/app/app.log 2>&1 &
