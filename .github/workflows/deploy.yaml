@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ "main" ] # main 브랜치에 push될 때 실행
+    branches: [ "main" ]
 
 jobs:
   deploy:
@@ -18,11 +18,33 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
+    # 1. GitHub Actions 서버의 현재 IP를 알아냅니다.
+    - name: Get GitHub Actions IP
+      id: ip
+      run: echo "ipv4=$(curl -s https://ipinfo.io/ip)" >> $GITHUB_OUTPUT
+
+    # 2. AWS 권한 설정 (기존 IAM 키 사용)
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+    # 3. 배포 시작 전 22번 포트 일시 개방 (내 IP만)
+    - name: Add GitHub IP to Security group
+      run: |
+        aws ec2 authorize-security-group-ingress \
+          --group-id ${{ secrets.AWS_SG_ID }} \
+          --protocol tcp \
+          --port 22 \
+          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
     - name: Build with Gradle
-      run: ./gradlew clean build -x test # 테스트 제외 빌드 (속도 우선)
+      run: ./gradlew clean build -x test
 
     - name: Copy JAR to EC2
       uses: appleboy/scp-action@master
@@ -41,7 +63,4 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # 기존 실행 중인 서버 종료
-          fuser -k 8080/tcp || true
-          # 새 서버 실행 (nohup을 써서 터미널을 꺼도 유지되게 함)
-          nohup java -jar /home/ubuntu/app/*.jar --spring.profiles.active=prod > /home/ubuntu/app/app.log 2>&1 &
+          fuser -k 8080
