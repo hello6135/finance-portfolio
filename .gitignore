@@ -40,7 +40,6 @@ out/
 upload_images/
 
 # AWS and Local Setting #
-src/main/resources/application-dev.properties
 src/main/resources/application-prod.properties
 
 .env
