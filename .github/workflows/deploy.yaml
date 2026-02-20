@@ -1,73 +1,77 @@
-name: Deploy to EC2
+name: Deploy with Docker
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-    - name: Set up JDK 21
-      uses: actions/setup-java@v3
+    # 1. Docker Hub 로그인
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
       with:
-        java-version: '21'
-        distribution: 'temurin'
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 1. GitHub Actions 서버의 현재 IP를 알아냅니다.
-    - name: Get GitHub Actions IP
-      id: ip
-      run: echo "ipv4=$(curl -s https://ipinfo.io/ip)" >> $GITHUB_OUTPUT
-
-    # 2. AWS 권한 설정 (기존 IAM 키 사용)
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2
-
-    # 3. 배포 시작 전 22번 포트 일시 개방 (내 IP만)
-    - name: Add GitHub IP to Security group
+    # 2. 브랜치에 따른 태그 결정
+    - name: Set Docker Tag
       run: |
-        aws ec2 authorize-security-group-ingress \
-          --group-id ${{ secrets.AWS_SG_ID }} \
-          --protocol tcp \
-          --port 22 \
-          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "TAG=latest" >> $GITHUB_ENV
+        else
+          echo "TAG=dev" >> $GITHUB_ENV
+        fi
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    # 3. Docker 이미지 빌드 및 푸시 (Dockerfile의 Multi-stage 빌드 활용)
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/finance-portfolio:${{ env.TAG }}
 
-    - name: Build with Gradle
-      run: ./gradlew clean build -x test
-
-    - name: Copy JAR to EC2
+    # 4. docker-compose.yml 파일을 EC2로 전송 (SCP)
+    - name: Copy docker-compose.yml to EC2
       uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "build/libs/*.jar"
-        target: "/home/ubuntu/app"
-        strip_components: 2
+        source: "docker-compose.yml"
+        target: "~/finance-portfolio" # EC2 내 저장 경로
 
-    - name: Execute Server
+    # 5. EC2에 접속해서 배포 실행 (SSH)
+    - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # 8080 포트를 점유 중인 프로세스가 있다면 종료 (없어도 에러 안 나게 || true 추가)
-          sudo fuser -k 8080/tcp || true
+          mkdir -p ~/finance-portfolio
+          cd ~/finance-portfolio
           
-          # 기존 앱 삭제 후 새 파일 실행 (경로 확인 필수)
-          nohup java -jar /home/ubuntu/app/*.jar \
-            --spring.profiles.active=dev \
-            --AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            --AWS_SECRET_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} > /home/ubuntu/app/app.log 2>&1 &
+          # [핵심] 5-1. Secrets를 사용하여 .env 파일 동적 생성
+          # docker-compose.yml이 이 파일을 읽어서 ${DB_PASSWORD} 등에 주입합니다.
+          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          
+          # 5-2. Docker Hub 로그인 (이미지 pull 권한 확인)
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+          # 5-3. 최신 이미지 pull
+          docker-compose pull
+          
+          # 5-4. 브랜치에 따라 컨테이너 실행
+          if [ "${{ env.TAG }}" == "latest" ]; then
+            docker-compose up -d app-prod db-prod
+          else
+            docker-compose up -d app-dev db-dev
+          fi
+          
+          # 5-5. 미사용 이미지 정리 (용량 확보)
+          docker image prune -f
