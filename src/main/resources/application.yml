@@ -1,0 +1,82 @@
+spring:
+  application:
+    name: finance-portfolio
+  profiles:
+    active: local
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: true
+      poll-interval: 1s
+      quiet-period: 500ms
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/portfolio_db?serverTimezone=UTC
+    username: root
+    password: password
+
+file:
+  upload-dir: upload_images
+  domain: http://localhost:8080
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:mysql://db-dev:3306/dev_db?serverTimezone=UTC
+    username: root
+    password: ${DB_PASSWORD}
+
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+        instance-profile: false
+      s3:
+        bucket: finportfolio-s3-bucket-dev-9806
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:mysql://db-prod:3306/portfolio_db?serverTimezone=UTC
+    username: root
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # 운영 서버는 테이블 구조가 변하면 안 되므로 안전하게 체크만 함
+
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+        instance-profile: false
+      s3:
+        bucket: finportfolio-s3-bucket-prod-9806
