@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.filter.HiddenHttpMethodFilter;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
+@Profile("local")
 public class WebConfig implements WebMvcConfigurer {
 
     // 이미지 업로드 경로 주소 환경변수로 받아옴
