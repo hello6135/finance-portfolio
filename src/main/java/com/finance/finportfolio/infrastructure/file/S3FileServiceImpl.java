@@ -102,6 +102,7 @@ public class S3FileServiceImpl implements FileService {
                 img.attr("src", pureKey);
             }
         }
+        log.info("살균된 content: {}", doc.body().html());
 
         return doc.body().html();
     }
@@ -118,17 +119,20 @@ public class S3FileServiceImpl implements FileService {
                 return fileUrl;
             }
 
-            URI uri = new URI(fileUrl);
-            String path = uri.getPath();
-
-            if (path == null || path.length() <= 1) {
-                return null;
+            String path;
+            if (fileUrl.startsWith("http")) {
+                // URL 형태인 경우 (https://domain/key)
+                path = fileUrl.substring(fileUrl.indexOf("/", fileUrl.indexOf("//") + 2));
+            } else {
+                // 절대 경로 형태인 경우 (/key)
+                path = fileUrl;
             }
 
-            // 첫 슬래시(/) 제거 및 디코딩
-            return URLDecoder.decode(path.substring(1), StandardCharsets.UTF_8);
+            // 첫 슬래시(/) 제거, 디코딩
+            String key = path.startsWith("/") ? path.substring(1) : path;
+            return URLDecoder.decode(key, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            log.error("Url 추출 실패: {}", fileUrl);
+            log.error("Url 추출 실패: {} | error: {}", fileUrl, e.getMessage());
             return null;
         }
     }
