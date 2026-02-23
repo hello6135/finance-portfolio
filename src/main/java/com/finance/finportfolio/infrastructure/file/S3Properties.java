@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 
 import lombok.NonNull;
 
-@Configuration
 @ConfigurationProperties(prefix = "cloud.aws.s3")
 public record S3Properties(
         @NonNull String bucketName,
