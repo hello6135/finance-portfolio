@@ -21,6 +21,15 @@ public class PostResponseDto {
         this.id = post.getId();
         this.author = post.getAuthor();
         this.title = post.getTitle();
+        this.content = null;
+        this.hasImage = post.isHasImage();
+        this.createdAt = post.getCreatedAt();
+    }
+
+    public PostResponseDto(Post post, String processedContent) {
+        this.id = post.getId();
+        this.author = post.getAuthor();
+        this.title = post.getTitle();
         this.content = post.getContent();
         this.hasImage = post.isHasImage();
         this.createdAt = post.getCreatedAt();
