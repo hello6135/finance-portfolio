@@ -12,6 +12,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,8 +48,9 @@ public class S3FileServiceImpl implements FileService {
 
     @Override
     public void deleteFiles(String content) {
-        if (content == null || content.isBlank())
+        if (content == null || content.isBlank()) {
             return;
+        }
 
         // 1. 본문에서 URL 추출 및 S3 Key로 변환
         List<String> keysToDelete = extractFileNamesFromContent(content).stream()
@@ -57,6 +62,35 @@ public class S3FileServiceImpl implements FileService {
         if (!keysToDelete.isEmpty()) {
             s3FileHandler.deleteFiles(keysToDelete);
         }
+    }
+
+    @Override
+    public String convertToCdnUrls(String content) {
+        if (content == null || content.isBlank()) {
+            return "";
+        }
+
+        // 1. HTML 파싱 (body 태그 내부 내용만 다룸)
+        Document doc = Jsoup.parseBodyFragment(content);
+
+        // 2. img 태그 중 src 속성이 있는 요소들을 선택
+        Elements imgs = doc.select("img[src]");
+
+        for (Element img : imgs) {
+            String src = img.attr("src");
+
+            // 3. 조건 검사: 이미 전체 경로(http)가 아니거나 로컬 경로가 아닌 경우 (순수 키값인 경우)
+            // DB에 uuid-name.png 형태로 저장되어 있다고 가정합니다.
+            if (!src.startsWith("http") && !src.startsWith("/")) {
+                // CloudFront 도메인을 붙여서 새로운 URL 생성
+                // s3Properties.getCloudfrontDomain() 부분은 실제 환경 변수나 설정값을 담은 필드로 대체하세요.
+                String cdnUrl = "https://" + s3FileHandler.getCloudfrontDomain() + "/" + src;
+                img.attr("src", cdnUrl);
+            }
+        }
+
+        // 4. 변환된 HTML의 body 내용물만 반환
+        return doc.body().html();
     }
 
     @Override

@@ -50,7 +50,7 @@ public class LocalFileServiceImpl implements FileService {
 
         localFileHandler.uploadFile(file, savedFileName);
 
-        return savedFileName;
+        return "/images/" + savedFileName;
     }
 
     @Override
@@ -66,6 +66,11 @@ public class LocalFileServiceImpl implements FileService {
         if (!fileNameToDelete.isEmpty()) {
             localFileHandler.deleteFiles(fileNameToDelete);
         }
+    }
+
+    @Override
+    public String convertToCdnUrls(String content) {
+        return content;
     }
 
     // HTML 본문에서 URL/파일명 리스트를 추출하는 정규식 로직

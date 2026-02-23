@@ -13,4 +13,5 @@ public interface FileService {
 
     void cleanUpOrphanFiles(List<String> allPostContents);
 
+    String convertToCdnUrls(String content);
 }
