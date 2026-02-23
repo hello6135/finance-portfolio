@@ -23,9 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class S3FileHandler {
 
     private final S3Template s3Template;
-
-    @Value("${spring.cloud.aws.s3.bucket}")
-    private String bucket;
+    private final S3Properties s3Properties;
 
     public String uploadFile(MultipartFile file, String savedFileName) {
         try {
@@ -36,15 +34,13 @@ public class S3FileHandler {
 
             // 2. 업로드 수행
             S3Resource resource = s3Template.upload(
-                    bucket,
+                    s3Properties.bucketName(),
                     savedFileName,
                     file.getInputStream(),
                     metadata // 람다 대신 객체를 직접 전달
             );
-
-            String uploadUrl = resource.getURL().toString();
-            log.info("S3 파일 업로드 성공: {}, URL: {}", savedFileName, uploadUrl);
-            return uploadUrl;
+            log.info("S3 파일 업로드 성공: {}", savedFileName);
+            return savedFileName;
 
         } catch (IOException e) {
             log.error("S3 파일 읽기 에러: {}", e.getMessage());
@@ -63,7 +59,7 @@ public class S3FileHandler {
 
         try {
             // S3Template은 리스트를 받아 일괄 삭제(Batch Delete)를 효율적으로 수행합니다.
-            urlKeys.forEach(key -> s3Template.deleteObject(bucket, key));
+            urlKeys.forEach(key -> s3Template.deleteObject(s3Properties.bucketName(), key));
             log.info("S3 객체 삭제 완료: {} 건", urlKeys.size());
 
         } catch (S3Exception e) {
@@ -71,10 +67,14 @@ public class S3FileHandler {
         }
     }
 
+    public String getCloudfrontDomain() {
+        return s3Properties.cloudfrontDomain();
+    }
+
     // S3버킷 모든 파일 키만 리스트로 반환
     public List<String> getS3ObjectKeys() {
         // listObjects가 훨씬 간결해졌으며, 스트림 처리에 최적화되어 있습니다.
-        return s3Template.listObjects(bucket, "")
+        return s3Template.listObjects(s3Properties.bucketName(), "")
                 .stream()
                 // S3Resource::getFilename은 String을 반환하므로 타입 추론이 명확해집니다.
                 .map(resource -> resource.getFilename())

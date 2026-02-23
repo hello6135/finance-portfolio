@@ -30,14 +30,7 @@ public class EditorImageController {
 
             // 2. CKEditor 5 전용 성공 응답 규격
             response.put("uploaded", true);
-
-            if (savedFileName.startsWith("http")) {
-                // S3방식
-                response.put("url", savedFileName);
-            } else {
-                // local방식, WebConfig 리소스 매핑 주소
-                response.put("url", "/images/" + savedFileName);
-            }
+            response.put("url", savedFileName);
 
         } catch (Exception e) {
             // 3. 에러 발생 시 실패 응답 규격
