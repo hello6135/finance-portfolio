@@ -30,7 +30,7 @@ public class PostResponseDto {
         this.id = post.getId();
         this.author = post.getAuthor();
         this.title = post.getTitle();
-        this.content = post.getContent();
+        this.content = processedContent;
         this.hasImage = post.isHasImage();
         this.createdAt = post.getCreatedAt();
     }
