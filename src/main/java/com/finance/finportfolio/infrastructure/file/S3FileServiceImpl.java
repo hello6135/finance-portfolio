@@ -44,7 +44,8 @@ public class S3FileServiceImpl implements FileService {
     }
 
     private String createFileName(String originalFileName) {
-        return UUID.randomUUID() + "-" + originalFileName;
+        String safeName = originalFileName.replaceAll("\\s", "_");
+        return UUID.randomUUID() + "-" + safeName;
     }
 
     @Override
@@ -164,7 +165,7 @@ public class S3FileServiceImpl implements FileService {
 
         // DB에는 도메인이 제거된 상태로 저장되므로, 순수 키 패턴(UUID 시작)만 찾아냄.
         // [a-f0-9\\-]{36} -> UUID 형태, 그 뒤에 파일명과 확장자
-        String pureKeyPattern = "([a-f0-9\\-]{36}-[^\"'>\\s]+)";
+        String pureKeyPattern = "([a-f0-9\\-]{36}-[^\"'>]+)";
 
         Pattern pattern = Pattern.compile(pureKeyPattern);
         Matcher matcher = pattern.matcher(content);
@@ -172,7 +173,7 @@ public class S3FileServiceImpl implements FileService {
         while (matcher.find()) {
             // 정규식 그룹 1번 자체가 이미 순수 키값입니다.
             String key = matcher.group(1);
-            imageKeys.add(URLDecoder.decode(key, StandardCharsets.UTF_8));
+            imageKeys.add(URLDecoder.decode(key.trim(), StandardCharsets.UTF_8));
         }
         return imageKeys;
     }
