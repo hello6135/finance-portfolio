@@ -103,7 +103,7 @@ public class PostService {
     @Transactional
     public Long savePost(PostSaveRequestDto requestDto) {
         // jsoup 살균과 Cdn삭제(키 추출) 동시에
-        String cleanedContent = cleanHtml(fileService.removeCdnUrls(requestDto.content()));
+        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
         Post post = Post.builder()
@@ -123,7 +123,7 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
         // jsoup 살균과 Cdn삭제(키 추출) 동시에
-        String cleanedContent = cleanHtml(fileService.removeCdnUrls(requestDto.content()));
+        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
         post.update(cleanText(requestDto.title()), cleanedContent, hasImage);
