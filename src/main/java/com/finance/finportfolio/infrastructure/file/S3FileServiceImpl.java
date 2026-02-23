@@ -119,17 +119,15 @@ public class S3FileServiceImpl implements FileService {
                 return fileUrl;
             }
 
-            String path;
+            String key;
             if (fileUrl.startsWith("http")) {
-                // URL 형태인 경우 (https://domain/key)
-                path = fileUrl.substring(fileUrl.indexOf("/", fileUrl.indexOf("//") + 2));
+                key = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            } else if (fileUrl.startsWith("/")) {
+                key = fileUrl.substring(1);
             } else {
-                // 절대 경로 형태인 경우 (/key)
-                path = fileUrl;
+                key = fileUrl;
             }
 
-            // 첫 슬래시(/) 제거, 디코딩
-            String key = path.startsWith("/") ? path.substring(1) : path;
             return URLDecoder.decode(key, StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.error("Url 추출 실패: {} | error: {}", fileUrl, e.getMessage());
