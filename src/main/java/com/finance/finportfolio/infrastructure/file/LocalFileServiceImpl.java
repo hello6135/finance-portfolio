@@ -73,6 +73,11 @@ public class LocalFileServiceImpl implements FileService {
         return content;
     }
 
+    @Override
+    public String removeCdnUrls(String content) {
+        return content;
+    }
+
     // HTML 본문에서 URL/파일명 리스트를 추출하는 정규식 로직
     private List<String> extractFileNamesFromContent(String content) {
         List<String> fileNames = new ArrayList<>();
