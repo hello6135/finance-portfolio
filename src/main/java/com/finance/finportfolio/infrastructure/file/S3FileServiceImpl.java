@@ -141,13 +141,23 @@ public class S3FileServiceImpl implements FileService {
             return imageKeys;
 
         String domain = s3FileHandler.getCloudfrontDomain();
-        String regex = "(?:https?://" + domain + "/)([^\"'>\\s]+)";
 
-        Pattern pattern = Pattern.compile(regex);
+        // 1. CDN URL 형태도 찾고 (이미 변환된 경우 대비)
+        String cdnPattern = "(?:https?://" + Pattern.quote(domain) + "/)([^\"'>\\s]+)";
+        // 2. 순수 파일명 형태도 찾음 (DB 저장 형태) - UUID 특성상 하이픈(-)과 확장자 체크
+        String pureKeyPattern = "([a-f0-9\\-]{36}-[^\"'>\\s]+)";
+
+        // 두 패턴을 모두 합쳐서 찾기
+        String combinedRegex = cdnPattern + "|" + pureKeyPattern;
+        Pattern pattern = Pattern.compile(combinedRegex);
         Matcher matcher = pattern.matcher(content);
 
         while (matcher.find()) {
-            imageKeys.add(matcher.group(1));
+            // matcher.group(1)은 CDN 패턴에서 찾은 키, matcher.group(2)는 순수 키 패턴
+            String key = (matcher.group(1) != null) ? matcher.group(1) : matcher.group(2);
+            if (key != null) {
+                imageKeys.add(URLDecoder.decode(key, StandardCharsets.UTF_8));
+            }
         }
         return imageKeys;
     }
