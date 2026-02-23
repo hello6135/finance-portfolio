@@ -136,23 +136,19 @@ public class S3FileServiceImpl implements FileService {
 
     // HTML 본문에서 URL/파일명 리스트를 추출하는 정규식 로직
     private List<String> extractFileNamesFromContent(String content) {
-        List<String> fileNames = new ArrayList<>();
+        List<String> imageKeys = new ArrayList<>();
         if (content == null || content.isBlank())
-            return fileNames;
+            return imageKeys;
 
-        Pattern pattern = Pattern.compile(
-                "/images/([^\"'>\\s]+)|(https://[a-zA-Z0-9.-]+\\.s3\\.[a-zA-Z0-9-]+\\.amazonaws\\.com/[^\"'>\\s]+)");
+        String domain = s3FileHandler.getCloudfrontDomain();
+        String regex = "(?:https?://" + domain + "/)([^\"'>\\s]+)";
+
+        Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(content);
 
         while (matcher.find()) {
-            String localFileName = matcher.group(1);
-            String s3FullUrl = matcher.group(2);
-
-            if (localFileName != null)
-                fileNames.add(localFileName);
-            else if (s3FullUrl != null)
-                fileNames.add(s3FullUrl);
+            imageKeys.add(matcher.group(1));
         }
-        return fileNames;
+        return imageKeys;
     }
 }
