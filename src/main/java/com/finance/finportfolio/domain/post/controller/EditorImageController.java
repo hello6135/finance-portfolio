@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.finance.finportfolio.infrastructure.file.FileService;
+import com.finance.finportfolio.infrastructure.file.S3Properties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EditorImageController {
 
     private final FileService fileService;
+    private final S3Properties s3Properties;
 
     @PostMapping("/api/image/upload")
     public Map<String, Object> upload(@RequestParam("upload") MultipartFile file) {
@@ -28,17 +30,20 @@ public class EditorImageController {
             // 1. 파일을 저장하고 저장된 파일명을 받아옴
             String savedFileName = fileService.uploadFile(file);
 
+            String cdnUrl = String.format("https://%s/%s",
+                    s3Properties.cloudfrontDomain(),
+                    savedFileName);
+
             // 2. CKEditor 5 전용 성공 응답 규격
             response.put("uploaded", true);
-            response.put("url", savedFileName);
+            response.put("url", cdnUrl);
 
+            log.info("CKEditor image uploaded successfully: {}", savedFileName);
         } catch (Exception e) {
-            // 3. 에러 발생 시 실패 응답 규격
-            response.put("uploaded", false);
+            log.error("CKEditor image upload failed", e);
 
-            Map<String, String> errorDetail = new HashMap<>();
-            errorDetail.put("message", "이미지 업로드에 실패했습니다: " + e.getMessage());
-            response.put("error", errorDetail);
+            response.put("uploaded", false);
+            response.put("error", Map.of("message", "이미지 업로드 실패: " + e.getMessage()));
         }
 
         return response; // 맵 객체를 최종 반환 (JSON으로 자동 변환됨)

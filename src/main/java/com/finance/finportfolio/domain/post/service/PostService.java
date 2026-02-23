@@ -16,6 +16,7 @@ import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
 import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
 import com.finance.finportfolio.infrastructure.file.FileService;
+import com.finance.finportfolio.infrastructure.file.S3FileServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
+        log.info("게시글 불러오기, content: {}", post.getContent());
         String processedContent = fileService.convertToCdnUrls(post.getContent());
 
         return new PostResponseDto(post, processedContent);
@@ -100,7 +102,8 @@ public class PostService {
      */
     @Transactional
     public Long savePost(PostSaveRequestDto requestDto) {
-        String cleanedContent = cleanHtml(requestDto.content());
+        // jsoup 살균과 Cdn삭제(키 추출) 동시에
+        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
         Post post = Post.builder()
@@ -119,7 +122,8 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
-        String cleanedContent = cleanHtml(requestDto.content());
+        // jsoup 살균과 Cdn삭제(키 추출) 동시에
+        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
         post.update(cleanText(requestDto.title()), cleanedContent, hasImage);
@@ -136,7 +140,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("삭제하려는 게시글이 존재하지 않습니다. id=" + id));
 
-        log.info("파일 삭제 요청 id: {}", id);
+        log.info("게시글 삭제 요청 id: {}", id);
         // S3 이미지 삭제
         fileService.deleteFiles(post.getContent());
 

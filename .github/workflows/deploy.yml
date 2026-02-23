@@ -2,7 +2,9 @@ name: Deploy with Docker
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: "main"
+  pull_request:
+    branches: develop
 
 jobs:
   build-and-deploy:
