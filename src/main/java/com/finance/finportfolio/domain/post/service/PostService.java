@@ -137,7 +137,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("삭제하려는 게시글이 존재하지 않습니다. id=" + id));
 
-        log.info("파일 삭제 요청 id: {}", id);
+        log.info("게시글 삭제 요청 id: {}", id);
         // S3 이미지 삭제
         fileService.deleteFiles(post.getContent());
 

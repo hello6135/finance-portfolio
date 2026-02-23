@@ -77,7 +77,9 @@ public class S3FileHandler {
         return s3Template.listObjects(s3Properties.bucketName(), "")
                 .stream()
                 // S3Resource::getFilename은 String을 반환하므로 타입 추론이 명확해집니다.
-                .map(resource -> resource.getFilename())
+                .map(resource -> {
+                    return resource.getLocation().getObject();
+                })
                 .filter(filename -> filename != null && !filename.isEmpty())
                 .toList();
     }
