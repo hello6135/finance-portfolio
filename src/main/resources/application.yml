@@ -36,6 +36,16 @@ spring:
     username: root
     password: password
 
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+        instance-profile: false
+      s3:
+        bucket-name: finportfolio-s3-bucket-dev-9806
+        # 하드코딩, 차후 aws secrets에서 환경변수로 받아오도록 변경
+        cloudfront-domain: d24842uv7pd3qd.cloudfront.net 
+
 file:
   upload-dir: upload_images
   domain: http://localhost:8080
@@ -57,7 +67,7 @@ spring:
         static: ap-northeast-2
         instance-profile: false
       s3:
-        bucket: finportfolio-s3-bucket-dev-9806
+        bucket-name: finportfolio-s3-bucket-dev-9806
         # 하드코딩, 차후 aws secrets에서 환경변수로 받아오도록 변경
         cloudfront-domain: d24842uv7pd3qd.cloudfront.net 
 ---
@@ -81,6 +91,6 @@ spring:
         static: ap-northeast-2
         instance-profile: false
       s3:
-        bucket: finportfolio-s3-bucket-prod-9806
+        bucket-name: finportfolio-s3-bucket-prod-9806
         # 하드코딩, 차후 aws secrets에서 환경변수로 받아오도록 변경
         cloudfront-domain: d2m4qtzslhorm2.cloudfront.net
