@@ -62,16 +62,18 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
-        return new PostResponseDto(post);
+        String processedContent = fileService.convertToCdnUrls(post.getContent());
+
+        return new PostResponseDto(post, processedContent);
     }
 
     // Jsoup 소독 메서드
     private String cleanText(String text) {
-        return (text == null) ? "" : Jsoup.clean(text, Safelist.none());
+        return (text == null || text.isEmpty()) ? "" : Jsoup.clean(text, Safelist.none());
     }
 
     private String cleanHtml(String text) {
-        if (text == null)
+        if (text == null || text.isEmpty())
             return "";
 
         if ("local".equals(activeProfile)) {
