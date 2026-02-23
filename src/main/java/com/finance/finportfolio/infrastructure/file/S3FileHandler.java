@@ -30,16 +30,19 @@ public class S3FileHandler {
             // 1. 메타데이터 객체 생성 및 설정 (빌더 패턴 활용)
             ObjectMetadata metadata = ObjectMetadata.builder()
                     .contentType(file.getContentType())
+                    .contentLength(file.getSize())
                     .build();
 
             // 2. 업로드 수행
-            S3Resource resource = s3Template.upload(
+            s3Template.upload(
                     s3Properties.bucketName(),
                     savedFileName,
                     file.getInputStream(),
                     metadata // 람다 대신 객체를 직접 전달
             );
+
             log.info("S3 파일 업로드 성공: {}", savedFileName);
+
             return savedFileName;
 
         } catch (IOException e) {
@@ -52,18 +55,25 @@ public class S3FileHandler {
     }
 
     // 다중 삭제
-    public void deleteFiles(List<String> urlKeys) {
-        if (urlKeys == null || urlKeys.isEmpty()) {
+    public void deleteFiles(List<String> keys) {
+        if (keys == null || keys.isEmpty()) {
             return;
         }
 
         try {
-            // S3Template은 리스트를 받아 일괄 삭제(Batch Delete)를 효율적으로 수행합니다.
-            urlKeys.forEach(key -> s3Template.deleteObject(s3Properties.bucketName(), key));
-            log.info("S3 객체 삭제 완료: {} 건", urlKeys.size());
+            // S3Template은 리스트를 받아 반복 삭제.(S3Client Batch 방식으로 다중 삭제 refactor 가능!)
+            keys.forEach(key -> {
+                try {
+                    s3Template.deleteObject(s3Properties.bucketName(), key);
+                    log.debug("S3 객체 삭제 시도: {}", key);
+                } catch (Exception e) {
+                    log.error("S3 개별 객체 삭제 실패 [key: {}]: {}", key, e.getMessage());
+                }
+            });
 
+            log.info("S3 객체 삭제 완료: {} 건", keys.size());
         } catch (S3Exception e) {
-            log.error("S3 삭제 중 에러 발생: {}", e.awsErrorDetails().errorMessage());
+            log.error("S3 삭제 중 중대한 에러 발생: {}", e.awsErrorDetails().errorMessage());
         }
     }
 
@@ -73,13 +83,9 @@ public class S3FileHandler {
 
     // S3버킷 모든 파일 키만 리스트로 반환
     public List<String> getS3ObjectKeys() {
-        // listObjects가 훨씬 간결해졌으며, 스트림 처리에 최적화되어 있습니다.
         return s3Template.listObjects(s3Properties.bucketName(), "")
                 .stream()
-                // S3Resource::getFilename은 String을 반환하므로 타입 추론이 명확해집니다.
-                .map(resource -> {
-                    return resource.getLocation().getObject();
-                })
+                .map(resource -> resource.getLocation().getObject())
                 .filter(filename -> filename != null && !filename.isEmpty())
                 .toList();
     }

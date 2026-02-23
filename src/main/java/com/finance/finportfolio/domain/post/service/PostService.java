@@ -16,6 +16,7 @@ import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
 import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
 import com.finance.finportfolio.infrastructure.file.FileService;
+import com.finance.finportfolio.infrastructure.file.S3FileServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +102,8 @@ public class PostService {
      */
     @Transactional
     public Long savePost(PostSaveRequestDto requestDto) {
-        String cleanedContent = cleanHtml(requestDto.content());
+        // jsoup 살균과 Cdn삭제(키 추출) 동시에
+        String cleanedContent = cleanHtml(fileService.removeCdnUrls(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
         Post post = Post.builder()
@@ -120,7 +122,8 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
-        String cleanedContent = cleanHtml(requestDto.content());
+        // jsoup 살균과 Cdn삭제(키 추출) 동시에
+        String cleanedContent = cleanHtml(fileService.removeCdnUrls(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
         post.update(cleanText(requestDto.title()), cleanedContent, hasImage);
