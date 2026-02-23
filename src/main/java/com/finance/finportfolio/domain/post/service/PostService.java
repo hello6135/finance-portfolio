@@ -62,6 +62,7 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
+        log.info("게시글 불러오기, content: {}", post.getContent());
         String processedContent = fileService.convertToCdnUrls(post.getContent());
 
         return new PostResponseDto(post, processedContent);

@@ -69,7 +69,7 @@ public class S3FileServiceImpl implements FileService {
         if (content == null || content.isBlank()) {
             return "";
         }
-        log.info(content);
+        log.info("작동확인1: {}", content);
 
         // 1. HTML 파싱 (body 태그 내부 내용만 다룸)
         Document doc = Jsoup.parseBodyFragment(content);
@@ -89,7 +89,7 @@ public class S3FileServiceImpl implements FileService {
                 img.attr("src", cdnUrl);
             }
         }
-        log.info(doc.body().html());
+        log.info("작동확인2: {}", doc.body().html());
 
         // 4. 변환된 HTML의 body 내용물만 반환
         return doc.body().html();
