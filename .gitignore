@@ -36,10 +36,4 @@ out/
 ### VS Code ###
 .vscode/
 
-# local Image Path #
-upload_images/
-
-# AWS and Local Setting #
-src/main/resources/application-prod.properties
-
 .env
