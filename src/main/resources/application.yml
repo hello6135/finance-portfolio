@@ -17,12 +17,19 @@ spring:
     hiddenmethod:
       filter:
         enabled: true
+
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+        instance-profile: false
 ---
 spring:
   config:
     activate:
       on-profile: local
 
+  # 핫스왑 설정
   devtools:
     livereload:
       enabled: true
@@ -38,17 +45,12 @@ spring:
 
   cloud:
     aws:
-      region:
-        static: ap-northeast-2
-        instance-profile: false
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID} 
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
-        bucket-name: finportfolio-s3-bucket-dev-9806
-        cloudfront-domain: d24842uv7pd3qd.cloudfront.net 
-
-file:
-  upload-dir: upload_images
-  domain: http://localhost:8080
-
+        bucket-name: finportfolio-s3-bucket-local-9806
+        cloudfront-domain: dt08rm0613jz4.cloudfront.net
 ---
 spring:
   config:
@@ -62,9 +64,6 @@ spring:
 
   cloud:
     aws:
-      region:
-        static: ap-northeast-2
-        instance-profile: false
       s3:
         bucket-name: finportfolio-s3-bucket-dev-9806
         cloudfront-domain: d24842uv7pd3qd.cloudfront.net
@@ -85,9 +84,6 @@ spring:
 
   cloud:
     aws:
-      region:
-        static: ap-northeast-2
-        instance-profile: false
       s3:
         bucket-name: finportfolio-s3-bucket-prod-9806
         cloudfront-domain: d2m4qtzslhorm2.cloudfront.net

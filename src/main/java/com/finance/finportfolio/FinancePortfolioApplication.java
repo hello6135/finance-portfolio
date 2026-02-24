@@ -8,15 +8,24 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 // JPA시간용
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
 
 @EnableJpaAuditing
 @SpringBootApplication
 @ConfigurationPropertiesScan("com.finance.finportfolio.infrastructure.file")
-public class PortfolioServerApplication {
+public class FinancePortfolioApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PortfolioServerApplication.class, args);
+        String profile = System.getProperty("spring.profiles.active");
+
+        // 로컬 환경일 때만 .env 로드 시도
+        if (profile == null || profile.contains("local")) {
+            Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+            dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+        }
+
+        SpringApplication.run(FinancePortfolioApplication.class, args);
     }
 
     @PostConstruct
