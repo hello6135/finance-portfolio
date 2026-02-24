@@ -1,5 +1,4 @@
 package com.finance.finportfolio.infrastructure.file;
-//package com.example.portfolio.infrastructure.file;
 
 import java.util.List;
 
@@ -13,4 +12,7 @@ public interface FileService {
 
     void cleanUpOrphanFiles(List<String> allPostContents);
 
+    String convertToCdnUrls(String content);
+
+    String removeCdnUrls(String content);
 }
