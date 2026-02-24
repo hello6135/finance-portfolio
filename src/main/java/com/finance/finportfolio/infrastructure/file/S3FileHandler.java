@@ -3,12 +3,10 @@ package com.finance.finportfolio.infrastructure.file;
 import java.io.IOException;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import io.awspring.cloud.s3.S3Resource;
 import io.awspring.cloud.s3.S3Template;
 import io.awspring.cloud.s3.ObjectMetadata;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -19,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("dev")
+@Profile("local | dev | prod")
 public class S3FileHandler {
 
     private final S3Template s3Template;
@@ -83,8 +81,7 @@ public class S3FileHandler {
 
     // S3버킷 모든 파일 키만 리스트로 반환
     public List<String> getS3ObjectKeys() {
-        return s3Template.listObjects(s3Properties.bucketName(), "")
-                .stream()
+        return s3Template.listObjects(s3Properties.bucketName(), "").stream()
                 .map(resource -> resource.getLocation().getObject())
                 .filter(filename -> filename != null && !filename.isEmpty())
                 .toList();

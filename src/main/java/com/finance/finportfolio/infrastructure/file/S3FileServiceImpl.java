@@ -1,6 +1,5 @@
 package com.finance.finportfolio.infrastructure.file;
 
-import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import java.util.stream.Collectors;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -27,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Profile("dev")
+@Profile("local | dev | prod")
 public class S3FileServiceImpl implements FileService {
 
     private final S3FileHandler s3FileHandler;
@@ -37,14 +35,14 @@ public class S3FileServiceImpl implements FileService {
         if (file == null || file.isEmpty() || file.getOriginalFilename() == null) {
             return null;
         }
-        // 널체크랑 UUID로 이름만 정해주고 핸들러로
+
         String savedFileName = createFileName(file.getOriginalFilename());
         return s3FileHandler.uploadFile(file, savedFileName);
 
     }
 
     private String createFileName(String originalFileName) {
-        String safeName = originalFileName.replaceAll("\\s", "_");
+        String safeName = originalFileName.replaceAll("\\s", "_"); // 공백 제거
         return UUID.randomUUID() + "-" + safeName;
     }
 
@@ -54,13 +52,13 @@ public class S3FileServiceImpl implements FileService {
             return;
         }
 
-        // 1. 본문에서 URL 추출 및 S3 Key로 변환
+        // 본문에서 URL 추출 및 S3 Key로 변환
         List<String> keysToDelete = extractFileNamesFromContent(content).stream()
                 .map(this::extractKeyFromUrl)
                 .filter(Objects::nonNull)
                 .toList();
 
-        // 2. 추출된 키가 있다면 다중 삭제 로직 하나로 처리
+        // 추출된 키가 있다면 다중 삭제 로직 하나로 처리
         if (!keysToDelete.isEmpty()) {
             s3FileHandler.deleteFiles(keysToDelete);
         }
@@ -139,6 +137,11 @@ public class S3FileServiceImpl implements FileService {
     // 미참조 파일 삭제
     @Override
     public void cleanUpOrphanFiles(List<String> allPostContents) {
+        if (allPostContents.isEmpty()) {
+            log.warn("DB 데이터가 비어있어 삭제 로직을 중단합니다.");
+            return;
+        }
+
         Set<String> usedKeys = allPostContents.stream()
                 .flatMap(content -> extractFileNamesFromContent(content).stream())
                 .collect(Collectors.toSet());
