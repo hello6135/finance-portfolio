@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+
 import { getPostById, deletePost } from '../api/postApi';
 
 const PostDetail = () => {
@@ -53,7 +54,7 @@ const PostDetail = () => {
                     </tr>
                     <tr>
                         <th className="table-light">내용</th>
-                        {/* Jsoup으로 살균된 HTML 렌더링 */}
+                        {/* dangerouslySetInnerHTML: 타임리프의 utext와 같은 기능 */}
                         <td
                             className="post-content"
                             dangerouslySetInnerHTML={{ __html: post.content }}
@@ -62,14 +63,22 @@ const PostDetail = () => {
                     </tr>
                     <tr>
                         <th className="table-light">작성일</th>
-                        <td>{post.createdAt}</td>
+                        <td>
+                            {new Intl.DateTimeFormat('ko-KR', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false // 24시간 형식
+                            }).format(new Date(post.createdAt))}
+                        </td>
                     </tr>
                 </tbody>
             </table>
 
             <div className="mt-3 d-flex gap-2">
                 <button onClick={() => navigate('/posts')} className="btn btn-secondary">목록으로</button>
-                {/* 수정 페이지로 이동하는 버튼도 나중에 추가하면 좋겠죠? */}
                 <button onClick={() => navigate(`/editor/${id}`)} className="btn btn-warning">수정</button>
                 <button onClick={onDelete} className="btn btn-danger">삭제</button>
             </div>

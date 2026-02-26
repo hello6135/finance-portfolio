@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import {
     ClassicEditor,
@@ -11,10 +13,9 @@ import {
     Image,
     ImageUpload,
     CKFinderUploadAdapter
-} from 'ckeditor5'; // 'ckeditor5'에서 직접 가져옴
+} from 'ckeditor5';
+import 'ckeditor5/ckeditor5.css';
 
-import 'ckeditor5/ckeditor5.css'; // 에디터 디자인을 위해 필수!
-import { useParams, useNavigate } from 'react-router-dom';
 import { getPostById, createPost, updatePost } from '../api/postApi';
 
 const PostEditor = () => {
