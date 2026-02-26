@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom';
 import PostList from './pages/PostList';
 import PostDetail from './pages/PostDetail';
 import PostEditor from './pages/PostEditor';
-// import PostDetail from './pages/PostDetail'; // 나중에 추가
 
 function App() {
   return (
