@@ -9,6 +9,7 @@ on:
     branches: [ "develop" ] # develop PR 시 dev 배포 (빌드 테스트 및 배포)
     paths:
       - 'finance-portfolio-frontend/**'
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
