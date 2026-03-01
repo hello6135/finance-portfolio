@@ -1,4 +1,4 @@
-name: Deploy with Docker
+name: Backend Deploy to EC2 with Docker Image (Dev & Prod)
 
 on:
   push:
