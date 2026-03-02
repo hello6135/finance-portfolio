@@ -28,7 +28,7 @@ cloudfront:
   custom:
     header:
       name: X-Custom-Access-Key
-      value: finance-custom-header-E50seZG05
+      value: ${CF_SECRET_KEY}
 ---
 spring:
   config:
