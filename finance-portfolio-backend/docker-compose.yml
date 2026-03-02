@@ -20,6 +20,8 @@ services:
   app-dev:
     image: ${DOCKER_USERNAME}/finance-portfolio:dev
     container_name: finance-app-dev
+    env_file:
+      - .env
     ports:
       - "8081:8080" # 외부 포트만 8081로 변경
     environment:
