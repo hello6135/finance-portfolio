@@ -1,7 +1,7 @@
 services:
   # 운영 서버 (Port 8080)
   app-prod:
-    image: ${DOCKER_USERNAME}/finance-portfolio/finance-portfolio-backend:latest
+    image: ${DOCKER_USERNAME}/finance-portfolio:latest
     container_name: finance-app-prod
     ports:
       - "8080:8080"
@@ -18,7 +18,7 @@ services:
 
   # 개발/테스트 서버 (Port 8081)
   app-dev:
-    image: ${DOCKER_USERNAME}/finance-portfolio/finance-portfolio-backend:dev
+    image: ${DOCKER_USERNAME}/finance-portfolio:dev
     container_name: finance-app-dev
     ports:
       - "8081:8080" # 외부 포트만 8081로 변경
