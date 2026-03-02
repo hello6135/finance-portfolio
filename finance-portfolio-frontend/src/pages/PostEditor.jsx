@@ -16,7 +16,7 @@ import {
 } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
 
-import { getPostById, createPost, updatePost } from '../postApi';
+import { getPostById, createPost, updatePost } from '../api/postApi';
 
 const PostEditor = () => {
     const { id } = useParams();
@@ -85,7 +85,7 @@ const PostEditor = () => {
                             plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload, CKFinderUploadAdapter],
                             toolbar: ['undo', 'redo', '|', 'bold', 'italic', '|', 'link', 'bulletedList', 'numberedList', '|', 'imageUpload'],
                             ckfinder: {
-                                uploadUrl: `${import.meta.env.VITE_API_BASE_URL}/api/image/upload`
+                                uploadUrl: `image/upload`
                             },
                             placeholder: "내용을 입력하세요..."
                         }}
