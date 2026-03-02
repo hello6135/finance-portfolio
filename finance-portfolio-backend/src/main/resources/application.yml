@@ -23,6 +23,12 @@ spring:
       region:
         static: ap-northeast-2
         instance-profile: false
+
+cloudfront:
+  custom:
+    header:
+      name: X-Custom-Access-Key
+      value: ${CF_SECRET_KEY:default-local-key}
 ---
 spring:
   config:
