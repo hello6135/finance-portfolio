@@ -20,8 +20,6 @@ services:
   app-dev:
     image: ${DOCKER_USERNAME}/finance-portfolio:dev
     container_name: finance-app-dev
-    env_file:
-      - .env
     ports:
       - "8081:8080" # 외부 포트만 8081로 변경
     environment:
@@ -31,7 +29,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=${AWS_ACCESS_KEY}
       - SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY=${AWS_SECRET_KEY}
-      - CF_SECRET_KEY=${CF_SECRET_KEY}
+      - CF_SECRET_KEY=finance-custom-header-E50seZG05
     depends_on:
       - db-dev
 
