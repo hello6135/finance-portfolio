@@ -24,6 +24,11 @@ public class CloudFrontHeaderFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
+        String receivedValue = request.getHeader(cfHeaderName);
+        System.out.println("DEBUG: URI=" + request.getRequestURI() +
+                ", ExpectedName=" + cfHeaderName +
+                ", ReceivedValue=" + receivedValue);
+
         try {
             // 1. OPTIONS 요청(CORS) 무조건 통과
             if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
