@@ -20,13 +20,18 @@ public class FilterConfig {
     @Profile({ "dev", "prod" })
     public FilterRegistrationBean<CloudFrontHeaderFilter> cloudFrontHeaderFilterRegistration() {
         // 필터를 여기서 직접 생성 (빈 주입을 기다리지 않음)
-        CloudFrontHeaderFilter filter = new CloudFrontHeaderFilter(cfHeaderName, cfHeaderValue);
+        try {
+            CloudFrontHeaderFilter filter = new CloudFrontHeaderFilter(cfHeaderName, cfHeaderValue);
 
-        FilterRegistrationBean<CloudFrontHeaderFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(filter);
-        registrationBean.addUrlPatterns("/api/*");
-        registrationBean.setOrder(1);
+            FilterRegistrationBean<CloudFrontHeaderFilter> registrationBean = new FilterRegistrationBean<>();
+            registrationBean.setFilter(filter);
+            registrationBean.addUrlPatterns("/api/*");
+            registrationBean.setOrder(1);
 
-        return registrationBean;
+            return registrationBean;
+        } catch (Exception e) {
+            throw new RuntimeException("CloudFront Header Filter 초기화 실패: " + e.getMessage());
+        }
+
     }
 }
