@@ -80,10 +80,9 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        envs: CF_SECRET_KEY
         script: |
-          mkdir -p ~/finance-portfolio
-          cd ~/finance-portfolio
+          mkdir -p ~/finance-portfolio/finance-portfolio-backend
+          cd ~/finance-portfolio/finance-portfolio-backend
           
           # 환경변수 파일(.env) 동적 생성 (S3 키 추가)
           echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
