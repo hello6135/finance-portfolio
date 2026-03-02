@@ -24,29 +24,40 @@ public class CloudFrontHeaderFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        // 1. OPTIONS 요청(CORS) 무조건 통과
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        String receivedValue = request.getHeader(cfHeaderName);
+        System.out.println("DEBUG: URI=" + request.getRequestURI() +
+                ", ExpectedName=" + cfHeaderName +
+                ", ExpectedValue=" + cfHeaderValue + // 이걸 추가해서 찍어보세요!
+                ", ReceivedValue=" + receivedValue);
+
+        try {
+            // 1. OPTIONS 요청(CORS) 무조건 통과
+            if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 2. Health Check 예외 처리
+            if ("/api/health".equals(request.getRequestURI())) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 3. 헤더 검증
+            String headerValue = request.getHeader(cfHeaderName);
+
+            if (headerValue == null || !headerValue.equals(cfHeaderValue)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(
+                        "{\"status\": 403, \"message\": \"Direct access is not allowed. Please access through CloudFront.\"}");
+                return;
+            }
+
             filterChain.doFilter(request, response);
-            return;
+        } catch (Exception e) {
+            throw new RuntimeException("CloudFront Header Filter 초기화 실패: " + e.getMessage());
         }
 
-        // 2. Health Check 예외 처리
-        if ("/api/health".equals(request.getRequestURI())) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 3. 헤더 검증
-        String headerValue = request.getHeader(cfHeaderName);
-
-        if (headerValue == null || !headerValue.equals(cfHeaderValue)) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write(
-                    "{\"status\": 403, \"message\": \"Direct access is not allowed. Please access through CloudFront.\"}");
-            return;
-        }
-
-        filterChain.doFilter(request, response);
     }
 }

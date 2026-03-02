@@ -28,7 +28,7 @@ cloudfront:
   custom:
     header:
       name: X-Custom-Access-Key
-      value: ${CF_SECRET_KEY:default-local-key}
+      value: ${CF_SECRET_KEY}
 ---
 spring:
   config:
