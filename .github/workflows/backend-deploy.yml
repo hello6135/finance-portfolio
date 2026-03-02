@@ -72,6 +72,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         source: "finance-portfolio-backend/docker-compose.yml"
         target: "~/finance-portfolio"
+        strip_components: 1
 
     # 8. EC2에 접속해서 배포 실행 (SSH)
     - name: Deploy to EC2
@@ -85,11 +86,13 @@ jobs:
           cd ~/finance-portfolio
           
           # 환경변수 파일(.env) 동적 생성 (S3 키 추가)
-          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" > .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
-          echo "AWS_SECRET_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
-          echo "CF_SECRET_KEY=${{ secrets.CF_SECRET_KEY }}" >> .env
+          cat <<EOF > .env
+DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY_ID }}
+AWS_SECRET_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+CF_SECRET_KEY=${{ secrets.CF_SECRET_KEY }}
+EOF
           
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker-compose pull
