@@ -85,7 +85,7 @@ const PostEditor = () => {
                             plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload, CKFinderUploadAdapter],
                             toolbar: ['undo', 'redo', '|', 'bold', 'italic', '|', 'link', 'bulletedList', 'numberedList', '|', 'imageUpload'],
                             ckfinder: {
-                                uploadUrl: `${import.meta.env.VITE_API_BASE_URL}/api/image/upload`
+                                uploadUrl: `api/image/upload`
                             },
                             placeholder: "내용을 입력하세요..."
                         }}
