@@ -80,6 +80,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
+        envs: CF_SECRET_KEY
         script: |
           mkdir -p ~/finance-portfolio
           cd ~/finance-portfolio
