@@ -1,0 +1,62 @@
+services:
+  # 운영 서버 (Port 8080)
+  app-prod:
+    image: ${DOCKER_USERNAME}/finance-portfolio:latest
+    container_name: finance-app-prod
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-prod:3306/portfolio_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY=${AWS_SECRET_KEY}
+      - CF_SECRET_KEY=${CF_SECRET_KEY}
+    depends_on:
+      - db-prod
+
+  # 개발/테스트 서버 (Port 8081)
+  app-dev:
+    image: ${DOCKER_USERNAME}/finance-portfolio:dev
+    container_name: finance-app-dev
+    ports:
+      - "8081:8080" # 외부 포트만 8081로 변경
+    env_file:
+      - .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-dev:3306/dev_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_CLOUD_AWS_CREDENTIALS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - SPRING_CLOUD_AWS_CREDENTIALS_SECRET_KEY=${AWS_SECRET_KEY}
+      - CF_SECRET_KEY=${CF_SECRET_KEY}
+    depends_on:
+      - db-dev
+
+  # 운영 DB
+  db-prod:
+    image: mysql:8.0
+    container_name: mysql-prod
+    environment:
+      - MYSQL_DATABASE=portfolio_db
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - prod_mysql_data:/var/lib/mysql
+
+  # 개발 DB
+  db-dev:
+    image: mysql:8.0
+    container_name: mysql-dev
+    environment:
+      - MYSQL_DATABASE=dev_db
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - dev_mysql_data:/var/lib/mysql
+
+volumes:
+  prod_mysql_data:
+  dev_mysql_data:
