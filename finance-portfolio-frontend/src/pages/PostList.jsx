@@ -39,6 +39,7 @@ const PostList = () => {
             <h2>금융 포트폴리오 게시판</h2>
 
             <button onClick={() => navigate(`/editor`)} className="btn btn-warning">새 글</button>
+            <button onClick={() => navigate(`/finance/fair`)} className="btn btn-warning">계산하기</button>
             <button onClick={onCleanUpFiles} className="btn btn-warning">미참조 이미지 삭제</button>
             <table className="table table-hover">
                 <thead>

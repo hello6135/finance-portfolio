@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import PostList from './pages/PostList';
 import PostDetail from './pages/PostDetail';
 import PostEditor from './pages/PostEditor';
+import FairValuePage from './finances/FinanceFair';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Route path="/detail/:id" element={<PostDetail />} />
       <Route path="/editor" element={<PostEditor />} />
       <Route path="/editor/:id" element={<PostEditor />} />
+      <Route path="/finance/fair" element={<FairValuePage />} />
     </Routes>
   );
 }
