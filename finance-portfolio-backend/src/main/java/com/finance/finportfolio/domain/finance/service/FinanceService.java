@@ -17,9 +17,15 @@ public class FinanceService {
      * expectedYield: 기대수익률
      */
     public double calculateFairValue(double dps, double expectedYield, double growthRate) {
-        if (growthRate > 0) {
-            return dps * (1 + growthRate) / (expectedYield - growthRate);
+        if (expectedYield <= growthRate) {
+            throw new IllegalArgumentException("기대수익률은 성장률보다 커야 합니다.");
         }
-        return dps / expectedYield;
+
+        // 2. 고든 성장 모델: V = (D1) / (k - g)
+        // 여기서 D1 = D0 * (1 + g)
+        double kDecimal = expectedYield / 100;
+        double gDecimal = growthRate / 100;
+
+        return (dps * (1 + gDecimal)) / (kDecimal - gDecimal);
     }
 }
