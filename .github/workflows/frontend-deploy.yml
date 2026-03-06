@@ -22,8 +22,8 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-
-    # 1. 환경 변수 설정 (브랜치에 따라 목적지 S3와 CDN ID 결정)
+    
+    # 환경 변수 설정 (브랜치에 따라 목적지 S3와 CDN ID 결정)
     - name: Set Environment Variables
       run: |
         if [ "${{ github.base_ref }}" == "develop" ] || [ "${{ github.ref }}" == "refs/heads/develop" ]; then
@@ -36,7 +36,7 @@ jobs:
           echo "VITE_API_BASE_URL=${{ secrets.PROD_API_URL }}" >> $GITHUB_ENV
         fi
 
-    # 2. Node.js 설정 및 빌드
+    # Node.js 설정 및 빌드
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -52,7 +52,7 @@ jobs:
         # 빌드 시 환경별 API 주소 주입 (React 기준)
         VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }} npm run build
 
-    # 3. AWS 권한 설정
+    # AWS 권한 설정
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -60,13 +60,30 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
 
-    # 4. S3에 빌드 결과물 업로드 (Sync)
+    # 소나 실행 엔진 캐싱 (빌드 시간 단축)
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar    
+
+    # 소나 분석
+    - name: Frontend SonarCloud Scan
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        npx sonarqube-scanner \
+          -Dproject.settings=sonar-project.properties
+
+    # S3에 빌드 결과물 업로드 (Sync)
     - name: Upload to S3
       run: |
         # dist/ 폴더 내용을 S3에 동기화, S3에만 있는 옛날 파일은 삭제(--delete)
         aws s3 sync dist/ s3://${{ env.S3_BUCKET }} --delete
 
-    # 5. CloudFront 캐시 무효화 (빌드 아티팩트 변경 시 캐시 삭제)
+    # CloudFront 캐시 무효화 (빌드 아티팩트 변경 시 캐시 삭제)
     - name: CloudFront Invalidation
       run: |
         aws cloudfront create-invalidation \

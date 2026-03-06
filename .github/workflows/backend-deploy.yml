@@ -11,20 +11,57 @@ on:
       - 'finance-portfolio-backend/**'
   workflow_dispatch:
 
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
 
-    # 1. Docker Hub 로그인
+    # JDK 버전 지정(소나 관련)
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    # Gradle 라이브러리 캐싱
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+
+    # 소나 실행 엔진 및 플러그인 캐싱
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    # 빌드 및 소나 작동
+    - name: Build and analyze
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: ./gradlew build sonar --info
+      working-directory: ./finance-portfolio-backend
+
+    # Docker Hub 로그인
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 2. 브랜치에 따른 태그 결정
+    # 브랜치에 따른 태그 결정
     - name: Set Docker Tag
       run: |
         if [ "${{ github.ref }}" == "refs/heads/main" ]; then
@@ -33,7 +70,7 @@ jobs:
           echo "TAG=dev" >> $GITHUB_ENV
         fi
 
-    # 3. Docker 이미지 빌드 및 푸시
+    # Docker 이미지 빌드 복사 및 푸시
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
@@ -41,20 +78,20 @@ jobs:
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/finance-portfolio:${{ env.TAG }}
 
-    # [보안 추가] 4. GitHub Actions 서버의 공인 IP 가져오기
+    # [보안 추가] GitHub Actions 서버의 공인 IP 가져오기
     - name: Get GitHub Actions IP
       id: ip
       run: echo "ipv4=$(curl -s https://api.ipify.org)" >> $GITHUB_OUTPUT
 
-    # [보안 추가] 5. AWS Credentials 설정 (보안 그룹 제어용)
+    # [보안 추가] AWS Credentials 설정 (보안 그룹 제어용)
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2 # 본인의 리전 확인
+        aws-region: ap-northeast-2
 
-    # [보안 추가] 6. EC2 보안 그룹에 22번 포트 임시 허용
+    # [보안 추가] EC2 보안 그룹에 22번 포트 임시 허용
     - name: Add GitHub IP to Security Group
       run: |
         aws ec2 authorize-security-group-ingress \
@@ -63,7 +100,7 @@ jobs:
           --port 22 \
           --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
-    # 7. docker-compose.yml 파일을 EC2로 전송 (SCP)
+    # docker-compose.yml 파일을 EC2로 전송 (SCP)
     - name: Copy docker-compose.yml to EC2
       uses: appleboy/scp-action@master
       with:
@@ -74,7 +111,7 @@ jobs:
         target: "~/finance-portfolio"
         strip_components: 1
 
-    # 8. EC2에 접속해서 배포 실행 (SSH)
+    # EC2에 접속해서 배포 실행 (SSH)
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -89,8 +126,8 @@ jobs:
           cat <<EOF > .env
           DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           CF_SECRET_KEY=${{ secrets.CF_SECRET_KEY }}
           EOF
           
@@ -105,12 +142,22 @@ jobs:
           
           docker image prune -f
 
-    # [보안 마무리] 9. 배포 완료 후 보안 그룹에서 IP 제거 (성공/실패 무관하게 실행)
+    # [보안 마무리] 배포 완료 후 보안 그룹에서 IP 제거 (성공/실패 무관하게 실행)
     - name: Remove GitHub IP from Security Group
-      if: always()
+      if: always() # 빌드 실패와 상관없이 무조건 실행해서 보안 구멍을 막음
       run: |
+        if [ -z "${{ steps.ip.outputs.ipv4 }}" ]; then
+          echo "Warning: GitHub Actions IP를 가져오지 못했습니다. 보안 그룹 정리를 건너뜁니다."
+          exit 0
+        fi
+        
         aws ec2 revoke-security-group-ingress \
           --group-id ${{ secrets.AWS_SG_ID }} \
           --protocol tcp \
           --port 22 \
-          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          --cidr ${{ steps.ip.outputs.ipv4 }}/32 \
+          --region ap-northeast-2
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ap-northeast-2

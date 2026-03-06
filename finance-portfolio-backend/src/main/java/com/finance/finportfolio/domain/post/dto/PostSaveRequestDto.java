@@ -12,6 +12,12 @@ public record PostSaveRequestDto(
                 String content,
                 Boolean hasImage) {
 
+        public PostSaveRequestDto {
+                if (hasImage == null) {
+                        hasImage = false;
+                }
+        }
+
         // DTO -> Entity 변환 (DB 저장용)
         public Post toEntity() {
                 return Post.builder()

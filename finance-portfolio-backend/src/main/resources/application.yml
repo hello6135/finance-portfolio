@@ -70,6 +70,9 @@ spring:
 
   cloud:
     aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID} 
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-dev-9806
         cloudfront-domain: d24842uv7pd3qd.cloudfront.net
@@ -90,6 +93,9 @@ spring:
 
   cloud:
     aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID} 
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-prod-9806
         cloudfront-domain: d2m4qtzslhorm2.cloudfront.net
