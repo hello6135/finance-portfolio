@@ -74,7 +74,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
-        npx @sonarsource/sonar-scanner \
+        npx sonarqube-scanner \
           -Dproject.settings=sonar-project.properties
 
     # S3에 빌드 결과물 업로드 (Sync)
