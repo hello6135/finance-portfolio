@@ -62,7 +62,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         npx @sonar/scan \
-          -Dproject.settings=sonar-analyze.yml 
+          -Dproject.settings=sonar-analyze.properties
 
     - name: Build Project
       run: |
