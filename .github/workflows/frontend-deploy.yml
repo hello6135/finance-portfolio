@@ -47,6 +47,19 @@ jobs:
     - name: Install dependencies
       run: npm install
 
+    - name: Build Project
+      run: |
+        # 빌드 시 환경별 API 주소 주입 (React 기준)
+        VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }} npm run build
+
+    # AWS 권한 설정
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
     # 소나 실행 엔진 캐싱 (빌드 시간 단축)
     - name: Cache SonarCloud packages
       uses: actions/cache@v4
@@ -61,21 +74,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
-        npx @sonar/scan \
+        npx @sonarsource/sonar-scanner \
           -Dproject.settings=sonar-project.properties
-
-    - name: Build Project
-      run: |
-        # 빌드 시 환경별 API 주소 주입 (React 기준)
-        VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }} npm run build
-
-    # AWS 권한 설정
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2
 
     # S3에 빌드 결과물 업로드 (Sync)
     - name: Upload to S3
