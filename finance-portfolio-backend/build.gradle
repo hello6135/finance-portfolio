@@ -56,7 +56,7 @@ jar {
 sonar {
     properties {
         property "sonar.projectKey", "hello6135_finance-portfolio"
-        property "sonar.organization", "ljh-finance"
+        property "sonar.organization", "hello6135"
         property "sonar.host.url", "https://sonarcloud.io"
     }
 }
