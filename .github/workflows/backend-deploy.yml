@@ -144,8 +144,13 @@ jobs:
 
     # [보안 마무리] 배포 완료 후 보안 그룹에서 IP 제거 (성공/실패 무관하게 실행)
     - name: Remove GitHub IP from Security Group
-      if: always()
+      if: always() # 빌드 실패와 상관없이 무조건 실행해서 보안 구멍을 막음
       run: |
+        if [ -z "${{ steps.ip.outputs.ipv4 }}" ]; then
+          echo "Warning: GitHub Actions IP를 가져오지 못했습니다. 보안 그룹 정리를 건너뜁니다."
+          exit 0
+        fi
+        
         aws ec2 revoke-security-group-ingress \
           --group-id ${{ secrets.AWS_SG_ID }} \
           --protocol tcp \
