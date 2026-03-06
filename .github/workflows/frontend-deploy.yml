@@ -61,7 +61,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
-        npx @sonarsource/sonar-scanner \
+        npx @sonar/scan \
           -Dproject.settings=sonar-project.properties
 
     - name: Build Project
