@@ -21,10 +21,10 @@ jobs:
 
     # JDK 버전 지정(소나 관련)
     - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
 
     # Gradle 라이브러리 캐싱
     - name: Cache Gradle packages
