@@ -11,8 +11,6 @@ on:
       - 'finance-portfolio-backend/**'
   workflow_dispatch:
 
-env:
-  AWS_REGION: ap-northeast-2
 
 jobs:
   build-and-deploy:
@@ -91,7 +89,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: ap-northeast-2
 
     # [보안 추가] EC2 보안 그룹에 22번 포트 임시 허용
     - name: Add GitHub IP to Security Group
@@ -153,4 +151,4 @@ jobs:
           --protocol tcp \
           --port 22 \
           --cidr ${{ steps.ip.outputs.ipv4 }}/32 \
-          --region ${{ env.AWS_REGION }}
+          --region ap-northeast-2
