@@ -34,3 +34,33 @@ export const deletePost = async (id) => {
 export const cleanUpFiles = async () => {
     await axiosInstance.delete('/posts/cleanup');
 };
+
+// 7. CKeditor 전용 업로드 어댑터
+export const imageUploadAdapter = (loader) => {
+    return {
+        upload: () => {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+
+                loader.file.then((file) => {
+                    formData.append('upload', file); // Spring 백엔드의 @RequestParam("upload")와 일치해야 함
+
+                    axiosInstance.post('/image/upload', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    })
+                        .then((res) => {
+                            // 성공 시 S3 URL 반환
+                            resolve({
+                                default: res.data.url
+                            });
+                        })
+                        .catch((err) => {
+                            reject(err.response?.data?.message || '업로드 실패');
+                        });
+                });
+            });
+        }
+    };
+};

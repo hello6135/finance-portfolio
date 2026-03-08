@@ -12,11 +12,10 @@ import {
     List,
     Image,
     ImageUpload,
-    CKFinderUploadAdapter
 } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
 
-import { getPostById, createPost, updatePost } from '../api/postApi';
+import { getPostById, createPost, updatePost, imageUploadAdapter } from '../api/postApi';
 
 const PostEditor = () => {
     const { id } = useParams();
@@ -80,13 +79,15 @@ const PostEditor = () => {
                     <CKEditor
                         editor={ClassicEditor}
                         data={content}
+                        onReady={(editor) => {
+                            editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
+                                return imageUploadAdapter(loader);
+                            };
+                        }}
                         config={{
                             licenseKey: 'GPL',
-                            plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload, CKFinderUploadAdapter],
+                            plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload],
                             toolbar: ['undo', 'redo', '|', 'bold', 'italic', '|', 'link', 'bulletedList', 'numberedList', '|', 'imageUpload'],
-                            ckfinder: {
-                                uploadUrl: `api/image/upload`
-                            },
                             placeholder: "내용을 입력하세요..."
                         }}
                         onChange={(event, editor) => {
