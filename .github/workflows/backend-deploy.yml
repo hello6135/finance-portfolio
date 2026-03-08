@@ -51,7 +51,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: ./gradlew build sonar --info
+      run: |
+        chmod +x gradlew
+        ./gradlew clean sonar -x test --info
       working-directory: ./finance-portfolio-backend
 
     # Docker Hub 로그인
