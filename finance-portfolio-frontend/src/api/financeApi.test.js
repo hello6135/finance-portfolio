@@ -1,7 +1,17 @@
 import axiosInstance from './axios';
 import { getFairValue } from './financeApi';
+import { vi, describe, test, expect } from 'vitest';
 
-jest.mock('./axios');
+vi.mock('./axios', () => {
+    return {
+        default: {
+            post: vi.fn(),
+            get: vi.fn(),
+            patch: vi.fn(),
+            delete: vi.fn(),
+        },
+    };
+});
 
 describe('getFairValue API 테스트', () => {
     const mockRequest = {
