@@ -12,11 +12,10 @@ import {
     List,
     Image,
     ImageUpload,
-    CKFinderUploadAdapter
 } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
 
-import { getPostById, createPost, updatePost } from '../api/postApi';
+import { getPostById, createPost, updatePost, imageUploadAdapter } from '../api/postApi';
 
 const PostEditor = () => {
     const { id } = useParams();
@@ -60,14 +59,19 @@ const PostEditor = () => {
             setLoading(false);
         }
     };
+    const getButtonText = () => {
+        if (loading) return '저장 중...';
+        return id ? '수정하기' : '저장하기';
+    };
 
     return (
         <div className="container mt-5">
             <h2>{id ? '게시글 수정' : '새 게시글 작성'}</h2>
             <div className="card p-4 shadow-sm">
                 <div className="mb-3">
-                    <label className="form-label">제목</label>
+                    <label htmlFor="title" className="form-label">제목</label>
                     <input
+                        id="title"
                         type="text"
                         className="form-control"
                         value={title}
@@ -76,17 +80,20 @@ const PostEditor = () => {
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">내용</label>
+                    <label htmlFor="content" className="form-label">내용</label>
                     <CKEditor
+                        id="content"
                         editor={ClassicEditor}
                         data={content}
+                        onReady={(editor) => {
+                            editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
+                                return imageUploadAdapter(loader);
+                            };
+                        }}
                         config={{
                             licenseKey: 'GPL',
-                            plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload, CKFinderUploadAdapter],
+                            plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload],
                             toolbar: ['undo', 'redo', '|', 'bold', 'italic', '|', 'link', 'bulletedList', 'numberedList', '|', 'imageUpload'],
-                            ckfinder: {
-                                uploadUrl: `api/image/upload`
-                            },
                             placeholder: "내용을 입력하세요..."
                         }}
                         onChange={(event, editor) => {
@@ -98,7 +105,7 @@ const PostEditor = () => {
 
                 <div className="d-flex gap-2">
                     <button onClick={handleSave} className="btn btn-primary" disabled={loading}>
-                        {loading ? '저장 중...' : (id ? '수정하기' : '저장하기')}
+                        {getButtonText()}
                     </button>
                     <button onClick={() => navigate(-1)} className="btn btn-secondary">취소</button>
                 </div>

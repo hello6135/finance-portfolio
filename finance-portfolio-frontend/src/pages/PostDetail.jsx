@@ -26,11 +26,12 @@ const PostDetail = () => {
     }, [id, navigate]);
 
     const onDelete = async () => {
-        if (window.confirm('정말 삭제하시겠습니까?')) {
+        if (globalThis.confirm('정말 삭제하시겠습니까?')) {
             try {
                 await deletePost(id);
                 navigate('/posts');
             } catch (error) {
+                console.error("삭제 중 오류 발생:", error);
                 alert("삭제에 실패했습니다.");
             }
         }

@@ -47,16 +47,16 @@ const FairValueCalculator = () => {
             <h3>📈 적정주가 계산기 (고든 성장 모델)</h3>
             <form onSubmit={handleCalculate}>
                 <div style={{ marginBottom: '10px' }}>
-                    <label>주당 배당금 (DPS): </label>
-                    <input type="number" name="dps" value={form.dps} onChange={handleChange} required />
+                    <label htmlFor="dps">주당 배당금 (DPS): </label>
+                    <input id="dps" type="number" name="dps" value={form.dps} onChange={handleChange} required />
                 </div>
                 <div style={{ marginBottom: '10px' }}>
-                    <label>기대 수익률 (%): </label>
-                    <input type="number" name="expectedYield" step="0.1" value={form.expectedYield} onChange={handleChange} required />
+                    <label htmlFor="expectedYield">기대 수익률 (%): </label>
+                    <input id="expectedYield" type="number" name="expectedYield" step="0.1" value={form.expectedYield} onChange={handleChange} required />
                 </div>
                 <div style={{ marginBottom: '10px' }}>
-                    <label>지속 성장률 (%): </label>
-                    <input type="number" name="growthRate" step="0.1" value={form.growthRate} onChange={handleChange} required />
+                    <label htmlFor="growthRate">지속 성장률 (%): </label>
+                    <input id="growthRate" type="number" name="growthRate" step="0.1" value={form.growthRate} onChange={handleChange} required />
                 </div>
                 <button type="submit" disabled={loading}>
                     {loading ? '계산 중...' : '계산하기'}

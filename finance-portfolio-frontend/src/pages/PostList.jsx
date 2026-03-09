@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { getAllPosts, cleanUpFiles } from '../api/postApi';
 
@@ -23,10 +23,11 @@ const PostList = () => {
     }, []);
 
     const onCleanUpFiles = async () => {
-        if (window.confirm('미참조 이미지를 삭제하시겠습니까?')) {
+        if (globalThis.confirm('미참조 이미지를 삭제하시겠습니까?')) {
             try {
                 await cleanUpFiles();
             } catch (error) {
+                console.error("삭제 중 오류 발생:", error);
                 alert("삭제에 실패했습니다.");
             }
         }

@@ -34,3 +34,35 @@ export const deletePost = async (id) => {
 export const cleanUpFiles = async () => {
     await axiosInstance.delete('/posts/cleanup');
 };
+
+// 7. CKeditor 전용 업로드 어댑터
+export const imageUploadAdapter = (loader) => {
+    return {
+        upload: async () => {
+            try {
+                // 1. 파일 로드 (await로 뎁스 제거)
+                const file = await loader.file;
+
+                // 2. FormData 준비
+                const formData = new FormData();
+                formData.append('upload', file);
+
+                // 3. API 호출
+                const response = await axiosInstance.post('/image/upload', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+
+                // 4. 성공 시 결과 반환
+                return {
+                    default: response.data.url
+                };
+            } catch (err) {
+                // 5. 에러 핸들링
+                const errorMessage = err.response?.data?.message || '업로드 실패';
+                throw errorMessage; // async 함수에서 에러는 throw하면 reject와 동일합니다.
+            }
+        }
+    };
+};
