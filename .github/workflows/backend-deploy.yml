@@ -47,13 +47,15 @@ jobs:
         restore-keys: ${{ runner.os }}-sonar
 
     # 소나 작동
-    - name: (Sonar) Code Quality Analysis 
+    - name: (Sonar) Code Quality Analysis
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         chmod +x gradlew
-        ./gradlew clean classes sonar -x test --info
+        ./gradlew clean classes sonar -x test --info \
+        -Dsonar.qualitygate.wait=true \
+        -Dsonar.qualitygate.timeout=300
       working-directory: ./finance-portfolio-backend
 
     # Buildx: Docker에 type=gha 캐싱 등 확장 기능 추가

@@ -75,7 +75,10 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         npx sonarqube-scanner \
-          -Dproject.settings=sonar-project.properties
+          -Dproject.settings=sonar-project.properties \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.qualitygate.timeout=300
+          
 
     # S3에 빌드 결과물 업로드 (Sync)
     - name: Upload to S3
