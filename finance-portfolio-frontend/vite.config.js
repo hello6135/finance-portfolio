@@ -14,6 +14,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom', // 브라우저 환경 모사
+    setupFiles: './src/setupTests.js',
     coverage: {
       provider: 'v8', // 커버리지 엔진
       reporter: ['text', 'lcov'], // SonarQube가 읽을 수 있도록 lcov 필수

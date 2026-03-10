@@ -76,8 +76,8 @@ jobs:
       run: |
         npx sonarqube-scanner \
           -Dproject.settings=sonar-project.properties \
-          # -Dsonar.qualitygate.wait=true \
-          # -Dsonar.qualitygate.timeout=300
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.qualitygate.timeout=300
           
 
     # S3에 빌드 결과물 업로드 (Sync)
