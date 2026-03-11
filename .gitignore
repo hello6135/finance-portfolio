@@ -38,4 +38,4 @@ out/
 
 .env
 
-bfg-1.15.0.jar
+bfg-*.jar

@@ -1,5 +1,6 @@
 name: Backend Deploy to EC2 with Docker Image (Dev & Prod)
 
+# 배포환경(main)은 머지, 개발테스트(develop) 환경은 PR시 작동
 on:
   push:
     branches: "main"
@@ -9,6 +10,7 @@ on:
     branches: develop
     paths:
       - 'finance-portfolio-backend/**'
+  # 수동 실행 추가
   workflow_dispatch:
 
 
@@ -20,25 +22,16 @@ jobs:
       with:
           fetch-depth: 0
 
-    # JDK 버전 지정
+    # JDK 세팅 [SONAR]
     - name: (Sonar) Set up JDK 21 
       uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
+        # [성능] gradle 캐싱 (1~2분)
+        cache: 'gradle'
 
-    # Gradle 라이브러리 캐싱 (라이브러리 캐싱 for Sonar in Github Acions)
-    - name: (Sonar) Cache Gradle packages 
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-
-    # 소나 실행 엔진 및 플러그인 캐싱
+    # [SONAR][성능] 실행 엔진 및 플러그인 캐싱 (20초)
     - name: (Sonar) Cache SonarCloud packages 
       uses: actions/cache@v4
       with:
@@ -46,23 +39,32 @@ jobs:
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
 
-    # 소나 작동
+    # [SONAR][배포]
     - name: (Sonar) Code Quality Analysis
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         chmod +x gradlew
-        ./gradlew clean classes sonar -x test --info \
+
+        # 빌드 위치, 이하 옵션 설명
+        # [성능] 독립적인 프로젝트/모듈을 병렬로 빌드 - 모노레포에서 유리 (20초)
+        # [성능] Gradle의 원격 빌드 캐시 기능을 활성화, 중복 계산 최소화 (30초)
+        # [성능] 데몬 비활성화 (5초)
+        # [안정성] 자바 힙 메모리 2GB로 명시 - 메모리 부족 방지 
+        # [소나] 퀄리티 게이트 통과 대기
+        # [소나] 퀄리티 게이트 최대 대기 시간 설정
+
+        ./gradlew build sonar --info \
+        --parallel \
+        --build-cache \
+        -Dorg.gradle.daemon=false \
+        -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m" \
         -Dsonar.qualitygate.wait=true \
         -Dsonar.qualitygate.timeout=300
       working-directory: ./finance-portfolio-backend
 
-    # Buildx: Docker에 type=gha 캐싱 등 확장 기능 추가
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    # Docker Hub 로그인
+    # [DOCKER] Hub 로그인
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
@@ -78,23 +80,27 @@ jobs:
           echo "TAG=dev" >> $GITHUB_ENV
         fi
 
-    # Docker 이미지 빌드 복사 및 푸시
+    # [성능] Buildx: Docker에 type=gha 캐싱 등 확장 기능 추가
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # [DOCKER] 이미지 빌드 복사 및 푸시
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
         context: ./finance-portfolio-backend
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/finance-portfolio:${{ env.TAG }}
-        # 빌드 속도 개선: Docker 레이어 캐시 활용 (라이브러리 캐싱 for Docker)
+        # [성능] Buildx: Docker 레이어 캐시 (라이브러리 캐싱)
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    # [보안 추가] GitHub Actions 서버의 공인 IP 가져오기
+    # [보안] GitHub Actions 서버의 공인 IP 가져오기
     - name: Get GitHub Actions IP
       id: ip
       run: echo "ipv4=$(curl -s https://api.ipify.org)" >> $GITHUB_OUTPUT
 
-    # [보안 추가] AWS Credentials 설정 (보안 그룹 제어용)
+    # [보안] AWS Credentials 설정 (보안 그룹 제어용)
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -102,7 +108,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
 
-    # [보안 추가] EC2 보안 그룹에 22번 포트 임시 허용
+    # [보안] EC2 보안 그룹에 22번 포트 임시 허용
     - name: Add GitHub IP to Security Group
       run: |
         aws ec2 authorize-security-group-ingress \
@@ -111,7 +117,7 @@ jobs:
           --port 22 \
           --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
-    # docker-compose.yml 파일을 EC2로 전송 (SCP)
+    # [배포] docker-compose.yml 파일을 EC2로 전송 (SCP)
     - name: Copy docker-compose.yml to EC2
       uses: appleboy/scp-action@master
       with:
@@ -122,7 +128,7 @@ jobs:
         target: "~/finance-portfolio"
         strip_components: 1
 
-    # EC2에 접속해서 배포 실행 (SSH)
+    # [배포] EC2에 접속해서 배포 실행 (SSH)
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -133,7 +139,7 @@ jobs:
           mkdir -p ~/finance-portfolio
           cd ~/finance-portfolio
           
-          # 환경변수 파일(.env) 동적 생성 (S3 키 추가)
+          # 환경변수 파일(.env) 동적 생성
           cat <<EOF > .env
           DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -146,16 +152,17 @@ jobs:
           docker-compose pull
           
           if [ "${{ env.TAG }}" == "latest" ]; then
-            docker-compose up -d app-prod db-prod
+            docker-compose up -d --force-recreate app-prod db-prod
           else
-            docker-compose up -d app-dev db-dev
+            docker-compose up -d --force-recreate app-dev db-dev
           fi
           
+          # [안정성] 디스크 용량 부족 방지
           docker image prune -f
 
-    # [보안 마무리] 배포 완료 후 보안 그룹에서 IP 제거 (성공/실패 무관하게 실행)
+    # [보안] 배포 완료 후 보안 그룹에서 IP 제거
     - name: Remove GitHub IP from Security Group
-      if: always() # 빌드 실패와 상관없이 무조건 실행해서 보안 구멍을 막음
+      if: always() # 빌드 실패와 상관없이 무조건 실행
       run: |
         if [ -z "${{ steps.ip.outputs.ipv4 }}" ]; then
           echo "Warning: GitHub Actions IP를 가져오지 못했습니다. 보안 그룹 정리를 건너뜁니다."
@@ -166,9 +173,4 @@ jobs:
           --group-id ${{ secrets.AWS_SG_ID }} \
           --protocol tcp \
           --port 22 \
-          --cidr ${{ steps.ip.outputs.ipv4 }}/32 \
-          --region ap-northeast-2
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: ap-northeast-2
+          --cidr ${{ steps.ip.outputs.ipv4 }}/32

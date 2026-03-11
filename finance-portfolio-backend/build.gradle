@@ -3,6 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.9'
 	id 'io.spring.dependency-management' version '1.1.7'
 
+	id 'jacoco'
 	id "org.sonarqube" version "5.0.0.4638"
 }
 
@@ -51,6 +52,38 @@ tasks.named('test') {
 jar {
 	// plain.jar 생성 방지
     enabled = false
+}
+
+// 2. JaCoCo 설정
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+// 3. 테스트 리포트 설정
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport // test가 끝나면 자동으로 리포트 생성
+}
+
+jacocoTestReport {
+    dependsOn test // 리포트 생전에 test가 먼저 실행되어야 함
+    reports {
+        xml.required = true // 소나큐브는 XML 리포트를 읽습니다
+        csv.required = false
+        html.required = true // 개발자가 직접 확인하기 용이함
+    }
+	afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                "**/*DTO*",
+                "**/*Request*",
+                "**/*Response*",
+                "**/*Entity*",
+                "**/config/**",
+                "**/FinalPortfolioApplication*" // 메인 클래스 제외
+            ])
+        }))
+    }
 }
 
 sonar {
