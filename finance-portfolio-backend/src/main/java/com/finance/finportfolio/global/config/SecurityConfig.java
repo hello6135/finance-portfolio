@@ -28,10 +28,12 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    @SuppressWarnings("java:S3330")
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // CSRF 방지
+                // NOSONAR: React에서 CSRF 토큰을 읽기 위해 HttpOnly(false)가 필수적임
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()) // React가 쿠키를 읽을 수 있게 설정
                 )

@@ -18,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-// ★ 중요: Static Imports (이게 없으면 assertThat, post, csrf 등이 작동 안 함)
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -49,6 +48,11 @@ class MemberControllerTest {
 
     @MockBean
     private Authentication authentication;
+
+    @Test
+    void coverageCheck() {
+        System.out.println("주입된 빈: " + passwordEncoder.getClass().getName());
+    }
 
     @Test
     @DisplayName("SecurityConfig의 빈들이 정상적으로 로드되었는지 확인")
