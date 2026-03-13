@@ -30,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @WebMvcTest(MemberController.class) // 컨트롤러만 슬라이스 테스트
 @Import(SecurityConfig.class)
-@AutoConfigureMockMvc
 class MemberControllerTest {
 
     @Autowired

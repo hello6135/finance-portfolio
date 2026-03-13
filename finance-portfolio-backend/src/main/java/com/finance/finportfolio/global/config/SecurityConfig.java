@@ -37,8 +37,13 @@ public class SecurityConfig {
                 )
                 // 추가적인 보안 헤더 설정 - XSS 방어
                 .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'")))
-                // 세션 설정 (`IF_REQUIRED`: 요청 시)
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; " + // 모든 리소스는 동일 출처(자기 자신)만 허용
+                                        "script-src 'self'; " + // 스크립트 실행도 자기 자신만 허용 (인라인 스크립트 차단)
+                                        "style-src 'self' 'unsafe-inline'; " + // CSS는 인라인 스타일 허용 (React 스타일링 대응)
+                                        "img-src 'self' data: https://*.s3.amazonaws.com; " + // S3 이미지 로딩 허용
+                                        "connect-src 'self';") // API 통신은 자기 자신과만 가능
+                        )) // 세션 설정 (`IF_REQUIRED`: 요청 시)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 // 인가 설정
