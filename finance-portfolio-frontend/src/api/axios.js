@@ -6,6 +6,11 @@ const axiosInstance = axios.create({
     baseURL: '/api',
     // 요청 타임아웃 설정 (5초)
     timeout: 5000,
+    // CSRF 방지용 토큰
+    withCredentials: true,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+
     headers: {
         'Content-Type': 'application/json',
     },
