@@ -5,13 +5,10 @@ import java.util.TimeZone;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-// JPA시간용
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.annotation.PostConstruct;
 
-@EnableJpaAuditing
 @SpringBootApplication
 @ConfigurationPropertiesScan("com.finance.finportfolio.infrastructure.file")
 public class FinancePortfolioApplication {
