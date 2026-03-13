@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,11 +26,15 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @WebMvcTest(MemberController.class) // 컨트롤러만 슬라이스 테스트
 @Import(SecurityConfig.class)
 @AutoConfigureMockMvc
 class MemberControllerTest {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder; // SecurityConfig의 passwordEncoder() 메서드 호출 유도
 
     @Autowired
     private MockMvc mockMvc;
@@ -45,6 +50,14 @@ class MemberControllerTest {
 
     @MockBean
     private Authentication authentication; // 가짜 인증 결과물
+
+    @Test
+    @DisplayName("SecurityConfig의 빈들이 정상적으로 로드되었는지 확인")
+    void securityConfigBeansLoad() {
+        // 이 테스트가 실행되면서 SecurityConfig의 빈 생성 메서드들이 호출됩니다.
+        assertThat(passwordEncoder).isNotNull();
+        assertThat(authenticationManager).isNotNull();
+    }
 
     @Test
     @WithMockUser // 스프링 시큐리티 인증 통과를 위한 가짜 유저

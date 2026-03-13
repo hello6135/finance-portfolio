@@ -35,6 +35,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()) // React가 쿠키를 읽을 수 있게 설정
                 )
+                // 추가적인 보안 헤더 설정 - XSS 방어
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'")))
                 // 세션 설정 (`IF_REQUIRED`: 요청 시)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
