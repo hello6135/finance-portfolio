@@ -4,12 +4,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequest;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequest;
 import com.finance.finportfolio.domain.member.service.MemberService;
+import com.finance.finportfolio.global.config.SecurityConfig;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
@@ -24,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MemberController.class) // 컨트롤러만 슬라이스 테스트
+@Import(SecurityConfig.class)
 @AutoConfigureMockMvc
 class MemberControllerTest {
 
@@ -77,5 +81,19 @@ class MemberControllerTest {
                 .content(json))
                 .andExpect(status().isOk())
                 .andExpect(content().string("로그인이 완료되었습니다."));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("CSRF 토큰 없이 POST 요청 시 403 Forbidden 에러가 발생해야 한다")
+    void login_Fail_Without_Csrf() throws Exception {
+        MemberLoginRequest loginRequest = new MemberLoginRequest("testId", "password123");
+        String json = objectMapper.writeValueAsString(loginRequest);
+
+        mockMvc.perform(post("/api/member/login")
+                // .with(csrf()) 를 고의로 누락
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+                .andExpect(status().isForbidden()); // 403 응답 확인
     }
 }
