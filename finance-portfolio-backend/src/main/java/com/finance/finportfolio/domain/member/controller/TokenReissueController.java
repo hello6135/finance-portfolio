@@ -23,30 +23,32 @@ public class TokenReissueController {
     public ResponseEntity<String> reissue(HttpServletRequest request,
             HttpServletResponse response) {
 
-        // 1. 쿠키에서 Refresh Token 추출
         String refreshToken = extractRefreshTokenFromCookie(request);
 
         if (refreshToken == null) {
             return ResponseEntity.badRequest().body("Refresh Token이 없습니다.");
         }
 
-        // 2. 새 Access Token + Refresh Token 발급 (Rotation)
-        String[] tokens = memberService.reissue(refreshToken);
-        String newAccessToken = tokens[0];
-        String newRefreshToken = tokens[1];
+        try {
+            String[] tokens = memberService.reissue(refreshToken);
+            String newAccessToken = tokens[0];
+            String newRefreshToken = tokens[1];
 
-        // 3. 새 Refresh Token → 쿠키 갱신
-        Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(refreshCookie);
+            Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setSecure(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+            response.addCookie(refreshCookie);
 
-        // 4. 새 Access Token → 헤더로 전달
-        response.setHeader("Authorization", "Bearer " + newAccessToken);
+            response.setHeader("Authorization", "Bearer " + newAccessToken);
 
-        return ResponseEntity.ok("토큰이 재발급되었습니다.");
+            return ResponseEntity.ok("토큰이 재발급되었습니다.");
+
+        } catch (IllegalStateException e) {
+            // 탈취 감지, 유효하지 않은 토큰 등 → 400 반환
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {
