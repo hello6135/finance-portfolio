@@ -25,6 +25,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@SuppressWarnings("java:S4502")
 public class SecurityConfig {
 
         private final JwtTokenProvider jwtTokenProvider;
