@@ -5,6 +5,7 @@ import com.finance.finportfolio.domain.member.dto.MemberJoinRequest;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequest;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.config.SecurityConfig;
+import com.finance.finportfolio.global.security.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,25 +38,18 @@ class MemberControllerTest {
     @MockBean
     private MemberService memberService;
 
-    // SecurityConfig에 정의된 빈들을 주입받아 커버리지를 채웁니다.
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     @MockBean
     private AuthenticationManager authenticationManager;
 
     @MockBean
-    private Authentication authentication;
+    private JwtTokenProvider jwtTokenProvider; // ← SecurityConfig 주입용, 추가 필수
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
-    void coverageCheck() {
-        System.out.println("주입된 빈: " + passwordEncoder.getClass().getName());
-    }
-
-    @Test
-    @DisplayName("SecurityConfig의 빈들이 정상적으로 로드되었는지 확인")
+    @DisplayName("SecurityConfig 빈 정상 로드 확인")
     void securityConfigBeansLoad() {
-        // 이 검증을 통해 SecurityConfig의 메서드들이 실행됨을 보장 (커버리지 확보)
         assertThat(passwordEncoder).isNotNull();
         assertThat(authenticationManager).isNotNull();
     }
@@ -67,12 +59,11 @@ class MemberControllerTest {
     @DisplayName("회원가입 API 호출 시 성공 메시지를 반환한다")
     void join_Success() throws Exception {
         MemberJoinRequest request = new MemberJoinRequest("testId", "password123", "nickname");
-        String json = objectMapper.writeValueAsString(request);
 
         mockMvc.perform(post("/api/member/join")
-                .with(csrf())
+                // csrf() 제거 — JWT 방식은 CSRF 비활성화
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("회원가입이 성공적으로 완료되었습니다."));
     }
@@ -81,36 +72,29 @@ class MemberControllerTest {
     @WithMockUser
     @DisplayName("로그인 API 호출 시 성공 메시지를 반환한다")
     void login_Success() throws Exception {
-        // 1. 데이터 준비
         MemberLoginRequest loginRequest = new MemberLoginRequest("testId", "password123");
-        String json = objectMapper.writeValueAsString(loginRequest);
 
-        // 2. 컨트롤러가 사용하는 모든 의존성을 확실히 모킹 (가장 중요)
-        // 컨트롤러에서 authenticationManager.authenticate()를 호출한다면:
-        when(authenticationManager.authenticate(any())).thenReturn(authentication);
+        // memberService.login()이 토큰 배열 반환하도록 모킹
+        when(memberService.login(any())).thenReturn(new String[] { "accessToken", "refreshToken" });
 
-        // 만약 서비스의 특정 메서드도 호출한다면 그것도 작성:
-        // when(memberService.someMethod(any())).thenReturn(someValue);
-
-        // 3. 실행 및 검증
         mockMvc.perform(post("/api/member/login")
-                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+                .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("로그인이 완료되었습니다."));
     }
 
     @Test
     @WithMockUser
-    @DisplayName("CSRF 토큰 없이 POST 요청 시 403 Forbidden 에러가 발생해야 한다")
-    void login_Fail_Without_Csrf() throws Exception {
+    @DisplayName("JWT 방식에서는 CSRF 없이도 POST 요청이 성공해야 한다")
+    void login_Success_Without_Csrf() throws Exception {
+        // JWT로 전환 후 CSRF 비활성화 → csrf() 없어도 200 반환되어야 함
         MemberLoginRequest loginRequest = new MemberLoginRequest("testId", "password123");
-        String json = objectMapper.writeValueAsString(loginRequest);
+        when(memberService.login(any())).thenReturn(new String[] { "accessToken", "refreshToken" });
 
         mockMvc.perform(post("/api/member/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
-                .andExpect(status().isForbidden());
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk());
     }
 }
