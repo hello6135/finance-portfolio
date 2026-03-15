@@ -1,5 +1,6 @@
 package com.finance.finportfolio.global.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,50 +12,98 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.finance.finportfolio.global.security.JwtAuthenticationFilter;
+import com.finance.finportfolio.global.security.JwtTokenProvider;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
+@SuppressWarnings("java:S4502")
 public class SecurityConfig {
 
-    // 비밀번호 암호화 (BCrypt 사용)
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        private final JwtTokenProvider jwtTokenProvider;
 
-    // 컨트롤러에 주입해주기 위해 Bean 등록
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    @SuppressWarnings("java:S3330")
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // CSRF 방지
-                // NOSONAR: React에서 CSRF 토큰을 읽기 위해 HttpOnly(false)가 필수적임
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()) // React가 쿠키를 읽을 수 있게 설정
-                )
-                // 추가적인 보안 헤더 설정 - XSS 방어
-                .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp
-                                .policyDirectives("default-src 'self'; " + // 모든 리소스는 동일 출처(자기 자신)만 허용
-                                        "script-src 'self'; " + // 스크립트 실행도 자기 자신만 허용 (인라인 스크립트 차단)
-                                        "style-src 'self' 'unsafe-inline'; " + // CSS는 인라인 스타일 허용 (React 스타일링 대응)
-                                        "img-src 'self' data: https://*.s3.amazonaws.com; " + // S3 이미지 로딩 허용
-                                        "connect-src 'self';") // API 통신은 자기 자신과만 가능
-                        )) // 세션 설정 (`IF_REQUIRED`: 요청 시)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                // 인가 설정
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll() // posts관련 Get 메서드는 전부 허용
-                        .requestMatchers("/api/member/join", "/api/member/login").permitAll() // 가입, 로그인은 모두 허용
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()); // 그 외 모든 요청 인증 필요
-        return http.build();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig)
+                        throws Exception {
+                return authConfig.getAuthenticationManager();
+        }
+
+        @Bean
+        public JwtAuthenticationFilter jwtAuthenticationFilter() {
+                return new JwtAuthenticationFilter(jwtTokenProvider);
+        }
+
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                // ── CSRF: JWT 방식은 세션 미사용 → CSRF 불필요 ──────────
+                                .csrf(csrf -> csrf.disable())
+
+                                // ── CORS: S3/CloudFront 도메인 허용 ─────────────────────
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                                // ── 보안 헤더 (기존 CSP 유지) ────────────────────────────
+                                .headers(headers -> headers
+                                                .contentSecurityPolicy(csp -> csp
+                                                                .policyDirectives("default-src 'self'; " +
+                                                                                "script-src 'self'; " +
+                                                                                "style-src 'self' 'unsafe-inline'; " +
+                                                                                "img-src 'self' data: https://*.s3.amazonaws.com; "
+                                                                                +
+                                                                                "connect-src 'self';")))
+
+                                // ── 세션 STATELESS: JWT 방식은 서버에 세션 저장 안 함 ────
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                                // ── 인가 설정 ────────────────────────────────────────────
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                                                .requestMatchers("/api/member/join", "/api/member/login").permitAll()
+                                                .requestMatchers("/api/auth/reissue").permitAll()
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .anyRequest().authenticated())
+
+                                // ── JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 등록 ──
+                                .addFilterBefore(jwtAuthenticationFilter(),
+                                                UsernamePasswordAuthenticationFilter.class);
+
+                return http.build();
+        }
+
+        // ── CORS 설정: React(S3/CloudFront) 도메인 허용 ───────────────
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration config = new CorsConfiguration();
+
+                // 실제 배포 도메인으로 교체 필요
+                config.setAllowedOrigins(List.of(
+                                "http://localhost:5173", // 로컬 개발 (Vite 기본 포트)
+                                "https://your-cloudfront-domain" // 실제 CloudFront 도메인
+                ));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+                config.setAllowedHeaders(List.of("*"));
+
+                // Authorization 헤더를 프론트에서 읽을 수 있도록 허용
+                config.setExposedHeaders(List.of("Authorization"));
+                config.setAllowCredentials(true); // Refresh Token 쿠키 전달 허용
+                config.setMaxAge(3600L);
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
 }
