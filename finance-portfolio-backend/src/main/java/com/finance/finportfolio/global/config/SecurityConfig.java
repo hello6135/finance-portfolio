@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -53,7 +54,7 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
 
                                 // ── CORS: S3/CloudFront 도메인 허용 ─────────────────────
-                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .cors(Customizer.withDefaults())
 
                                 // ── 보안 헤더 (기존 CSP 유지) ────────────────────────────
                                 .headers(headers -> headers
@@ -82,28 +83,5 @@ public class SecurityConfig {
                                                 UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
-        }
-
-        // ── CORS 설정: React(S3/CloudFront) 도메인 허용 ───────────────
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration config = new CorsConfiguration();
-
-                // 실제 배포 도메인으로 교체 필요
-                config.setAllowedOrigins(List.of(
-                                "http://localhost:5173", // 로컬 개발 (Vite 기본 포트)
-                                "https://your-cloudfront-domain" // 실제 CloudFront 도메인
-                ));
-                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-                config.setAllowedHeaders(List.of("*"));
-
-                // Authorization 헤더를 프론트에서 읽을 수 있도록 허용
-                config.setExposedHeaders(List.of("Authorization"));
-                config.setAllowCredentials(true); // Refresh Token 쿠키 전달 허용
-                config.setMaxAge(3600L);
-
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", config);
-                return source;
         }
 }
