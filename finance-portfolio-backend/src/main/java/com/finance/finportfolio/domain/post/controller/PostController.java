@@ -38,7 +38,7 @@ public class PostController {
     @GetMapping("/{id}") // post detail, editor 페이지에서 조회
     public ResponseEntity<PostResponseDto> getPostById(@PathVariable("id") Long id) {
         PostResponseDto post = postService.getPostById(id);
-        log.info("게시글 상세 조회 - ID: {}, 제목: {}", id, post.getTitle());
+        log.info("게시글 상세 조회 - ID: {}, 제목: {}", id, post.title());
         return ResponseEntity.ok(post);
     }
 
