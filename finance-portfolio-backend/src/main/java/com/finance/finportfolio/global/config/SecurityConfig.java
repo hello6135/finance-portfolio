@@ -89,11 +89,10 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration config = new CorsConfiguration();
 
-                // 실제 배포 도메인으로 교체 필요
                 config.setAllowedOrigins(List.of(
-                                "http://localhost:5173", // 로컬 개발 (Vite 기본 포트)
-                                "https://your-cloudfront-domain" // 실제 CloudFront 도메인
-                ));
+                                "http://localhost:3000", // 로컬 개발 (Vite 기본 포트)
+                                "https://www.ljh-finance.com", // 실제 CloudFront 도메인
+                                "https://dev.ljh-finance.com"));
                 config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
                 config.setAllowedHeaders(List.of("*"));
 
