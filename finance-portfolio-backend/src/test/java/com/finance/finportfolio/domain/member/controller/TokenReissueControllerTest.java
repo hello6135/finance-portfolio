@@ -28,77 +28,77 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfig.class)
 class TokenReissueControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockBean
-    private MemberService memberService;
+        @MockBean
+        private MemberService memberService;
 
-    @MockBean
-    private AuthenticationManager authenticationManager;
+        @MockBean
+        private AuthenticationManager authenticationManager;
 
-    @MockBean
-    private JwtTokenProvider jwtTokenProvider;
+        @MockBean
+        private JwtTokenProvider jwtTokenProvider;
 
-    // ── 정상 재발급 ────────────────────────────────────────────
+        // ── 정상 재발급 ────────────────────────────────────────────
 
-    @Test
-    @WithMockUser
-    @DisplayName("유효한 Refresh Token 쿠키로 요청 시 새 토큰이 발급된다")
-    void reissue_Success() throws Exception {
-        given(memberService.reissue(any()))
-                .willReturn(new String[] { "newAccessToken", "newRefreshToken" });
+        @Test
+        @WithMockUser
+        @DisplayName("유효한 Refresh Token 쿠키로 요청 시 새 토큰이 발급된다")
+        void reissue_Success() throws Exception {
+                given(memberService.reissue(any()))
+                                .willReturn(new String[] { "newAccessToken", "newRefreshToken" });
 
-        mockMvc.perform(post("/api/auth/reissue")
-                .cookie(new Cookie("refreshToken", "validRefreshToken")))
-                .andExpect(status().isOk())
-                .andExpect(content().string("토큰이 재발급되었습니다."))
-                // 새 Access Token이 Authorization 헤더에 담겨야 함
-                .andExpect(header().string("Authorization", "Bearer newAccessToken"))
-                // 새 Refresh Token이 HttpOnly 쿠키로 내려와야 함
-                .andExpect(cookie().value("refreshToken", "newRefreshToken"))
-                .andExpect(cookie().httpOnly("refreshToken", true));
-    }
+                mockMvc.perform(post("/api/auth/reissue")
+                                .cookie(new Cookie("refreshToken", "validRefreshToken")))
+                                .andExpect(status().isOk())
+                                .andExpect(content().string("토큰이 재발급되었습니다."))
+                                // 새 Access Token이 Authorization 헤더에 담겨야 함
+                                .andExpect(header().string("Authorization", "Bearer newAccessToken"))
+                                // 새 Refresh Token이 HttpOnly 쿠키로 내려와야 함
+                                .andExpect(cookie().value("refreshToken", "newRefreshToken"))
+                                .andExpect(cookie().httpOnly("refreshToken", true));
+        }
 
-    // ── Refresh Token 없는 경우 ────────────────────────────────
+        // ── Refresh Token 없는 경우 ────────────────────────────────
 
-    @Test
-    @WithMockUser
-    @DisplayName("Refresh Token 쿠키가 없으면 400 Bad Request를 반환한다")
-    void reissue_Fail_NoCookie() throws Exception {
-        mockMvc.perform(post("/api/auth/reissue"))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Refresh Token이 없습니다."));
+        @Test
+        @WithMockUser
+        @DisplayName("Refresh Token 쿠키가 없으면 401 Unauthorized를 반환한다")
+        void reissue_Fail_NoCookie() throws Exception {
+                mockMvc.perform(post("/api/auth/reissue"))
+                                .andExpect(status().isUnauthorized())
+                                .andExpect(content().string("Refresh Token이 없습니다."));
 
-        // 쿠키 없으면 서비스 호출 안 해야 함
-        verify(memberService, never()).reissue(any());
-    }
+                // 쿠키 없으면 서비스 호출 안 해야 함
+                verify(memberService, never()).reissue(any());
+        }
 
-    // ── 유효하지 않은 Refresh Token ────────────────────────────
+        // ── 유효하지 않은 Refresh Token ────────────────────────────
 
-    @Test
-    @WithMockUser
-    @DisplayName("유효하지 않은 Refresh Token이면 400 Bad Request를 반환한다")
-    void reissue_Fail_InvalidToken() throws Exception {
-        given(memberService.reissue(any()))
-                .willThrow(new IllegalStateException("유효하지 않은 Refresh Token입니다."));
+        @Test
+        @WithMockUser
+        @DisplayName("유효하지 않은 Refresh Token이면 400 Bad Request를 반환한다")
+        void reissue_Fail_InvalidToken() throws Exception {
+                given(memberService.reissue(any()))
+                                .willThrow(new IllegalStateException("유효하지 않은 Refresh Token입니다."));
 
-        mockMvc.perform(post("/api/auth/reissue")
-                .cookie(new Cookie("refreshToken", "invalidToken")))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(post("/api/auth/reissue")
+                                .cookie(new Cookie("refreshToken", "invalidToken")))
+                                .andExpect(status().isBadRequest());
+        }
 
-    // ── 탈취 감지 ──────────────────────────────────────────────
+        // ── 탈취 감지 ──────────────────────────────────────────────
 
-    @Test
-    @WithMockUser
-    @DisplayName("탈취 감지 시 (토큰 불일치) 400 Bad Request를 반환한다")
-    void reissue_Fail_TokenMismatch() throws Exception {
-        given(memberService.reissue(any()))
-                .willThrow(new IllegalStateException("Refresh Token이 일치하지 않습니다. 재로그인이 필요합니다."));
+        @Test
+        @WithMockUser
+        @DisplayName("탈취 감지 시 (토큰 불일치) 400 Bad Request를 반환한다")
+        void reissue_Fail_TokenMismatch() throws Exception {
+                given(memberService.reissue(any()))
+                                .willThrow(new IllegalStateException("Refresh Token이 일치하지 않습니다. 재로그인이 필요합니다."));
 
-        mockMvc.perform(post("/api/auth/reissue")
-                .cookie(new Cookie("refreshToken", "stolenToken")))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(post("/api/auth/reissue")
+                                .cookie(new Cookie("refreshToken", "stolenToken")))
+                                .andExpect(status().isBadRequest());
+        }
 }

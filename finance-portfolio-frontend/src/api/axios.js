@@ -49,7 +49,7 @@ axiosInstance.interceptors.response.use(
 
         // Silent Refresh 실패(비로그인 상태)는 조용히 넘깁니다
         if (originalRequest.url === '/auth/reissue') {
-            throw Promise.reject(error);
+            throw error;
         }
 
         // ACCESS_TOKEN_EXPIRED 에러이고 재시도 안 한 요청이면 재발급 시도
@@ -59,7 +59,7 @@ axiosInstance.interceptors.response.use(
             !originalRequest._retry;
 
         if (!isExpired) {
-            return Promise.reject(error);
+            throw error;
         }
 
         // 재발급이 이미 진행 중이면 대기열에 추가
@@ -94,7 +94,7 @@ axiosInstance.interceptors.response.use(
             processPendingQueue(reissueError);
             // 로그인 페이지로 이동 (router를 여기서 import하면 순환참조 위험 → window 사용)
             globalThis.location.href = '/login';
-            throw Promise.reject(reissueError);
+            throw reissueError;
         } finally {
             isRefreshing = false;
         }
