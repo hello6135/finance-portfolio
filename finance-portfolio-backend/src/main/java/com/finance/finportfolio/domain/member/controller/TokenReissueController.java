@@ -5,6 +5,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +28,7 @@ public class TokenReissueController {
         String refreshToken = extractRefreshTokenFromCookie(request);
 
         if (refreshToken == null) {
-            return ResponseEntity.badRequest().body("Refresh Token이 없습니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 없습니다.");
         }
 
         try {

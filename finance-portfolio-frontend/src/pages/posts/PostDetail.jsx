@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { getPostById, deletePost } from '../api/postApi';
+import { getPostById, deletePost } from '../../api/postApi';
 
 const PostDetail = () => {
     const { id } = useParams();

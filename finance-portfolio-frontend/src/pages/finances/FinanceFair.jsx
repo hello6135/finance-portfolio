@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getFairValue } from '../api/financeApi';
+import { getFairValue } from '../../api/financeApi';
 
 const FairValueCalculator = () => {
     // 1. 입력 데이터 상태 관리 (RequestDto 구조와 일치)

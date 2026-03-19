@@ -15,7 +15,7 @@ import {
 } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
 
-import { getPostById, createPost, updatePost, imageUploadAdapter } from '../api/postApi';
+import { getPostById, createPost, updatePost, imageUploadAdapter } from '../../api/postApi';
 
 const PostEditor = () => {
     const { id } = useParams();

@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,10 +51,11 @@ public class MemberController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@Valid @RequestBody MemberLoginRequest loginRequest,
-            HttpServletResponse response) {
+    public ResponseEntity<String> logout(HttpServletResponse response) {
+        String loginId = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
 
-        memberService.logout(loginRequest.loginId());
+        memberService.logout(loginId);
 
         // Refresh Token 쿠키 만료 처리
         Cookie refreshCookie = new Cookie("refreshToken", null);
