@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, test, expect, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import PostList from './PostList';
-import { getAllPosts, cleanUpFiles } from '../api/postApi';
+import { getAllPosts, cleanUpFiles } from '../../api/postApi';
 
 // API 모킹
 vi.mock('../api/postApi', () => ({

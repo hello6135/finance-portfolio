@@ -1,0 +1,140 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../../api/axios';
+
+const JoinPage = () => {
+    const navigate = useNavigate();
+    const [form, setForm] = useState({ loginId: '', password: '', nickname: '' });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
+        setError('');
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        if (form.password.length < 4) {
+            setError('비밀번호는 최소 4자 이상이어야 합니다.');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            await axiosInstance.post('/member/join', form);
+            alert('회원가입이 완료되었습니다. 로그인해주세요.');
+            navigate('/login');
+        } catch (err) {
+            const status = err.response?.status;
+            const message = err.response?.data;
+
+            if (status === 400 && typeof message === 'string') {
+                setError(message);
+            } else {
+                setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="container mt-5">
+            <div className="row justify-content-center">
+                <div className="col-12 col-sm-8 col-md-5">
+                    <div className="card shadow-sm">
+                        <div className="card-body p-4">
+                            <h3 className="card-title text-center mb-1">📈 Finance Portfolio</h3>
+                            <p className="text-center text-muted mb-4">
+                                새 계정을 만들어보세요
+                            </p>
+
+                            <form onSubmit={handleSubmit}>
+                                <div className="mb-3">
+                                    <label htmlFor="loginId" className="form-label">아이디</label>
+                                    <input
+                                        id="loginId"
+                                        type="text"
+                                        name="loginId"
+                                        className="form-control"
+                                        value={form.loginId}
+                                        onChange={handleChange}
+                                        placeholder="아이디를 입력하세요"
+                                        required
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div className="mb-3">
+                                    <label htmlFor="password" className="form-label">
+                                        비밀번호
+                                        <span className="text-muted ms-1" style={{ fontSize: '0.8rem' }}>
+                                            (4자 이상)
+                                        </span>
+                                    </label>
+                                    <input
+                                        id="password"
+                                        type="password"
+                                        name="password"
+                                        className="form-control"
+                                        value={form.password}
+                                        onChange={handleChange}
+                                        placeholder="비밀번호를 입력하세요"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="mb-3">
+                                    <label htmlFor="nickname" className="form-label">닉네임</label>
+                                    <input
+                                        id="nickname"
+                                        type="text"
+                                        name="nickname"
+                                        className="form-control"
+                                        value={form.nickname}
+                                        onChange={handleChange}
+                                        placeholder="닉네임을 입력하세요"
+                                        required
+                                    />
+                                </div>
+
+                                {error && (
+                                    <div className="alert alert-danger py-2" role="alert">
+                                        {error}
+                                    </div>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary w-100"
+                                    disabled={loading}
+                                >
+                                    {loading ? '처리 중...' : '회원가입'}
+                                </button>
+                            </form>
+
+                            <hr />
+
+                            <p className="text-center text-muted mb-0">
+                                이미 계정이 있으신가요?{' '}
+                                <button
+                                    className="btn btn-link p-0 align-baseline"
+                                    onClick={() => navigate('/login')}
+                                >
+                                    로그인
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default JoinPage;
