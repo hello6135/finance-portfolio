@@ -68,9 +68,6 @@ jobs:
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
 
-    # 테스트 커버리지 lcov.info파일 생성
-    - name: Run Test Coverage
-      run: npm run test:coverage
     # 소나 분석
     - name: Frontend SonarCloud Scan
       env:
