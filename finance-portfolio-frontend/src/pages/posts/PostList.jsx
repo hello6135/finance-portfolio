@@ -35,32 +35,16 @@ const PostList = () => {
         }
     };
 
-    const onLogout = async () => {
-        try {
-            // 백엔드에 로그아웃 요청 (Refresh Token DB 삭제 + 쿠키 만료)
-            await axiosInstance.post('/member/logout');
-        } catch {
-            // 로그아웃은 에러가 나도 클라이언트 상태는 정리합니다
-        } finally {
-            authStore.clearToken();
-            navigate('/login');
-        }
-    };
-
     if (loading) return <div>로딩 중...</div>;
 
     return (
         <div className="container mt-5">
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <h2>금융 포트폴리오 게시판</h2>
-                <button onClick={onLogout} className="btn btn-outline-danger btn-sm">
-                    로그아웃
-                </button>
             </div>
 
             <div className="mb-3 d-flex gap-2">
                 <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>
-                <button onClick={() => navigate('/finance/fair')} className="btn btn-warning">계산하기</button>
                 <button onClick={onCleanUpFiles} className="btn btn-warning">미참조 이미지 삭제</button>
             </div>
 
