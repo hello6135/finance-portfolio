@@ -4,13 +4,17 @@ import axiosInstance from './api/axios';
 import authStore from './api/authStore';
 import './App.css';
 
+import Layout from './components/Layout';
+
 import PostList from './pages/posts/PostList';
 import PostDetail from './pages/posts/PostDetail';
 import PostEditor from './pages/posts/PostEditor';
 import FairValuePage from './pages/finances/FinanceFair';
 import LoginPage from './pages/members/LoginPage';
 import JoinPage from './pages/members/JoinPage';
+import ErrorPage from './pages/global/ErrorPage';
 import PrivateRoute from './components/PrivateRoute';
+
 
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -38,6 +42,7 @@ function App() {
       });
   }, []);
 
+
   if (!authChecked) {
     return (
       <div className="loading-screen">
@@ -48,32 +53,33 @@ function App() {
 
   return (
     <Routes>
-      {/* 공개 라우트 */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/join" element={<JoinPage />} />
+      {/* 레이아웃: 네비게이션, */}
+      <Route element={<Layout />}>
 
-      {/* 인증 필요 라우트 */}
-      <Route path="/" element={
-        <PrivateRoute><PostList /></PrivateRoute>
-      } />
-      <Route path="/posts" element={
-        <PrivateRoute><PostList /></PrivateRoute>
-      } />
-      <Route path="/detail/:id" element={
-        <PrivateRoute><PostDetail /></PrivateRoute>
-      } />
-      <Route path="/editor" element={
-        <PrivateRoute><PostEditor /></PrivateRoute>
-      } />
-      <Route path="/editor/:id" element={
-        <PrivateRoute><PostEditor /></PrivateRoute>
-      } />
-      <Route path="/finance/fair" element={
-        <PrivateRoute><FairValuePage /></PrivateRoute>
-      } />
+        {/* 공개 라우트 - 게시판 */}
+        <Route path="/" element={<PostList />} />
+        <Route path="/posts" element={<PostList />} />
+        <Route path="/detail/:id" element={<PostDetail />} />
+        {/* 공개 라우트 - 금융계산기 */}
+        <Route path="/finance/fair" element={<FairValuePage />} />
+        {/* 공개 라우트 - 인증 인가 */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/join" element={<JoinPage />} />
 
-      {/* 없는 경로는 로그인 페이지로 */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* 인증 필요 라우트 */}
+        <Route path="/editor" element={
+          <PrivateRoute><PostEditor /></PrivateRoute>
+        } />
+        <Route path="/editor/:id" element={
+          <PrivateRoute><PostEditor /></PrivateRoute>
+        } />
+
+        {/* 에러 라우트 */}
+        <Route path="/error" element={<ErrorPage />} />
+
+        {/* 명시한 엔드포인트 이외엔 에러 페이지로 */}
+        <Route path="*" element={<ErrorPage status="404" message="페이지를 찾을 수 없습니다." />} />
+      </Route>
     </Routes>
   );
 }
