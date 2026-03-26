@@ -2,17 +2,21 @@ package com.finance.finportfolio.global.error;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@ControllerAdvice // 모든 컨트롤러의 예외를 여기서 캐치
+@RestControllerAdvice // 모든 컨트롤러의 예외를 여기서 캐치
 public class GlobalExceptionHandler {
 
-    // 내가 직접 던지는 IllegalArgumentException 처리 (예: 게시글 없음)
+    // 인자 예외
+    // 400 BAD_REQUEST
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
         log.error("잘못된 인자 유입: {}", e.getMessage());
@@ -26,7 +30,44 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    // 상태 예외
+    // 400 badRequest
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalStateException(IllegalStateException e) {
+
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    // @Valid 검증 실패
+    // 400 badRequest
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getDefaultMessage())
+                .findFirst()
+                .orElse("입력값이 올바르지 않습니다.");
+
+        return ResponseEntity.badRequest().body(message);
+    }
+
+    // 중복 아이디 커스텀 예외
+    // 409 Conflict
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<String> handleDuplicateException(DuplicateResourceException e) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
+
+    // 아이디 못찾음 예외
+    // 401 Unauthorized
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException e) {
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+    }
+
     // 그 외 예상치 못한 모든 에러(500) 처리
+    // 500 INTERNAL_SERVER_ERROR
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllException(Exception e) {
         log.error("서버 내부 에러 발생!", e); // 스택 트레이스 전체 로그 기록
@@ -40,19 +81,4 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // @Valid 검증 실패 → 400
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getDefaultMessage())
-                .findFirst()
-                .orElse("입력값이 올바르지 않습니다.");
-        return ResponseEntity.badRequest().body(message);
-    }
-
-    // 중복 아이디 등 비즈니스 예외 → 400
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<String> handleIllegalStateException(IllegalStateException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
-    }
 }

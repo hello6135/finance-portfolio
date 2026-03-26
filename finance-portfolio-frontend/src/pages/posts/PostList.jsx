@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getAllPosts, cleanUpFiles } from '../../api/postApi';
-import axiosInstance from '../../api/axios';
-import authStore from '../../api/authStore';
 
 const PostList = () => {
     const [posts, setPosts] = useState([]);

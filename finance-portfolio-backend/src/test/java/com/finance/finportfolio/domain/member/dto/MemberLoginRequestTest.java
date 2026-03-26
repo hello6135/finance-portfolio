@@ -25,9 +25,9 @@ public class MemberLoginRequestTest {
     @Test
     @DisplayName("올바른 로그인 데이터는 검증을 통과")
     void login_Success() {
-        MemberLoginRequest request = new MemberLoginRequest("testId", "password123");
+        MemberLoginRequestDto request = new MemberLoginRequestDto("testId", "password123");
 
-        Set<ConstraintViolation<MemberLoginRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<MemberLoginRequestDto>> violations = validator.validate(request);
 
         assertThat(violations).isEmpty();
     }
@@ -35,9 +35,9 @@ public class MemberLoginRequestTest {
     @Test
     @DisplayName("아이디가 공백이면 검증에 실패해야 한다.")
     void login_Fail_BlankId() {
-        MemberLoginRequest request = new MemberLoginRequest("", "1234");
+        MemberLoginRequestDto request = new MemberLoginRequestDto("", "1234");
 
-        Set<ConstraintViolation<MemberLoginRequest>> violations = validator.validate(request);
+        Set<ConstraintViolation<MemberLoginRequestDto>> violations = validator.validate(request);
 
         assertThat(violations).isNotEmpty();
         assertThat(violations.iterator().next().getMessage()).isEqualTo("아이디를 입력해주세요.");

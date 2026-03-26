@@ -1,4 +1,4 @@
-package com.finance.finportfolio.global.security;
+package com.finance.finportfolio.global.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;

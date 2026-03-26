@@ -20,6 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS") // 허용할 HTTP 메서드
                 .allowedHeaders("*") // 모든 헤더 허용
                 .allowCredentials(true) // 쿠키/인증 정보 포함 허용
+                .exposedHeaders("Authorization") // Authorization 헤더 허용(Login)
                 .maxAge(3600); // 프리플라이트(Preflight) 요청 캐싱 시간 (초)
     }
 

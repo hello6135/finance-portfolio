@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import authStore from '../api/authStore';
+import authStore from '../../store/authStore';
+import logoutMember from '../../api/memberApi';
 
 
 const Navbar = () => {
@@ -9,7 +10,10 @@ const Navbar = () => {
     const onLogout = async () => {
         try {
             // 백엔드에 로그아웃 요청 (Refresh Token DB 삭제 + 쿠키 만료)
-            await axiosInstance.post('/member/logout');
+            const { status, message } = await logoutMember();
+            if (status == 200 || status == 201) {
+                console.log(message);
+            }
         } catch {
             // 로그아웃은 에러가 나도 클라이언트 상태는 정리합니다
         } finally {

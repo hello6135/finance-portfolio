@@ -1,12 +1,14 @@
 package com.finance.finportfolio.domain.member.controller;
 
-import com.finance.finportfolio.domain.member.dto.MemberJoinRequest;
-import com.finance.finportfolio.domain.member.dto.MemberLoginRequest;
+import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
+import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
+import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,13 +24,13 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping("/join")
-    public ResponseEntity<String> join(@Valid @RequestBody MemberJoinRequest request) {
+    public ResponseEntity<String> join(@Valid @RequestBody MemberJoinRequestDto request) {
         memberService.join(request);
         return ResponseEntity.ok("회원가입이 성공적으로 완료되었습니다.");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody MemberLoginRequest loginRequest,
+    public ResponseEntity<String> login(@Valid @RequestBody MemberLoginRequestDto loginRequest,
             HttpServletResponse response) {
 
         // 1. 로그인 처리 → Access Token + Refresh Token 발급
@@ -67,4 +69,5 @@ public class MemberController {
 
         return ResponseEntity.ok("로그아웃이 완료되었습니다.");
     }
+
 }

@@ -1,4 +1,4 @@
-package com.finance.finportfolio.domain.member.domain;
+package com.finance.finportfolio.domain.member.entity;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,11 +1,12 @@
 package com.finance.finportfolio.global.config;
 
-import com.finance.finportfolio.global.filter.CloudFrontHeaderFilter;
 import org.springframework.beans.factory.annotation.Value; // import 추가
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+
+import com.finance.finportfolio.global.security.filter.CloudFrontHeaderFilter;
 
 @Configuration
 public class FilterConfig {

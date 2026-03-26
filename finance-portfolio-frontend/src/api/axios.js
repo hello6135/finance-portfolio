@@ -1,5 +1,5 @@
 import axios from 'axios';
-import authStore from './authStore';
+import authStore from '../store/authStore';
 
 // 1. axios 인스턴스 생성
 const axiosInstance = axios.create({

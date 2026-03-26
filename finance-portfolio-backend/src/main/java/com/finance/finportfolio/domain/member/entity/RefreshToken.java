@@ -1,4 +1,4 @@
-package com.finance.finportfolio.domain.member.domain;
+package com.finance.finportfolio.domain.member.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +12,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 
 @Entity
 @Getter
@@ -30,13 +31,13 @@ public class RefreshToken {
     private String token;
 
     @Builder
-    public RefreshToken(Member member, String token) {
+    public RefreshToken(@NonNull Member member, @NonNull String token) {
         this.member = member;
         this.token = token;
     }
 
     // ── Refresh Token Rotation: 재발급 시 기존 토큰 교체 ──────
-    public void rotate(String newToken) {
+    public void rotate(@NonNull String newToken) {
         this.token = newToken;
     }
 }

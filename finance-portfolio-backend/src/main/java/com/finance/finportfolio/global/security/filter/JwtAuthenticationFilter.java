@@ -1,4 +1,4 @@
-package com.finance.finportfolio.global.security;
+package com.finance.finportfolio.global.security.filter;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -12,6 +12,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import java.io.IOException;
 import java.util.List;

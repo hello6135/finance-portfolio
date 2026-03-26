@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import axiosInstance from './api/axios';
-import authStore from './api/authStore';
+import authStore from './store/authStore';
 import './App.css';
 
-import Layout from './components/Layout';
+import Layout from './components/layout/Layout';
 
 import PostList from './pages/posts/PostList';
 import PostDetail from './pages/posts/PostDetail';
@@ -12,8 +12,8 @@ import PostEditor from './pages/posts/PostEditor';
 import FairValuePage from './pages/finances/FinanceFair';
 import LoginPage from './pages/members/LoginPage';
 import JoinPage from './pages/members/JoinPage';
-import ErrorPage from './pages/global/ErrorPage';
-import PrivateRoute from './components/PrivateRoute';
+import ErrorPage from './pages/common/ErrorPage';
+import PrivateRoute from './components/common/PrivateRoute';
 
 
 function App() {
@@ -67,12 +67,10 @@ function App() {
         <Route path="/join" element={<JoinPage />} />
 
         {/* 인증 필요 라우트 */}
-        <Route path="/editor" element={
-          <PrivateRoute><PostEditor /></PrivateRoute>
-        } />
-        <Route path="/editor/:id" element={
-          <PrivateRoute><PostEditor /></PrivateRoute>
-        } />
+        <Route element={<PrivateRoute />}>
+          <Route path="/editor" element={<PostEditor />} />
+          <Route path="/editor/:id" element={<PostEditor />} />
+        </Route>
 
         {/* 에러 라우트 */}
         <Route path="/error" element={<ErrorPage />} />

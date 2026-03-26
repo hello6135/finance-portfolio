@@ -2,7 +2,8 @@ package com.finance.finportfolio.domain.member.controller;
 
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.config.SecurityConfig;
-import com.finance.finportfolio.global.security.JwtTokenProvider;
+import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
+
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -95,7 +96,7 @@ class TokenReissueControllerTest {
         @DisplayName("탈취 감지 시 (토큰 불일치) 400 Bad Request를 반환한다")
         void reissue_Fail_TokenMismatch() throws Exception {
                 given(memberService.reissue(any()))
-                                .willThrow(new IllegalStateException("Refresh Token이 일치하지 않습니다. 재로그인이 필요합니다."));
+                                .willThrow(new IllegalStateException("Refresh Token이 일치하지 않습니다."));
 
                 mockMvc.perform(post("/api/auth/reissue")
                                 .cookie(new Cookie("refreshToken", "stolenToken")))

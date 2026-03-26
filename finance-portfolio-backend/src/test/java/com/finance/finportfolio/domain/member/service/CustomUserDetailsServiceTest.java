@@ -1,8 +1,8 @@
 package com.finance.finportfolio.domain.member.service;
 
-import com.finance.finportfolio.domain.member.domain.Member;
-import com.finance.finportfolio.domain.member.domain.MemberRepository;
-import com.finance.finportfolio.domain.member.domain.Role;
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.entity.Role;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.member.service.CustomUserDetailsService;
 
 import org.junit.jupiter.api.DisplayName;

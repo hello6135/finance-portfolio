@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../../api/axios';
+import { joinMember } from '../../api/memberApi';
 
 const JoinPage = () => {
     const navigate = useNavigate();
@@ -26,17 +26,20 @@ const JoinPage = () => {
         }
 
         try {
-            await axiosInstance.post('/member/join', form);
-            alert('회원가입이 완료되었습니다. 로그인해주세요.');
-            navigate('/login');
-        } catch (err) {
-            const status = err.response?.status;
-            const message = err.response?.data;
+            const { status, message } = await joinMember(form);
+            if (status === 200 || status === 201) {
+                alert(message);
+                console.log(message);
+                navigate('/login');
+            }
+        } catch (error) {
+            const status = error.response?.status;
+            const message = error.response?.data;
 
             if (status === 400 && typeof message === 'string') {
                 setError(message);
             } else {
-                setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                setError('서버 오류가 발생했습니다.');
             }
         } finally {
             setLoading(false);

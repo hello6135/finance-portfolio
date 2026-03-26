@@ -31,26 +31,20 @@ public class TokenReissueController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 없습니다.");
         }
 
-        try {
-            String[] tokens = memberService.reissue(refreshToken);
-            String newAccessToken = tokens[0];
-            String newRefreshToken = tokens[1];
+        String[] tokens = memberService.reissue(refreshToken);
+        String newAccessToken = tokens[0];
+        String newRefreshToken = tokens[1];
 
-            Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setSecure(true);
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-            response.addCookie(refreshCookie);
+        Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(refreshCookie);
 
-            response.setHeader("Authorization", "Bearer " + newAccessToken);
+        response.setHeader("Authorization", "Bearer " + newAccessToken);
 
-            return ResponseEntity.ok("토큰이 재발급되었습니다.");
-
-        } catch (IllegalStateException e) {
-            // 탈취 감지, 유효하지 않은 토큰 등 → 400 반환
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ResponseEntity.ok("토큰이 재발급되었습니다.");
     }
 
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {

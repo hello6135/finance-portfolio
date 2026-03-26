@@ -1,4 +1,4 @@
-package com.finance.finportfolio.domain.member.domain;
+package com.finance.finportfolio.domain.member.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
