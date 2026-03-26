@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import authStore from '../../store/authStore';
-import logoutMember from '../../api/memberApi';
+import { logoutMember } from '../../api/memberApi';
 
 
 const Navbar = () => {
@@ -29,7 +29,7 @@ const Navbar = () => {
             <span className="navbar-brand">Finance Portfolio Navigation</span>
             <div className="d-flex gap-3">
                 <NavLink
-                    to="/post"
+                    to="/posts"
                     className={({ isActive }) =>
                         'nav-link' + (isActive ? ' text-white fw-bold' : ' text-secondary')
                     }

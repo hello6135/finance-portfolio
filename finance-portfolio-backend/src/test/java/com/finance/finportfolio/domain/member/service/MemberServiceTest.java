@@ -7,6 +7,7 @@ import com.finance.finportfolio.domain.member.entity.RefreshToken;
 import com.finance.finportfolio.domain.member.entity.Role;
 import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.member.repository.RefreshTokenRepository;
+import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import org.junit.jupiter.api.DisplayName;
@@ -92,7 +93,7 @@ class MemberServiceTest {
                                 .willReturn(Optional.of(createMember("duplicateId")));
 
                 assertThatThrownBy(() -> memberService.join(request))
-                                .isInstanceOf(IllegalStateException.class)
+                                .isInstanceOf(DuplicateResourceException.class)
                                 .hasMessageContaining("이미 존재하는 아이디입니다.");
 
                 verify(memberRepository, never()).save(any(Member.class));
