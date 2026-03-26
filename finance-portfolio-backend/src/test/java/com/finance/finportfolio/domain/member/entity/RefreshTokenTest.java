@@ -1,8 +1,12 @@
-package com.finance.finportfolio.domain.member.domain;
+package com.finance.finportfolio.domain.member.entity;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.entity.RefreshToken;
+import com.finance.finportfolio.domain.member.entity.Role;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -6,8 +6,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.finance.finportfolio.domain.member.domain.Member;
-import com.finance.finportfolio.domain.member.domain.MemberRepository;
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
         Member member = memberRepository.findByLoginId(loginId)
-                .orElseThrow(() -> new UsernameNotFoundException("해당 아이디를 찾을 수 없습니다: " + loginId));
+                .orElseThrow(() -> new UsernameNotFoundException("해당 아이디를 찾을 수 없습니다."));
         return User.builder()
                 .username(member.getLoginId())
                 .password(member.getPassword())

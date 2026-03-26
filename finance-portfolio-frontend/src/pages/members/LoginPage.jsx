@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../../api/axios';
-import authStore from '../../api/authStore';
+import authStore from '../../store/authStore';
+import { loginMember } from '../../api/memberApi';
+
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -21,22 +22,23 @@ const LoginPage = () => {
         setError('');
 
         try {
-            const response = await axiosInstance.post('/member/login', form);
-
-            const token = response.headers['authorization']?.replace('Bearer ', '');
-            if (token) {
+            const { status, message, token } = await loginMember(form);
+            if ((status === 200 || status === 201) && token) {
+                // 저장소에 토큰 저장
+                console.log(message);
                 authStore.setToken(token);
-            }
 
-            navigate('/posts');
-        } catch (err) {
-            const status = err.response?.status;
+                navigate('/posts');
+            }
+        } catch (error) {
+            const status = error.response?.status;
+
             if (status === 400) {
                 setError('아이디 또는 비밀번호가 올바르지 않습니다.');
             } else if (status === 401) {
-                setError('인증에 실패했습니다. 다시 시도해주세요.');
+                setError('인증에 실패했습니다.');
             } else {
-                setError('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                setError('서버 오류가 발생했습니다.');
             }
         } finally {
             setLoading(false);

@@ -18,8 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.finance.finportfolio.global.security.JwtAuthenticationFilter;
-import com.finance.finportfolio.global.security.JwtTokenProvider;
+import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
+import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import java.util.List;
 

@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.finance.finportfolio.infrastructure.file.FileService;
+import com.finance.finportfolio.domain.post.service.FileService;
 import com.finance.finportfolio.infrastructure.file.S3Properties;
 
 import lombok.RequiredArgsConstructor;

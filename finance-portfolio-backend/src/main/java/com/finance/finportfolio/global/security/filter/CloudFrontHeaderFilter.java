@@ -1,4 +1,4 @@
-package com.finance.finportfolio.global.filter;
+package com.finance.finportfolio.global.security.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

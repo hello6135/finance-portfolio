@@ -2,7 +2,7 @@ package com.finance.finportfolio.domain.post.dto;
 
 import java.time.LocalDateTime;
 
-import com.finance.finportfolio.domain.post.domain.Post;
+import com.finance.finportfolio.domain.post.entity.Post;
 
 // PostResponseDto - Post 엔티티 Get용 DTO
 public record PostResponseDto(

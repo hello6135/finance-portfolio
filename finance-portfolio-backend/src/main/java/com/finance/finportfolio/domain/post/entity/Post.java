@@ -1,4 +1,4 @@
-package com.finance.finportfolio.domain.post.domain;
+package com.finance.finportfolio.domain.post.entity;
 
 import java.time.LocalDateTime;
 

@@ -9,12 +9,11 @@ import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.finance.finportfolio.domain.post.domain.Post;
-import com.finance.finportfolio.domain.post.domain.PostRepository;
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
 import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
-import com.finance.finportfolio.infrastructure.file.FileService;
+import com.finance.finportfolio.domain.post.entity.Post;
+import com.finance.finportfolio.domain.post.repository.PostRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

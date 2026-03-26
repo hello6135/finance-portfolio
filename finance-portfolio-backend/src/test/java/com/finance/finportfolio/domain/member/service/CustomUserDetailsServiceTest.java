@@ -1,8 +1,8 @@
 package com.finance.finportfolio.domain.member.service;
 
-import com.finance.finportfolio.domain.member.domain.Member;
-import com.finance.finportfolio.domain.member.domain.MemberRepository;
-import com.finance.finportfolio.domain.member.domain.Role;
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.entity.Role;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.member.service.CustomUserDetailsService;
 
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +61,6 @@ class CustomUserDetailsServiceTest {
         // when & then
         assertThatThrownBy(() -> userDetailsService.loadUserByUsername("unknownUser"))
                 .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessageContaining("해당 아이디를 찾을 수 없습니다");
+                .hasMessageContaining("해당 아이디를 찾을 수 없습니다.");
     }
 }

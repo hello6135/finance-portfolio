@@ -1,9 +1,10 @@
-package com.finance.finportfolio.domain.member.domain;
+package com.finance.finportfolio.domain.member.repository;
 
-import com.finance.finportfolio.domain.member.domain.Member;
-import com.finance.finportfolio.domain.member.domain.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.entity.RefreshToken;
 
 import java.util.Optional;
 

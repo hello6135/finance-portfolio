@@ -1,6 +1,6 @@
 package com.finance.finportfolio.domain.post.dto;
 
-import com.finance.finportfolio.domain.post.domain.Post;
+import com.finance.finportfolio.domain.post.entity.Post;
 
 import lombok.Builder;
 
