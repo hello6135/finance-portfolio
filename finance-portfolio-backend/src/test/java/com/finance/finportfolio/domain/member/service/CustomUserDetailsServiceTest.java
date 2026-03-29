@@ -61,6 +61,6 @@ class CustomUserDetailsServiceTest {
         // when & then
         assertThatThrownBy(() -> userDetailsService.loadUserByUsername("unknownUser"))
                 .isInstanceOf(UsernameNotFoundException.class)
-                .hasMessageContaining("해당 아이디를 찾을 수 없습니다.");
+                .hasMessageContaining("아이디를 찾을 수 없습니다.");
     }
 }

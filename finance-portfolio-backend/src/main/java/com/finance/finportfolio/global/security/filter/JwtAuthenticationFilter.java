@@ -31,25 +31,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        // 토큰 없으면 다음 필터로 (인증 불필요한 엔드포인트는 SecurityConfig에서 처리)
-        if (!StringUtils.hasText(token)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        try {
-            if (jwtTokenProvider.validateToken(token)) {
-                setAuthentication(token);
+        if (StringUtils.hasText(token)) {
+            try {
+                if (jwtTokenProvider.validateToken(token)) {
+                    // 1. 인증 정보 설정 시 발생할 수 있는 예외 방지
+                    setAuthentication(token);
+                }
+            } catch (ExpiredJwtException e) {
+                log.warn("만료된 Access Token: {}", request.getRequestURI());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\": \"ACCESS_TOKEN_EXPIRED\"}");
+                return; // 만료 시 여기서 종료
+            } catch (Exception e) {
+                // 2. 그 외 모든 예외는 로그를 남기고 인증되지 않은 상태로 진행 (500 에러 방어)
+                log.error("JWT 인증 처리 중 오류 발생: {}", e.getMessage());
+                SecurityContextHolder.clearContext();
             }
-        } catch (ExpiredJwtException e) {
-            // 만료된 토큰 → 401 반환 (프론트에서 /reissue 요청하도록 유도)
-            log.warn("만료된 Access Token: {}", request.getRequestURI());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"error\": \"ACCESS_TOKEN_EXPIRED\"}");
-            return;
         }
 
+        // 3. 토큰이 없거나, 유효하지 않거나, 에러가 나더라도 다음 필터로 넘겨야 permitAll이 작동함
         filterChain.doFilter(request, response);
     }
 
@@ -67,12 +68,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String loginId = jwtTokenProvider.getLoginId(token);
         String role = jwtTokenProvider.getRole(token);
 
-        // DB 조회 없이 토큰 클레임만으로 인증 객체 생성 → 성능 최적화
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                loginId,
-                null,
-                List.of(new SimpleGrantedAuthority(role)));
+        if (loginId != null && role != null) {
+            // Spring Security의 hasRole()은 기본적으로 "ROLE_" 접두사를 기대합니다.
+            String grantedRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    loginId,
+                    null,
+                    List.of(new SimpleGrantedAuthority(grantedRole)));
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
     }
 }

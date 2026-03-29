@@ -56,7 +56,7 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
 
                                 // ── CORS: S3/CloudFront 도메인 허용 ─────────────────────
-                                .cors(Customizer.withDefaults())
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                                 // ── 보안 헤더 (기존 CSP 유지) ────────────────────────────
                                 .headers(headers -> headers
@@ -72,6 +72,15 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
+                                // ── 인가 설정 ────────────────────────────────────────────
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers("/error").permitAll()
+                                                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                                                .requestMatchers("/api/member/join", "/api/member/login").permitAll()
+                                                .requestMatchers("/api/auth/reissue").permitAll()
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .anyRequest().authenticated())
+
                                 // 인증되지 않은 사용자가 보호된 리소스에 접근 시 응답 설정
                                 .exceptionHandling(ex -> ex
                                                 .authenticationEntryPoint((request, response, authException) -> {
@@ -79,18 +88,31 @@ public class SecurityConfig {
                                                         response.setContentType("application/json;charset=UTF-8");
                                                         response.getWriter().write("{\"error\": \"UNAUTHORIZED\"}");
                                                 }))
-                                // ── 인가 설정 ────────────────────────────────────────────
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                                                .requestMatchers("/api/member/join", "/api/member/login").permitAll()
-                                                .requestMatchers("/api/auth/reissue").permitAll()
-                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                                .anyRequest().authenticated())
 
                                 // ── JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 등록 ──
                                 .addFilterBefore(jwtAuthenticationFilter(),
                                                 UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
+        }
+
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
+
+                // CloudFront 통합 관리로 자기 경로 참조하기 때문에 Origin 허용 필수는 아님
+                configuration.setAllowedOrigins(List.of(
+                                "http://localhost:3000",
+                                "https://www.ljh-finance.com",
+                                "https://dev.ljh-finance.com"));
+                configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setAllowCredentials(true);
+                configuration.setExposedHeaders(List.of("Authorization"));
+                configuration.setMaxAge(3600L);
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration); // 모든 경로에 적용
+                return source;
         }
 }
