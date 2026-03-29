@@ -24,6 +24,13 @@ spring:
         static: ap-northeast-2
         instance-profile: false
 
+server:
+  error:
+    include-stacktrace: never      # 스택트레이스 노출 차단 (필수)
+    include-message: never         # 에러 메시지 노출 차단
+    include-exception: false       # 예외 클래스명 노출 차단
+    include-binding-errors: never  # 파라미터 바인딩 에러 노출 차단
+
 cloudfront:
   custom:
     header:

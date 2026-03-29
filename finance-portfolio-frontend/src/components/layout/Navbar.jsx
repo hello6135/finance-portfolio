@@ -12,13 +12,15 @@ const Navbar = () => {
             // 백엔드에 로그아웃 요청 (Refresh Token DB 삭제 + 쿠키 만료)
             const { status, message } = await logoutMember();
             if (status == 200 || status == 201) {
-                console.log(message);
+                alert(message);
             }
-        } catch {
-            // 로그아웃은 에러가 나도 클라이언트 상태는 정리합니다
+        } catch (error) {
+            const message = error.response?.data;
+            alert(message);
         } finally {
+            // 로그아웃은 에러가 나도 클라이언트 상태는 정리
             authStore.clearToken();
-            navigate('/login');
+            navigate('/', { replace: true });
         }
     };
 
