@@ -29,7 +29,6 @@ const JoinPage = () => {
             const { status, message } = await joinMember(form);
             if (status === 200 || status === 201) {
                 alert(message);
-                console.log(message);
                 navigate('/login');
             }
         } catch (error) {

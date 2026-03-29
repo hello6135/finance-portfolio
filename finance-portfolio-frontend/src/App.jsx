@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import axiosInstance from './api/axios';
 import authStore from './store/authStore';
 import './App.css';
 
@@ -13,33 +12,46 @@ import FairValuePage from './pages/finances/FinanceFair';
 import LoginPage from './pages/members/LoginPage';
 import JoinPage from './pages/members/JoinPage';
 import ErrorPage from './pages/common/ErrorPage';
-import PrivateRoute from './components/common/PrivateRoute';
+import PrivateRoute from './components/auth/PrivateRoute';
+import { reissueMember } from './api/memberApi';
 
 
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
+  // 새로고침 혹은 사이트 처음 접속 시 실행
   useEffect(() => {
-    // 로그인/회원가입 페이지에서는 silent refresh 시도 안 함
-    if (globalThis.location.pathname === '/login' || globalThis.location.pathname === '/join') {
-      setAuthChecked(true);
-      return;
-    }
-    // Silent Refresh: 새로고침 후에도 Refresh Token 쿠키가 살아있으면 자동 로그인 유지
-    axiosInstance.post('/auth/reissue')
-      .then((res) => {
-        const token = res.headers['authorization']?.replace('Bearer ', '');
-        if (token) {
+    // 1. async 로직을 별도 함수로 분리
+    const initAuth = async () => {
+      const pathname = globalThis.location.pathname;
+
+      // 로그인/회원가입 페이지에서는 silent refresh 시도 안 함
+      if (pathname === '/login' || pathname === '/join') {
+        setAuthChecked(true);
+        return;
+      }
+
+      try {
+        // Silent Refresh 시도
+        const response = await reissueMember();
+        // memberApi의 응답 구조에 따라 적절히 수정 (예: response.data)
+        const { status, message, token } = response;
+
+        if ((status === 200 || status === 201) && token) {
+          console.log("자동 로그인 성공:", message);
           authStore.setToken(token);
         }
-      })
-      .catch(() => {
-        // Refresh Token이 없거나 만료됨 → 비로그인 상태 유지 (정상 케이스)
+      } catch (error) {
+        // 여기서 에러 처리는 '조용히' 실패하게 두는 것이 좋습니다.
+        // 세션이 없으면 그냥 로그아웃 상태로 시작하는 것이니까요.
+        console.warn(error);
         authStore.clearToken();
-      })
-      .finally(() => {
+      } finally {
         setAuthChecked(true);
-      });
+      }
+    };
+
+    initAuth();
   }, []);
 
 
@@ -75,7 +87,7 @@ function App() {
         {/* 에러 라우트 */}
         <Route path="/error" element={<ErrorPage />} />
 
-        {/* 명시한 엔드포인트 이외엔 에러 페이지로 */}
+        {/* 명시한 엔드포인트 이외엔 404 */}
         <Route path="*" element={<ErrorPage status="404" message="페이지를 찾을 수 없습니다." />} />
       </Route>
     </Routes>

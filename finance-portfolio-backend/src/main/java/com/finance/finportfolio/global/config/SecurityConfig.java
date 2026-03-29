@@ -21,6 +21,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.List;
 
 @Configuration
@@ -70,6 +72,13 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
+                                // 인증되지 않은 사용자가 보호된 리소스에 접근 시 응답 설정
+                                .exceptionHandling(ex -> ex
+                                                .authenticationEntryPoint((request, response, authException) -> {
+                                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                                        response.setContentType("application/json;charset=UTF-8");
+                                                        response.getWriter().write("{\"error\": \"UNAUTHORIZED\"}");
+                                                }))
                                 // ── 인가 설정 ────────────────────────────────────────────
                                 .authorizeHttpRequests(auth -> auth
                                                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()

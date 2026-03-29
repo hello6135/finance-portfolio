@@ -7,12 +7,8 @@ import axiosInstance from './axios';
      * expectedYield: 기대수익률
      */
 export const getFairValue = async (requestDto) => {
-    try {
-        // GET 대신 POST 사용, 두 번째 인자로 DTO 전달
-        const response = await axiosInstance.post('/fin/fair', requestDto);
-        return response.data; // { fairValue: 123.45, message: "..." }
-    } catch (error) {
-        console.error("API 호출 에러:", error);
-        throw error;
-    }
+
+    // GET 대신 POST 사용, 두 번째 인자로 DTO 전달
+    const response = await axiosInstance.post('/fin/fair', requestDto);
+    return response.data; // { fairValue: 123.45, message: "..." }
 };
