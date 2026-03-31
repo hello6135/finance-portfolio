@@ -47,8 +47,20 @@ class GlobalExceptionHandlerTest {
     void handleBadCredentialsTest() throws Exception {
         mockMvc.perform(get("/test/bad-credentials"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.code").value("BAD_CREDENTIALS"))
-                .andExpect(jsonPath("$.message").value("비밀번호 불일치"))
+                .andExpect(jsonPath("$.message").value("🛠아이디 또는 비밀번호가 일치하지 않습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("BadCredentialsException 발생 시 401 에러와 전용 코드를 반환한다")
+    void RefreshTokenNotFoundExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/refresh-token-not-found"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.code").value("REFRESH_TOKEN_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("🛠Refresh Token이 없습니다."))
                 .andDo(print());
     }
 
@@ -57,6 +69,7 @@ class GlobalExceptionHandlerTest {
     void handleDuplicateExceptionTest() throws Exception {
         mockMvc.perform(get("/test/duplicate"))
                 .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.code").value("DUPLICATE_RESOURCE"))
                 .andExpect(jsonPath("$.message").value("이미 가입된 이메일입니다."))
                 .andDo(print());
@@ -67,6 +80,7 @@ class GlobalExceptionHandlerTest {
     void handleAllExceptionTest() throws Exception {
         mockMvc.perform(get("/test/runtime"))
                 .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.code").value("INTERNAL_SERVER_ERROR"))
                 .andExpect(jsonPath("$.message").value("DB 연결 오류"))
                 .andDo(print());

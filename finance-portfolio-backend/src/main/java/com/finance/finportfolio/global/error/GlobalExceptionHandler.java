@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
+import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,10 +92,18 @@ public class GlobalExceptionHandler {
             code = "BAD_CREDENTIALS";
         }
         // 3순위: 그 외 기타 인증 에러 (토큰 만료, 접근 거부 등)
-        // 여기서는 기본 설정된 defaultMsg와 code가 사용됩니다.
+        // 여기서는 기본 설정된 defaultMsg와 code 반환.
 
         String message = resolveMessage(e.getMessage(), defaultMsg);
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, code, message);
+    }
+
+    // 401 UNAUTHORIZED
+    // REFRESH_TOKEN_NOT_FOUND: 리프레쉬 토큰 없음
+    @ExceptionHandler(RefreshTokenNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenNotFoundException(RefreshTokenNotFoundException e) {
+        String message = resolveMessage(e.getMessage(), "🛠Refresh Token이 없습니다.");
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_NOT_FOUND", message);
     }
 
     // 409 CONFLICT
