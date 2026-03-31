@@ -101,7 +101,7 @@ public class GlobalExceptionHandler {
     // 401 UNAUTHORIZED
     // REFRESH_TOKEN_NOT_FOUND: 리프레쉬 토큰 없음
     @ExceptionHandler(RefreshTokenNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleAuthException(RefreshTokenNotFoundException e) {
+    public ResponseEntity<ErrorResponse> handleRefreshTokenNotFoundException(RefreshTokenNotFoundException e) {
         String message = resolveMessage(e.getMessage(), "🛠Refresh Token이 없습니다.");
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_NOT_FOUND", message);
     }

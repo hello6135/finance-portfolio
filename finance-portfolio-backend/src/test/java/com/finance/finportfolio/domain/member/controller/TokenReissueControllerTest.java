@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -65,13 +66,19 @@ class TokenReissueControllerTest {
 
         @Test
         @WithMockUser
-        @DisplayName("Refresh Token 쿠키가 없으면 401 Unauthorized를 반환한다")
+        @DisplayName("Refresh Token 쿠키가 없으면 401과 함께 에러 JSON을 반환한다")
         void reissue_Fail_NoCookie() throws Exception {
                 mockMvc.perform(post("/api/auth/reissue"))
                                 .andExpect(status().isUnauthorized())
-                                .andExpect(content().string("Refresh Token이 없습니다."));
+                                // 1. JSON 응답의 status 필드 확인
+                                .andExpect(jsonPath("$.status").value(401))
+                                // 2. 정의한 에러 코드(REFRESH_TOKEN_NOT_FOUND) 확인
+                                .andExpect(jsonPath("$.code").value("REFRESH_TOKEN_NOT_FOUND"))
+                                // 3. 메시지 내용 확인 (resolveMessage가 작동하므로 포함 여부로 확인하는 게 안전)
+                                .andExpect(jsonPath("$.message")
+                                                .value(org.hamcrest.Matchers.containsString("Refresh Token이 없습니다.")));
 
-                // 쿠키 없으면 서비스 호출 안 해야 함
+                // 쿠키 없으면 서비스 호출 안 해야 함 (검증 로직은 그대로 유지)
                 verify(memberService, never()).reissue(any());
         }
 
