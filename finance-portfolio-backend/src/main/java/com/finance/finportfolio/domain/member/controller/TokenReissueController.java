@@ -1,12 +1,13 @@
 package com.finance.finportfolio.domain.member.controller;
 
 import com.finance.finportfolio.domain.member.service.MemberService;
+import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +29,7 @@ public class TokenReissueController {
         String refreshToken = extractRefreshTokenFromCookie(request);
 
         if (refreshToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh Token이 없습니다.");
+            throw new RefreshTokenNotFoundException("Refresh Token이 없습니다.");
         }
 
         String[] tokens = memberService.reissue(refreshToken);
