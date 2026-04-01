@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import authStore from './store/authStore';
 import './App.css';
 
@@ -15,7 +15,6 @@ import ErrorPage from './pages/common/ErrorPage';
 import PrivateRoute from './components/auth/PrivateRoute';
 import { reissueMember } from './api/memberApi';
 
-
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -24,9 +23,11 @@ function App() {
     // 1. async 로직을 별도 함수로 분리
     const initAuth = async () => {
       const pathname = globalThis.location.pathname;
+      const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
 
       // 로그인/회원가입 페이지에서는 silent refresh 시도 안 함
-      if (pathname === '/login' || pathname === '/join') {
+      // 로그인 흔적도 없으면 silent refresh 시도 안 함
+      if (pathname === '/login' || pathname === '/join' || !hasAuthCookie) {
         setAuthChecked(true);
         return;
       }
@@ -41,10 +42,7 @@ function App() {
           console.log("자동 로그인 성공:", message);
           authStore.setToken(token);
         }
-      } catch (error) {
-        // 여기서 에러 처리는 '조용히' 실패하게 두는 것이 좋습니다.
-        // 세션이 없으면 그냥 로그아웃 상태로 시작하는 것이니까요.
-        console.warn(error);
+      } catch {
         authStore.clearToken();
       } finally {
         setAuthChecked(true);

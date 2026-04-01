@@ -31,9 +31,12 @@ const LoginPage = () => {
                 navigate('/posts');
             }
         } catch (error) {
-            const message = error.response?.data;
-
-            setError(message);
+            // 객체 아닌 문자열만 추출
+            const errorData = error.response?.data;
+            const errorMessage = typeof errorData === 'object'
+                ? errorData.message
+                : (errorData || "로그인에 실패했습니다..");
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
