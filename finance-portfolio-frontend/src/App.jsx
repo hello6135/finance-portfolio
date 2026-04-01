@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import authStore from './store/authStore';
-import { history } from './utils/history';
 import './App.css';
 
 import Layout from './components/layout/Layout';
@@ -19,13 +18,6 @@ import { reissueMember } from './api/memberApi';
 
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
-
-  // 네비게이션 객체 주입
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    history.navigate = navigate;
-  }, [navigate]);
 
   // 새로고침 혹은 사이트 처음 접속 시 실행
   useEffect(() => {
