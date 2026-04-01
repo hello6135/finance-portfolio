@@ -1,5 +1,6 @@
 import axios from 'axios';
 import authStore from '../store/authStore';
+import { history } from '../utils/history';
 
 // 1. axios 인스턴스 생성
 const axiosInstance = axios.create({
@@ -61,7 +62,7 @@ axiosInstance.interceptors.response.use(
             processPendingQueue(error); // 대기 중인 다른 요청들 종료
 
             // 리프레시 토큰도 만료된 것이므로 로그인 페이지로 이동
-            globalThis.location.href = '/login';
+            history.push('/login');
             throw error;
         }
 
@@ -82,9 +83,12 @@ axiosInstance.interceptors.response.use(
                 console.error(`[API Error] Status: ${status}, Message: ${message}`);
             }
 
-            if (status === 404 || status >= 500) {
+            // 로그인 요청(`/auth/login`)에서 발생한 에러는 비지니스 로직상 실패: 에러 페이지로 보내지 않음!
+            const isLoginRequest = originalRequest.url.includes('/auth/login');
+
+            if (!isLoginRequest && (status === 404 || status >= 500)) {
                 // 쿼리 스트링으로 데이터 전달
-                globalThis.location.href = `/error?status=${status}&message=${encodeURIComponent(message)}`;
+                history.push(`/error?status=${status}&message=${encodeURIComponent(message)}`);
             }
 
             throw error;
@@ -129,8 +133,8 @@ axiosInstance.interceptors.response.use(
             // 재발급 실패 = Refresh Token도 만료 → 강제 로그아웃
             authStore.clearToken();
             processPendingQueue(reissueError);
-            // 로그인 페이지로 이동 (router를 여기서 import하면 순환참조 위험 → window 사용)
-            globalThis.location.href = '/login';
+            // 로그인 페이지로 이동 
+            history.push('/login');
             throw reissueError;
         } finally {
             isRefreshing = false;

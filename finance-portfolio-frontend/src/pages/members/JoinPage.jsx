@@ -33,13 +33,22 @@ const JoinPage = () => {
             }
         } catch (error) {
             const status = error.response?.status;
-            const message = error.response?.data;
+            const errorData = error.response?.data; // message 대신 data라는 이름을 주로 씁니다.
 
-            if (status === 400 && typeof message === 'string') {
-                setError(message);
-            } else {
-                setError('서버 오류가 발생했습니다.');
+            let errorMessage = '서버 오류가 발생했습니다..'; // 기본 메시지
+
+            if (status >= 400 && status < 500) {
+                // 1. 서버가 객체로 보냈을 경우 ({ message: "..." })
+                if (errorData && typeof errorData === 'object' && errorData.message) {
+                    errorMessage = errorData.message;
+                }
+                // 2. 서버가 단순 문자열로 보냈을 경우 ("이미 존재하는...")
+                else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                }
             }
+
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
