@@ -15,7 +15,6 @@ import ErrorPage from './pages/common/ErrorPage';
 import PrivateRoute from './components/auth/PrivateRoute';
 import { reissueMember } from './api/memberApi';
 
-
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
