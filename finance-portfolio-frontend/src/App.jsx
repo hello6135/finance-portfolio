@@ -36,7 +36,7 @@ function App() {
         // Silent Refresh 시도
         const response = await reissueMember();
         // memberApi의 응답 구조에 따라 적절히 수정 (예: response.data)
-        const { status, message, token } = response;
+        const { status, token } = response;
 
         if ((status === 200 || status === 201) && token) {
           authStore.setToken(token);
