@@ -21,41 +21,36 @@ import java.util.Arrays;
 public class TokenReissueController {
 
     private final MemberService memberService;
+    private final TokenCookieManager tokenCookieManager;
 
+    // 토큰 재발급
     @PostMapping("/reissue")
     public ResponseEntity<String> reissue(HttpServletRequest request,
             HttpServletResponse response) {
 
-        String refreshToken = extractRefreshTokenFromCookie(request);
+        // 쿠키 추출
+        String refreshToken = tokenCookieManager.extractRefreshTokenFromCookie(request);
 
         if (refreshToken == null) {
+            // 혹시 모르니 토큰 즉시 만료
+            tokenCookieManager.expireAuthCookies(response);
             throw new RefreshTokenNotFoundException("Refresh Token이 없습니다.");
         }
 
-        String[] tokens = memberService.reissue(refreshToken);
-        String newAccessToken = tokens[0];
-        String newRefreshToken = tokens[1];
+        try {
+            String[] tokens = memberService.reissue(refreshToken);
+            String newAccessToken = tokens[0];
+            String newRefreshToken = tokens[1];
 
-        Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60);
-        response.addCookie(refreshCookie);
+            tokenCookieManager.setAuthCookies(response, newRefreshToken);
 
-        response.setHeader("Authorization", "Bearer " + newAccessToken);
+            response.setHeader("Authorization", "Bearer " + newAccessToken);
 
-        return ResponseEntity.ok("토큰이 재발급되었습니다.");
+            return ResponseEntity.ok("토큰이 재발급되었습니다.");
+        } catch (Exception e) {
+            tokenCookieManager.expireAuthCookies(response);
+            throw e; // 기존 예외 처리가 작동하도록 던짐
+        }
     }
 
-    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
-        if (request.getCookies() == null)
-            return null;
-
-        return Arrays.stream(request.getCookies())
-                .filter(cookie -> "refreshToken".equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
-    }
 }

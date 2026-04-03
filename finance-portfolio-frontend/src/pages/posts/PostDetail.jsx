@@ -37,7 +37,7 @@ const PostDetail = () => {
         }
     };
 
-    if (loading) return <div className="container mt-5">로딩 중...</div>;
+    if (loading) return <LoadingPage />;
     if (!post) return null;
 
     return (

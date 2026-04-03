@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getAllPosts, cleanUpFiles } from '../../api/postApi';
+import LoadingPage from '../common/LoadingPage';
 
 const PostList = () => {
     const [posts, setPosts] = useState([]);
@@ -33,13 +34,10 @@ const PostList = () => {
         }
     };
 
-    if (loading) return <div>로딩 중...</div>;
+    if (loading) return <LoadingPage />;
 
     return (
         <div className="container mt-5">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h2>금융 포트폴리오 게시판</h2>
-            </div>
 
             <div className="mb-3 d-flex gap-2">
                 <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>

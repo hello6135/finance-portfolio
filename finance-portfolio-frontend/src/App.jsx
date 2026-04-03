@@ -39,7 +39,6 @@ function App() {
         const { status, message, token } = response;
 
         if ((status === 200 || status === 201) && token) {
-          console.log("자동 로그인 성공:", message);
           authStore.setToken(token);
         }
       } catch {
@@ -56,7 +55,7 @@ function App() {
   if (!authChecked) {
     return (
       <div className="loading-screen">
-        로딩 중...
+        인증 검사 중...
       </div>
     );
   }

@@ -2,9 +2,7 @@ package com.finance.finportfolio.domain.member.controller;
 
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
-import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
 import com.finance.finportfolio.domain.member.service.MemberService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
+    private final TokenCookieManager tokenCookieManager;
 
     @PostMapping("/join")
     public ResponseEntity<String> join(@Valid @RequestBody MemberJoinRequestDto request) {
@@ -33,23 +32,23 @@ public class MemberController {
     public ResponseEntity<String> login(@Valid @RequestBody MemberLoginRequestDto loginRequest,
             HttpServletResponse response) {
 
-        // 1. 로그인 처리 → Access Token + Refresh Token 발급
-        String[] tokens = memberService.login(loginRequest);
-        String accessToken = tokens[0];
-        String refreshToken = tokens[1];
+        try {
+            // 1. 로그인 처리 → Access Token + Refresh Token 발급
+            String[] tokens = memberService.login(loginRequest);
+            String accessToken = tokens[0];
+            String refreshToken = tokens[1];
 
-        // 2. Refresh Token → HttpOnly 쿠키로 전달 (JS 접근 불가 → XSS 방어)
-        Cookie refreshCookie = new Cookie("refreshToken", refreshToken);
-        refreshCookie.setHttpOnly(true); // JS에서 접근 불가
-        refreshCookie.setSecure(true); // HTTPS 환경에서만 전송
-        refreshCookie.setPath("/"); // 모든 경로에서 쿠키 전송
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-        response.addCookie(refreshCookie);
+            // 2. 토큰 쿠키 전달 (리프레쉬 토큰, 로그인 플래그)
+            tokenCookieManager.setAuthCookies(response, refreshToken);
 
-        // 3. Access Token → 응답 헤더로 전달 (프론트에서 메모리에 저장)
-        response.setHeader("Authorization", "Bearer " + accessToken);
+            // 3. Access Token → 응답 헤더로 전달 (프론트에서 authStore 메모리에 저장)
+            response.setHeader("Authorization", "Bearer " + accessToken);
 
-        return ResponseEntity.ok("로그인이 완료되었습니다.");
+            return ResponseEntity.ok("로그인이 완료되었습니다.");
+        } catch (Exception e) {
+            tokenCookieManager.expireAuthCookies(response);
+            throw e; // 기존 예외 처리가 작동하도록 던짐
+        }
     }
 
     @PostMapping("/logout")
@@ -59,13 +58,8 @@ public class MemberController {
 
         memberService.logout(loginId);
 
-        // Refresh Token 쿠키 만료 처리
-        Cookie refreshCookie = new Cookie("refreshToken", null);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(0); // 즉시 만료
-        response.addCookie(refreshCookie);
+        // 2. 토큰 쿠키 만료 처리 (리프레쉬 토큰, 로그인 플래그)
+        tokenCookieManager.expireAuthCookies(response);
 
         return ResponseEntity.ok("로그아웃이 완료되었습니다.");
     }
