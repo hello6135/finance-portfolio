@@ -1,3 +1,5 @@
+// 엑세스 토큰 저장소(메모리)
+
 let accessToken = null;
 
 const authStore = {

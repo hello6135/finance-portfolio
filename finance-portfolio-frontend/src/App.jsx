@@ -36,10 +36,9 @@ function App() {
         // Silent Refresh 시도
         const response = await reissueMember();
         // memberApi의 응답 구조에 따라 적절히 수정 (예: response.data)
-        const { status, message, token } = response;
+        const { status, token } = response;
 
         if ((status === 200 || status === 201) && token) {
-          console.log("자동 로그인 성공:", message);
           authStore.setToken(token);
         }
       } catch {
@@ -56,7 +55,7 @@ function App() {
   if (!authChecked) {
     return (
       <div className="loading-screen">
-        로딩 중...
+        인증 검사 중...
       </div>
     );
   }

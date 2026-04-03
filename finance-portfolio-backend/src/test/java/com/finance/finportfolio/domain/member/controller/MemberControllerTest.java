@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -43,6 +44,9 @@ class MemberControllerTest {
 
     @MockBean
     private MemberService memberService;
+
+    @SpyBean
+    private TokenCookieManager tokenCookieManager;
 
     @MockBean
     private AuthenticationManager authenticationManager;
@@ -113,11 +117,14 @@ class MemberControllerTest {
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("로그인이 완료되었습니다."))
-                // Access Token → Authorization 헤더 확인
+                // Access Token 검증
                 .andExpect(header().string("Authorization", "Bearer accessToken"))
-                // Refresh Token → HttpOnly 쿠키 확인
+                // Refresh Token 쿠키 검증 (HttpOnly)
                 .andExpect(cookie().value("refreshToken", "refreshToken"))
-                .andExpect(cookie().httpOnly("refreshToken", true));
+                .andExpect(cookie().httpOnly("refreshToken", true))
+                // isLoggedIn 플래그 쿠키 검증 (JS 접근 가능)
+                .andExpect(cookie().value("isLoggedIn", "true"))
+                .andExpect(cookie().httpOnly("isLoggedIn", false));
     }
 
     @Test
@@ -147,20 +154,38 @@ class MemberControllerTest {
         verify(memberService, never()).login(any());
     }
 
+    // 로그인 try 실패 시 catch
+
+    @Test
+    @WithMockUser
+    @DisplayName("로그인 실패 시 기존 인증 정보를 지우기 위해 쿠키를 만료시킨다")
+    void login_Fail_And_Expire_Cookies() throws Exception {
+        MemberLoginRequestDto loginRequest = new MemberLoginRequestDto("wrongId", "wrongPw");
+        // 서비스에서 예외 발생 시나리오
+        given(memberService.login(any())).willThrow(new RuntimeException("로그인 실패"));
+
+        mockMvc.perform(post("/api/member/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isInternalServerError()) // 또는 설정한 ExceptionHandler의 응답값
+                // 실패 시에도 쿠키 만료 로직이 실행되었는지 확인
+                .andExpect(cookie().maxAge("refreshToken", 0))
+                .andExpect(cookie().maxAge("isLoggedIn", 0));
+    }
+
     // ── 로그아웃 ───────────────────────────────────────────────
 
     @Test
     @WithMockUser
     @DisplayName("로그아웃 성공 시 refreshToken 쿠키가 즉시 만료된다")
     void logout_Success() throws Exception {
-        MemberLoginRequestDto loginRequest = new MemberLoginRequestDto("testId", "password123");
-
         mockMvc.perform(post("/api/member/logout")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginRequest)))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().string("로그아웃이 완료되었습니다."))
-                // 쿠키 maxAge = 0 → 즉시 만료 확인
-                .andExpect(cookie().maxAge("refreshToken", 0));
+                // 모든 쿠키 maxAge = 0 확인
+                .andExpect(cookie().maxAge("refreshToken", 0))
+                .andExpect(cookie().maxAge("isLoggedIn", 0));
     }
+
 }

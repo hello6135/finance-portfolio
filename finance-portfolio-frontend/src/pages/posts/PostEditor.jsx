@@ -83,6 +83,7 @@ const PostEditor = () => {
                     <label htmlFor="content" className="form-label">내용</label>
                     <CKEditor
                         id="content"
+                        className=".ck-editor__wrapper"
                         editor={ClassicEditor}
                         data={content}
                         onReady={(editor) => {

@@ -48,9 +48,8 @@ const LoginPage = () => {
                 <div className="col-12 col-sm-8 col-md-5">
                     <div className="card shadow-sm">
                         <div className="card-body p-4">
-                            <h3 className="card-title text-center mb-1">📈 Finance Portfolio</h3>
                             <p className="text-center text-muted mb-4">
-                                로그인하여 포트폴리오를 관리하세요
+                                로그인 정보를 입력하세요
                             </p>
 
                             <form onSubmit={handleSubmit}>
