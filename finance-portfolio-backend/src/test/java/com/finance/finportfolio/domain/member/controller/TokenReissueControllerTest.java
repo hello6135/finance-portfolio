@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,11 +27,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hamcrest.Matchers;
 
 @WebMvcTest(TokenReissueController.class)
-@Import(SecurityConfig.class)
+@Import({ SecurityConfig.class, TokenCookieManager.class })
 class TokenReissueControllerTest {
 
         @Autowired
@@ -38,7 +41,7 @@ class TokenReissueControllerTest {
         @MockBean
         private MemberService memberService;
 
-        @MockBean
+        @SpyBean
         private TokenCookieManager tokenCookieManager;
 
         @MockBean
@@ -59,7 +62,8 @@ class TokenReissueControllerTest {
                 String newRefreshToken = "newRefreshToken";
 
                 // 1. 추출 로직 Mocking
-                given(tokenCookieManager.extractRefreshTokenFromCookie(any())).willReturn(oldRefreshToken);
+                org.mockito.Mockito.doReturn(oldRefreshToken)
+                                .when(tokenCookieManager).extractRefreshTokenFromCookie(any());
 
                 // 2. 서비스 로직 Mocking
                 given(memberService.reissue(oldRefreshToken))
@@ -91,7 +95,8 @@ class TokenReissueControllerTest {
         @DisplayName("Refresh Token 쿠키가 없으면 401 에러를 반환한다")
         void reissue_Fail_NoCookie() throws Exception {
                 // given
-                given(tokenCookieManager.extractRefreshTokenFromCookie(any())).willReturn(null);
+                org.mockito.Mockito.doReturn(null)
+                                .when(tokenCookieManager).extractRefreshTokenFromCookie(any());
 
                 // when & then
                 mockMvc.perform(post("/api/auth/reissue"))
@@ -108,8 +113,8 @@ class TokenReissueControllerTest {
         @WithMockUser
         @DisplayName("유효하지 않은 Refresh Token이면 400 Bad Request를 반환한다")
         void reissue_Fail_InvalidToken() throws Exception {
-                given(tokenCookieManager.extractRefreshTokenFromCookie(any()))
-                                .willReturn("invalidToken");
+                org.mockito.Mockito.doReturn("invalidToken")
+                                .when(tokenCookieManager).extractRefreshTokenFromCookie(any());
 
                 given(memberService.reissue(any()))
                                 .willThrow(new IllegalStateException("유효하지 않은 Refresh Token입니다."));
@@ -125,8 +130,8 @@ class TokenReissueControllerTest {
         @WithMockUser
         @DisplayName("탈취 감지 시 (토큰 불일치) 400 Bad Request를 반환한다")
         void reissue_Fail_TokenMismatch() throws Exception {
-                given(tokenCookieManager.extractRefreshTokenFromCookie(any()))
-                                .willReturn("stolenToken");
+                org.mockito.Mockito.doReturn("stolenToken")
+                                .when(tokenCookieManager).extractRefreshTokenFromCookie(any());
 
                 given(memberService.reissue(any()))
                                 .willThrow(new IllegalStateException("Refresh Token이 일치하지 않습니다."));
@@ -134,5 +139,51 @@ class TokenReissueControllerTest {
                 mockMvc.perform(post("/api/auth/reissue")
                                 .cookie(new Cookie("refreshToken", "stolenToken")))
                                 .andExpect(status().isBadRequest());
+        }
+
+        // -- TokenCookieManager의 extractRefreshTokenFromCookie 메서드 테스트 --
+
+        @Test
+        @DisplayName("쿠키 목록에 refreshToken이 있으면 해당 값을 추출한다")
+        void extractRefreshToken_Success() {
+                // given
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                Cookie refreshTokenCookie = new Cookie("refreshToken", "test-refresh-token");
+                Cookie otherCookie = new Cookie("other", "value");
+                request.setCookies(refreshTokenCookie, otherCookie);
+
+                // when
+                String result = tokenCookieManager.extractRefreshTokenFromCookie(request);
+
+                // then
+                assertThat(result).isEqualTo("test-refresh-token");
+        }
+
+        @Test
+        @DisplayName("쿠키 목록이 null이면 null을 반환한다")
+        void extractRefreshToken_NullCookies() {
+                // given
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                // request.setCookies를 하지 않음 (기본 null)
+
+                // when
+                String result = tokenCookieManager.extractRefreshTokenFromCookie(request);
+
+                // then
+                assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("refreshToken이라는 이름의 쿠키가 없으면 null을 반환한다")
+        void extractRefreshToken_NoTargetCookie() {
+                // given
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.setCookies(new Cookie("accessToken", "some-value"));
+
+                // when
+                String result = tokenCookieManager.extractRefreshTokenFromCookie(request);
+
+                // then
+                assertThat(result).isNull();
         }
 }
