@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { getAllPosts, cleanUpFiles } from '../../api/postApi';
 import LoadingPage from '../common/LoadingPage';
+import { navRef } from '../../utils/history';
 
 const PostList = () => {
     const [posts, setPosts] = useState([]);
@@ -34,6 +35,10 @@ const PostList = () => {
         }
     };
 
+    const toErrorPageTest = () => {
+        navRef.navigate('/error', { state: { status: '999', message: '메시지 전달' } });
+    }
+
     if (loading) return <LoadingPage />;
 
     return (
@@ -42,6 +47,7 @@ const PostList = () => {
             <div className="mb-3 d-flex gap-2">
                 <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>
                 <button onClick={onCleanUpFiles} className="btn btn-warning">미참조 이미지 삭제</button>
+                <button onClick={() => toErrorPageTest()} className="btn btn-warning">에러테스트</button>
             </div>
 
             <table className="table table-hover">
