@@ -53,7 +53,7 @@ const Navbar = () => {
                 {authStore.isLoggedIn() ? (
                     <>
                         <span className="text-light badge bg-secondary px-3 py-2">
-                            `사용자`님 {/* authStore.nickname 교체 예정 */}
+                            사용자님 {/* authStore.nickname 교체 예정 */}
                         </span>
                         <button onClick={onLogout} className="btn btn-outline-light btn-sm">
                             로그아웃
