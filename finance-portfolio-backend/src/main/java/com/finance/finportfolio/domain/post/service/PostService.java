@@ -6,6 +6,10 @@ import java.util.Objects;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +61,18 @@ public class PostService {
         return postRepository.findAll().stream()
                 .map(PostResponseDto::new)
                 .toList(); // JDK 21 최신 문법
+    }
+
+    // 게시글 페이지 조회(페이징), return: 게시글 목록
+    @Transactional(readOnly = true)
+    public Page<PostResponseDto> getPostList(int page, int size) {
+        // 최신순 정렬을 포함한 Pageable 객체 생성 (0부터 시작)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        Page<Post> postPage = postRepository.findAll(pageable);
+
+        // Entity를 DTO로 변환하여 반환
+        return postPage.map(PostResponseDto::new);
     }
 
     // ID로 게시글 조회, return: 게시글

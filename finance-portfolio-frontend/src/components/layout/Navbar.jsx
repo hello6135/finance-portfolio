@@ -15,7 +15,7 @@ const Navbar = () => {
                 alert(message);
             }
         } catch (error) {
-            const message = error.response?.data;
+            const message = error.response?.data || "로그아웃 중 오류가 발생했습니다."
             alert(message);
         } finally {
             // 로그아웃은 에러가 나도 클라이언트 상태는 정리
@@ -24,52 +24,89 @@ const Navbar = () => {
         }
     };
 
+    // 미참조 이미지 삭제 버튼(admin 용으로 변경 예정)
+    const onCleanUpFiles = async () => {
+        if (globalThis.confirm('미참조 이미지를 삭제하시겠습니까?')) {
+            try {
+                await cleanUpFiles();
+            } catch (error) {
+                console.error("삭제 중 오류 발생:", error);
+                alert("삭제에 실패했습니다.");
+            }
+        }
+    };
+
+    // 에러페이지 동작 테스트(admin 용으로 변경 예정)
+    const toErrorPageTest = () => {
+        navRef.navigate('/error', { state: { status: '999', message: '메시지 전달' } });
+    }
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-4"
-            style={{}}>
-            <span className="navbar-brand">Finance Portfolio Navigation</span>
-            <div className="d-flex gap-3">
-                <NavLink
-                    to="/posts"
-                    className={({ isActive }) =>
-                        'nav-link' + (isActive ? ' text-white fw-bold' : ' text-secondary')
-                    }
-                >
-                    게시판
+        <nav className="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow w-100 px-4">
+            <div className="container-fluid">
+                {/* 브랜드 로고 */}
+                <NavLink to="/" className="navbar-brand fw-bold">
+                    Finance Portfolio
                 </NavLink>
-                <NavLink
-                    to="/finance/fair"
-                    className={({ isActive }) =>
-                        'nav-link' + (isActive ? ' text-white fw-bold' : ' text-secondary')
-                    }
-                >
-                    금융계산기
-                </NavLink>
-            </div>
 
-            {/* 로그인 관련 */}
-            <div className="ms-auto d-flex align-items-center gap-3">
-                {authStore.isLoggedIn() ? (
-                    <>
-                        <span className="text-light badge bg-secondary px-3 py-2">
-                            사용자님 {/* authStore.nickname 교체 예정 */}
-                        </span>
-                        <button onClick={onLogout} className="btn btn-outline-light btn-sm">
-                            로그아웃
-                        </button>
-                    </>
-                ) : (
-                    <>
-                        <span className="text-secondary small">로그인이 필요합니다</span>
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="btn btn-primary btn-sm px-3"
-                        >
-                            로그인
-                        </button>
-                    </>
-                )}
+                {/* 햄버거 버튼 (모바일용) */}
+                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span className="navbar-toggler-icon"></span>
+                </button>
+
+                {/* 메뉴 영역 */}
+                <div className="collapse navbar-collapse" id="navbarNav">
+                    <ul className="navbar-nav me-auto gap-2">
+                        <li className="nav-item">
+                            <NavLink
+                                to="/posts"
+                                className={({ isActive }) => `nav-link ${isActive ? 'text-white fw-bold' : 'text-secondary'}`}
+                            >
+                                게시판
+                            </NavLink>
+                        </li>
+                        <li className="nav-item">
+                            <NavLink
+                                to="/finance/fair"
+                                className={({ isActive }) => `nav-link ${isActive ? 'text-white fw-bold' : 'text-secondary'}`}
+                            >
+                                금융계산기
+                            </NavLink>
+                        </li>
+                        <li className="nav-item">
+                            <NavLink
+                                to="/admin"
+                                className={({ isActive }) => `nav-link ${isActive ? 'text-white fw-bold' : 'text-secondary'}`}
+                            >
+                                관리자
+                            </NavLink>
+                        </li>
+                    </ul>
+
+                    {/* 우측 로그인 세션 */}
+                    <div className="d-flex align-items-center gap-3">
+                        {authStore.isLoggedIn() ? (
+                            <>
+                                <span className="badge bg-secondary px-3 py-2 fw-normal">
+                                    사용자님
+                                </span>
+                                <button
+                                    onClick={onLogout}
+                                    className="btn btn-outline-light btn-sm"
+                                >
+                                    로그아웃
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="btn btn-primary btn-sm px-4"
+                            >
+                                로그인
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
         </nav>
     );
