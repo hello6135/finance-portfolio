@@ -94,6 +94,12 @@ jacocoTestReport {
     }
 }
 
+sonarqube {
+    properties {
+        property "sonar.coverage.exclusions", "**/domain/post/**, **/*Dto*, **/*Request*, **/*Response*, **/*Entity*"
+    }
+}
+
 sonar {
     properties {
         property "sonar.projectKey", "hello6135_finance-portfolio"
