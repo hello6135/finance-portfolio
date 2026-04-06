@@ -83,13 +83,20 @@ jacocoTestReport {
 	afterEvaluate {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
-                "**/*DTO*",
+                "**/*Dto*",
                 "**/*Request*",
                 "**/*Response*",
                 "**/*Entity*",
+				"**/domain/post/**",
                 "**/FinalPortfolioApplication*" // 메인 클래스 제외
             ])
         }))
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.coverage.exclusions", "**/domain/post/**, **/*Dto*, **/*Request*, **/*Response*, **/*Entity*"
     }
 }
 

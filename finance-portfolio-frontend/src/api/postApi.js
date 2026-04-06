@@ -1,8 +1,16 @@
 import axiosInstance from './axios';
 
-// 1. 게시글 목록 조회 (GET /api/posts)
+// 1. 게시글 목록 전체 조회 (GET /api/posts)
 export const getAllPosts = async () => {
     const response = await axiosInstance.get('/posts');
+    return response.data; // List<PostResponseDto> 가 들어옴
+};
+
+// 1. 게시글 목록 조회 (GET /api/posts/list)
+export const getPostList = async (page, size) => {
+    const response = await axiosInstance.get('/posts/list', {
+        params: { page, size }
+    });
     return response.data; // List<PostResponseDto> 가 들어옴
 };
 

@@ -2,6 +2,7 @@ package com.finance.finportfolio.domain.post.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
@@ -33,6 +35,16 @@ public class PostController {
         List<PostResponseDto> posts = postService.getAllPosts();
         log.info("게시글 목록 조회 - 개수: {}", posts.size());
         return ResponseEntity.ok(posts); // JSON으로 반환
+    }
+
+    @GetMapping("/list") // posts 게시글 리스트 조회(페이징)
+    public ResponseEntity<Page<PostResponseDto>> getPosts(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        // 서비스 레이어에 page와 size를 전달하여 페이징 결과 수신
+        Page<PostResponseDto> postPage = postService.getPostList(page, size);
+        return ResponseEntity.ok(postPage);
     }
 
     @GetMapping("/{id}") // post detail, editor 페이지에서 조회
