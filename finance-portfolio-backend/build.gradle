@@ -87,7 +87,7 @@ jacocoTestReport {
                 "**/*Request*",
                 "**/*Response*",
                 "**/*Entity*",
-				"**/post/**",
+				"**/*Post*",
                 "**/FinalPortfolioApplication*" // 메인 클래스 제외
             ])
         }))
