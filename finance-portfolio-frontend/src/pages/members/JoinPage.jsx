@@ -55,12 +55,11 @@ const JoinPage = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <div className="row justify-content-center">
+        <div className="container min-vh-100 d-flex align-items-center">
+            <div className="row justify-content-center w-100">
                 <div className="col-12 col-sm-8 col-md-5">
                     <div className="card shadow-sm">
                         <div className="card-body p-4">
-                            <h3 className="card-title text-center mb-1">📈 Finance Portfolio</h3>
                             <p className="text-center text-muted mb-4">
                                 새 계정을 만들어보세요
                             </p>

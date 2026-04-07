@@ -30,13 +30,6 @@ public class PostController {
 
     private final PostService postService;
 
-    @GetMapping // posts 엔드포인트 접근 시 기본 GET
-    public ResponseEntity<List<PostResponseDto>> getAllPosts() {
-        List<PostResponseDto> posts = postService.getAllPosts();
-        log.info("게시글 목록 조회 - 개수: {}", posts.size());
-        return ResponseEntity.ok(posts); // JSON으로 반환
-    }
-
     @GetMapping("/list") // posts 게시글 리스트 조회(페이징)
     public ResponseEntity<Page<PostResponseDto>> getPosts(
             @RequestParam(value = "page", defaultValue = "0") int page,
