@@ -4,6 +4,7 @@ import com.finance.finportfolio.domain.member.controller.MemberController;
 import com.finance.finportfolio.domain.member.controller.TokenCookieManager;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.domain.post.controller.PostController;
+import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import org.junit.jupiter.api.DisplayName;
@@ -12,12 +13,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.List;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*; // 이 줄이 print()를 가능하게 합니다.
 
 /**
@@ -122,11 +128,14 @@ class SecurityConfigTest {
         @Test
         @DisplayName("GET /api/posts 는 인증 없이도 200을 반환한다 (permitAll)")
         void getAllPosts_WithoutAuth_Returns200() throws Exception {
-                // postService.getAllPosts()는 기본 Mock → 빈 리스트 반환
-                org.mockito.BDDMockito.given(postService.getAllPosts())
-                                .willReturn(java.util.List.of());
+                Page<PostResponseDto> emptyPage = new PageImpl<>(List.of());
+                // postService.getPostList(page, size)는 기본 Mock → 빈 리스트를 포함하는 Page 객체 반환
+                org.mockito.BDDMockito.given(postService.getPostList(0, 10))
+                                .willReturn(emptyPage);
 
-                mockMvc.perform(get("/api/posts"))
+                mockMvc.perform(get("/api/posts/list") // 엔드포인트 경로 확인 (/list 추가 여부)
+                                .param("page", "0")
+                                .param("size", "10"))
                                 .andExpect(status().isOk());
         }
 

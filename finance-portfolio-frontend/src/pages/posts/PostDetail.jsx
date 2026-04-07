@@ -42,7 +42,7 @@ const PostDetail = () => {
     if (!post) return null;
 
     return (
-        <div className="container mt-5">
+        <div className="container mt-3">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>게시글 상세</h2>
                 <span className="text-muted">ID: {post.id}</span>

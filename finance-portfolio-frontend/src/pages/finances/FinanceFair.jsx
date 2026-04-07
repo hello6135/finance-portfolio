@@ -43,33 +43,54 @@ const FairValueCalculator = () => {
     };
 
     return (
-        <div style={{ padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-            <h3>📈 적정주가 계산기 (고든 성장 모델)</h3>
-            <form onSubmit={handleCalculate}>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="dps">주당 배당금 (DPS): </label>
-                    <input id="dps" type="number" name="dps" value={form.dps} onChange={handleChange} required />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="expectedYield">기대 수익률 (%): </label>
-                    <input id="expectedYield" type="number" name="expectedYield" step="0.1" value={form.expectedYield} onChange={handleChange} required />
-                </div>
-                <div style={{ marginBottom: '10px' }}>
-                    <label htmlFor="growthRate">지속 성장률 (%): </label>
-                    <input id="growthRate" type="number" name="growthRate" step="0.1" value={form.growthRate} onChange={handleChange} required />
-                </div>
-                <button type="submit" disabled={loading}>
-                    {loading ? '계산 중...' : '계산하기'}
-                </button>
-            </form>
+        <div className="card shadow-sm mb-4">
+            <div className="card-header bg-primary text-white">
+                <h5 className="mb-0">📈 적정주가 계산기 (고든 성장 모델)</h5>
+            </div>
+            <div className="card-body">
+                <form onSubmit={handleCalculate}>
+                    <div className="mb-3">
+                        <label htmlFor="dps" className="form-label">주당 배당금 (DPS)</label>
+                        <div className="input-group">
+                            <input id="dps" type="number" name="dps" className="form-control"
+                                value={form.dps} onChange={handleChange} required placeholder="예: 5000" />
+                            <span className="input-group-text">원</span>
+                        </div>
+                    </div>
 
-            {/* 4. 결과 출력 영역 (ResponseDto 활용) */}
-            {result && (
-                <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#444' }}>
-                    <h4>결과: {result.fairValue.toLocaleString()} 원</h4>
-                    <p style={{ fontSize: '0.9em', color: '#bbb' }}>{result.message}</p>
-                </div>
-            )}
+                    <div className="mb-3">
+                        <label htmlFor="expectedYield" className="form-label">기대 수익률 (%)</label>
+                        <input id="expectedYield" type="number" name="expectedYield" step="0.1" className="form-control"
+                            value={form.expectedYield} onChange={handleChange} required placeholder="예: 8.5" />
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="growthRate" className="form-label">지속 성장률 (%)</label>
+                        <input id="growthRate" type="number" name="growthRate" step="0.1" className="form-control"
+                            value={form.growthRate} onChange={handleChange} required placeholder="예: 2.0" />
+                    </div>
+
+                    <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+                        {loading ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                계산 중...
+                            </>
+                        ) : '계산하기'}
+                    </button>
+                </form>
+
+                {/* 결과 출력 영역 */}
+                {result && (
+                    <div className="mt-4 p-3 bg-light border rounded text-center">
+                        <h6 className="text-muted mb-2">계산된 적정 주가</h6>
+                        <h3 className="text-primary fw-bold mb-1">
+                            {result.fairValue.toLocaleString()} <small className="text-dark">원</small>
+                        </h3>
+                        <p className="small text-secondary mb-0 mt-2">{result.message}</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

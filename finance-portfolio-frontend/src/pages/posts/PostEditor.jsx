@@ -65,7 +65,7 @@ const PostEditor = () => {
     };
 
     return (
-        <div className="container mt-5">
+        <div className="container mt-3">
             <h2>{id ? '게시글 수정' : '새 게시글 작성'}</h2>
             <div className="card p-4 shadow-sm">
                 <div className="mb-3">

@@ -44,7 +44,7 @@ const PostList = () => {
     if (loading) return <LoadingPage />;
 
     return (
-        <div className="container mt-5">
+        <div className="container mt-3">
             <div className="mb-3 d-flex gap-2">
                 <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>
             </div>
@@ -87,12 +87,14 @@ const PostList = () => {
                     </li>
 
                     {/* 페이지 번호: 현재 페이지 기준 유동적 노출 */}
-                    {[...Array(pageInfo.totalPages)].map((_, i) => {
-                        // 현재 페이지 앞뒤 2개씩만 노출 (예: 1 2 [3] 4 5)
+                    {Array.from({ length: pageInfo.totalPages }, (_, i) => {
+                        // 현재 페이지 앞뒤 2개씩만 노출
                         if (i >= pageInfo.currentPage - 2 && i <= pageInfo.currentPage + 2) {
                             return (
                                 <li key={i} className={`page-item ${pageInfo.currentPage === i ? 'active' : ''}`}>
-                                    <button className="page-link" onClick={() => fetchPostList(i)}>{i + 1}</button>
+                                    <button className="page-link" onClick={() => fetchPostList(i)}>
+                                        {i + 1}
+                                    </button>
                                 </li>
                             );
                         }

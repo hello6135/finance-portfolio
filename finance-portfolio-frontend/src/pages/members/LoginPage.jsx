@@ -43,8 +43,8 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <div className="row justify-content-center">
+        <div className="container min-vh-100 d-flex align-items-center">
+            <div className="row justify-content-center w-100">
                 <div className="col-12 col-sm-8 col-md-5">
                     <div className="card shadow-sm">
                         <div className="card-body p-4">

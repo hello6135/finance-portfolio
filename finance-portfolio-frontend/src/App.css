@@ -12,11 +12,6 @@
   transition: filter 300ms;
 }
 
-body {
-  padding-top: 80px;
-  background-color: #f8f9fa;
-}
-
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }

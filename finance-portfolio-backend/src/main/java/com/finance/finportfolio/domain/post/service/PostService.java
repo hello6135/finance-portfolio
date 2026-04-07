@@ -55,14 +55,6 @@ public class PostService {
         return !doc.select("img").isEmpty();
     }
 
-    // 모든 게시글 조회, return: 게시글 목록
-    @Transactional(readOnly = true)
-    public List<PostResponseDto> getAllPosts() {
-        return postRepository.findAll().stream()
-                .map(PostResponseDto::new)
-                .toList(); // JDK 21 최신 문법
-    }
-
     // 게시글 페이지 조회(페이징), return: 게시글 목록
     @Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(int page, int size) {
