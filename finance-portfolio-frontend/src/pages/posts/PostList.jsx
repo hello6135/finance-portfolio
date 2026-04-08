@@ -44,11 +44,17 @@ const PostList = () => {
     if (loading) return <LoadingPage />;
 
     return (
-        <div className="container mt-3">
-            <div className="mb-3 d-flex gap-2">
+        // 페이지
+        <div className="container py-4">
+            {/* 페이지 헤더 */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="mb-0">카테고리 명(카테고리 추가 후 동적으로 변경)</h2>
                 <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>
             </div>
+
+            {/* 페이지 바디: 테이블 */}
             <table className="table table-hover">
+                {/* 테이블 헤더 */}
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -56,6 +62,7 @@ const PostList = () => {
                         <th>시간</th>
                     </tr>
                 </thead>
+                {/* 테이블 바디 */}
                 <tbody>
                     {posts.length > 0 ? (
                         posts.map((post) => (
@@ -78,7 +85,7 @@ const PostList = () => {
                     )}
                 </tbody>
             </table>
-            {/* 페이징 네비게이션 추가 */}
+            {/* 페이징 네비게이션*/}
             <nav>
                 <ul className="pagination justify-content-center">
                     {/* 이전 버튼 */}

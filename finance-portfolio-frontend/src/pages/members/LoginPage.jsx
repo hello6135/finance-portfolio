@@ -43,72 +43,68 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="container min-vh-100 d-flex align-items-center">
-            <div className="row justify-content-center w-100">
-                <div className="col-12 col-sm-8 col-md-5">
-                    <div className="card shadow-sm">
-                        <div className="card-body p-4">
-                            <p className="text-center text-muted mb-4">
-                                로그인 정보를 입력하세요
-                            </p>
+        <div className="d-flex align-items-center justify-content-center flex-grow-1">
+            <div className="w-100" style={{ maxWidth: '420px', padding: '0 1rem' }}>
+                {/* 로그인 카드 */}
+                <div className="card shadow card-theme-custom">
+                    <div className="card-body p-4">
+                        <h4 className="card-title text-center mb-1" style={{ paddingBottom: '1rem' }}>로그인</h4>
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label htmlFor="loginId" className="form-label">아이디</label>
+                                <input
+                                    id="loginId"
+                                    type="text"
+                                    name="loginId"
+                                    className="form-control"
+                                    value={form.loginId}
+                                    onChange={handleChange}
+                                    placeholder="아이디를 입력하세요"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
 
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-3">
-                                    <label htmlFor="loginId" className="form-label">아이디</label>
-                                    <input
-                                        id="loginId"
-                                        type="text"
-                                        name="loginId"
-                                        className="form-control"
-                                        value={form.loginId}
-                                        onChange={handleChange}
-                                        placeholder="아이디를 입력하세요"
-                                        required
-                                        autoFocus
-                                    />
+                            <div className="mb-3">
+                                <label htmlFor="password" className="form-label">비밀번호</label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    name="password"
+                                    className="form-control"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    placeholder="비밀번호를 입력하세요"
+                                    required
+                                />
+                            </div>
+
+                            {error && (
+                                <div className="alert alert-danger py-2 mb-3" role="alert">
+                                    {error}
                                 </div>
+                            )}
 
-                                <div className="mb-3">
-                                    <label htmlFor="password" className="form-label">비밀번호</label>
-                                    <input
-                                        id="password"
-                                        type="password"
-                                        name="password"
-                                        className="form-control"
-                                        value={form.password}
-                                        onChange={handleChange}
-                                        placeholder="비밀번호를 입력하세요"
-                                        required
-                                    />
-                                </div>
+                            <button
+                                type="submit"
+                                className="btn btn-primary w-100"
+                                disabled={loading}
+                            >
+                                {loading ? '로그인 중...' : '로그인'}
+                            </button>
+                        </form>
 
-                                {error && (
-                                    <div className="alert alert-danger py-2" role="alert">
-                                        {error}
-                                    </div>
-                                )}
+                        <hr />
 
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary w-100"
-                                    disabled={loading}
-                                >
-                                    {loading ? '로그인 중...' : '로그인'}
-                                </button>
-                            </form>
-
-                            <hr />
-
-                            <p className="text-center text-muted mb-0">
-                                계정이 없으신가요?{' '}
-                                <button
-                                    className="btn btn-link p-0 align-baseline"
-                                    onClick={() => navigate('/join')}
-                                >
-                                    회원가입
-                                </button>
-                            </p>
-                        </div>
+                        <p className="text-center mb-0" style={{ fontSize: '0.9rem' }}>
+                            계정이 없으신가요?{' '}
+                            <button
+                                className="btn btn-link p-0 align-baseline"
+                                onClick={() => navigate('/join')}
+                            >
+                                회원가입
+                            </button>
+                        </p>
                     </div>
                 </div>
             </div>

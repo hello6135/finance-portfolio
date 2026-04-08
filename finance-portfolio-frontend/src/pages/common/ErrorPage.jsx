@@ -18,12 +18,15 @@ const ErrorPage = ({ status: propStatus, message: propMessage }) => {
     console.log(location.state?.status);
 
     return (
-        <div className="container mt-5 text-center">
-            <h2>{status}</h2>
-            <p>{message}</p>
-            <button onClick={() => navigate('/')} className="btn btn-secondary">
-                홈으로
-            </button>
+        <div className="d-flex align-items-center justify-content-center"
+            style={{ minHeight: 'calc(100vh - 56px)' }}>
+            <div className="text-center">
+                <h1 className="display-1 fw-bold text-muted">{status}</h1>
+                <p className="fs-5 mb-4">{message}</p>
+                <button onClick={() => navigate('/')} className="btn btn-primary">
+                    홈으로
+                </button>
+            </div>
         </div>
     );
 };
