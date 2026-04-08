@@ -65,8 +65,11 @@ const PostEditor = () => {
     };
 
     return (
-        <div className="container mt-3">
-            <h2>{id ? '게시글 수정' : '새 게시글 작성'}</h2>
+        <div className="container py-4">
+            {/* 페이지 헤더 */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="mb-0">{id ? '게시글 수정' : '새 게시글 작성'}</h2>
+            </div>
             <div className="card p-4 shadow-sm">
                 <div className="mb-3">
                     <label htmlFor="title" className="form-label">제목</label>

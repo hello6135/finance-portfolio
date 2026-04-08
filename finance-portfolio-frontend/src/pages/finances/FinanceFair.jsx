@@ -43,9 +43,11 @@ const FairValueCalculator = () => {
     };
 
     return (
-        <div className="card shadow-sm mb-4">
-            <div className="card-header bg-primary text-white">
-                <h5 className="mb-0">📈 적정주가 계산기 (고든 성장 모델)</h5>
+
+        <div className="container py-4">
+            {/* 페이지 헤더 */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h2 className="mb-0">📈 적정주가 계산기 (고든 성장 모델)</h2>
             </div>
             <div className="card-body">
                 <form onSubmit={handleCalculate}>

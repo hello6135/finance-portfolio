@@ -55,91 +55,90 @@ const JoinPage = () => {
     };
 
     return (
-        <div className="container min-vh-100 d-flex align-items-center">
-            <div className="row justify-content-center w-100">
-                <div className="col-12 col-sm-8 col-md-5">
-                    <div className="card shadow-sm">
-                        <div className="card-body p-4">
-                            <p className="text-center text-muted mb-4">
-                                새 계정을 만들어보세요
-                            </p>
+        <div className="d-flex align-items-center justify-content-center flex-grow-1">
+            <div className="w-100" style={{ maxWidth: '420px', padding: '0 1rem' }}>
+                {/* 회원가입 카드 */}
+                <div className="card shadow card-theme-custom">
+                    <div className="card-body p-4">
+                        <h4 className="card-title text-center mb-1">회원가입</h4>
 
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-3">
-                                    <label htmlFor="loginId" className="form-label">아이디</label>
-                                    <input
-                                        id="loginId"
-                                        type="text"
-                                        name="loginId"
-                                        className="form-control"
-                                        value={form.loginId}
-                                        onChange={handleChange}
-                                        placeholder="아이디를 입력하세요"
-                                        required
-                                        autoFocus
-                                    />
+                        <hr />
+
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label htmlFor="loginId" className="form-label">아이디</label>
+                                <input
+                                    id="loginId"
+                                    type="text"
+                                    name="loginId"
+                                    className="form-control"
+                                    value={form.loginId}
+                                    onChange={handleChange}
+                                    placeholder="아이디를 입력하세요"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="mb-3">
+                                <label htmlFor="password" className="form-label">
+                                    비밀번호
+                                    <span className="text-muted ms-1" style={{ fontSize: '0.8rem' }}>
+                                        (4자 이상)
+                                    </span>
+                                </label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    name="password"
+                                    className="form-control"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    placeholder="비밀번호를 입력하세요"
+                                    required
+                                />
+                            </div>
+
+                            <div className="mb-3">
+                                <label htmlFor="nickname" className="form-label">닉네임</label>
+                                <input
+                                    id="nickname"
+                                    type="text"
+                                    name="nickname"
+                                    className="form-control"
+                                    value={form.nickname}
+                                    onChange={handleChange}
+                                    placeholder="닉네임을 입력하세요"
+                                    required
+                                />
+                            </div>
+
+                            {error && (
+                                <div className="alert alert-danger py-2" role="alert">
+                                    {error}
                                 </div>
+                            )}
 
-                                <div className="mb-3">
-                                    <label htmlFor="password" className="form-label">
-                                        비밀번호
-                                        <span className="text-muted ms-1" style={{ fontSize: '0.8rem' }}>
-                                            (4자 이상)
-                                        </span>
-                                    </label>
-                                    <input
-                                        id="password"
-                                        type="password"
-                                        name="password"
-                                        className="form-control"
-                                        value={form.password}
-                                        onChange={handleChange}
-                                        placeholder="비밀번호를 입력하세요"
-                                        required
-                                    />
-                                </div>
+                            <button
+                                type="submit"
+                                className="btn btn-primary w-100"
+                                disabled={loading}
+                            >
+                                {loading ? '처리 중...' : '회원가입'}
+                            </button>
+                        </form>
 
-                                <div className="mb-3">
-                                    <label htmlFor="nickname" className="form-label">닉네임</label>
-                                    <input
-                                        id="nickname"
-                                        type="text"
-                                        name="nickname"
-                                        className="form-control"
-                                        value={form.nickname}
-                                        onChange={handleChange}
-                                        placeholder="닉네임을 입력하세요"
-                                        required
-                                    />
-                                </div>
+                        <hr />
 
-                                {error && (
-                                    <div className="alert alert-danger py-2" role="alert">
-                                        {error}
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary w-100"
-                                    disabled={loading}
-                                >
-                                    {loading ? '처리 중...' : '회원가입'}
-                                </button>
-                            </form>
-
-                            <hr />
-
-                            <p className="text-center text-muted mb-0">
-                                이미 계정이 있으신가요?{' '}
-                                <button
-                                    className="btn btn-link p-0 align-baseline"
-                                    onClick={() => navigate('/login')}
-                                >
-                                    로그인
-                                </button>
-                            </p>
-                        </div>
+                        <p className="text-center mb-0">
+                            이미 계정이 있으신가요?{' '}
+                            <button
+                                className="btn btn-link p-0 align-baseline"
+                                onClick={() => navigate('/login')}
+                            >
+                                로그인
+                            </button>
+                        </p>
                     </div>
                 </div>
             </div>
