@@ -60,7 +60,10 @@ const JoinPage = () => {
                 {/* 회원가입 카드 */}
                 <div className="card shadow card-theme-custom">
                     <div className="card-body p-4">
-                        <h4 className="card-title text-center mb-1" style={{ paddingBottom: '1rem' }}>회원가입</h4>
+                        <h4 className="card-title text-center mb-1">회원가입</h4>
+
+                        <hr />
+
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
                                 <label htmlFor="loginId" className="form-label">아이디</label>
