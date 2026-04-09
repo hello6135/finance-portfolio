@@ -24,23 +24,6 @@ const Navbar = () => {
         }
     };
 
-    // 미참조 이미지 삭제 버튼(admin 용으로 변경 예정)
-    const onCleanUpFiles = async () => {
-        if (globalThis.confirm('미참조 이미지를 삭제하시겠습니까?')) {
-            try {
-                await cleanUpFiles();
-            } catch (error) {
-                console.error("삭제 중 오류 발생:", error);
-                alert("삭제에 실패했습니다.");
-            }
-        }
-    };
-
-    // 에러페이지 동작 테스트(admin 용으로 변경 예정)
-    const toErrorPageTest = () => {
-        navref.navigate('/error', { state: { status: '999', message: '메시지 전달' } });
-    }
-
     // 활성화 된 페이지 표시
     const navLinkClass = ({ isActive }) => {
         return `nav-link ${isActive ? 'text-white fw-bold' : 'text-secondary'}`;
