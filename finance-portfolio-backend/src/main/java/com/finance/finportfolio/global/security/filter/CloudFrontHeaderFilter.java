@@ -4,7 +4,12 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
+
 import java.io.IOException;
 
 // Component에 등록하면 호출과 무관하게 헤더 검증 로직이 작동하는 문제가 있음!: @Value 사용 불가
@@ -20,9 +25,9 @@ public class CloudFrontHeaderFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         try {
             // 1. OPTIONS 요청(CORS) 무조건 통과
@@ -50,7 +55,7 @@ public class CloudFrontHeaderFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
         } catch (Exception e) {
-            throw new RuntimeException("CloudFront Header Filter 초기화 실패: " + e.getMessage());
+            throw new CloudFrontConfigurationException("CloudFront Header Filter 초기화 실패: " + e.getMessage());
         }
 
     }

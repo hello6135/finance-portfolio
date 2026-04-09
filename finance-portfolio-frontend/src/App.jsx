@@ -14,6 +14,7 @@ import JoinPage from './pages/members/JoinPage';
 import ErrorPage from './pages/common/ErrorPage';
 import PrivateRoute from './components/auth/PrivateRoute';
 import { reissueMember } from './api/memberApi';
+import LoadingPage from './pages/common/LoadingPage';
 
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -53,11 +54,7 @@ function App() {
 
 
   if (!authChecked) {
-    return (
-      <div className="loading-screen">
-        인증 검사 중...
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   return (

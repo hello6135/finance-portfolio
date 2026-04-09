@@ -47,7 +47,7 @@ const Navbar = () => {
     }
 
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark card-theme-custom fixed-top shadow">
+        <nav className="navbar navbar-expand-sm navbar-dark card-theme-custom fixed-top shadow">
             <div className="container">
                 {/* 브랜드 로고 */}
                 <NavLink to="/" className="navbar-brand fw-bold">
@@ -69,7 +69,7 @@ const Navbar = () => {
 
                 {/* 메뉴 영역 */}
                 <div className="collapse navbar-collapse" id="navbarNav">
-                    <ul className="navbar-nav me-auto gap-2">
+                    <ul className="navbar-nav me-auto gap-2 ">
                         <li className="nav-item">
                             <NavLink to="/posts" className={navLinkClass}>
                                 게시판
@@ -86,6 +86,8 @@ const Navbar = () => {
                             </NavLink>
                         </li>
                     </ul>
+
+                    <br />
 
                     {/* 우측 로그인 세션 */}
                     <div className="d-flex align-items-center gap-3">
