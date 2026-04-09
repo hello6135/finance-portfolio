@@ -6,14 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-
-import com.finance.finportfolio.domain.member.controller.MemberController;
-import com.finance.finportfolio.domain.member.controller.TokenCookieManager;
 import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
 
 import java.io.IOException;
@@ -25,8 +19,8 @@ import static org.mockito.Mockito.*;
 class CloudFrontHeaderFilterTest {
 
     private CloudFrontHeaderFilter filter;
-    private final String HEADER_NAME = "X-Custom-CF-Header";
-    private final String HEADER_VALUE = "secret-value-123";
+    private static final String HEADER_NAME = "X-Custom-CF-Header";
+    private static final String HEADER_VALUE = "secret-value-123";
 
     @BeforeEach
     void setUp() {
@@ -106,20 +100,15 @@ class CloudFrontHeaderFilterTest {
     void throwCloudFrontConfigurationException() {
         // given
         String originalErrorMessage = "Access Key is missing";
-        String expectedPrefix = "CloudFront Header Filter 초기화 실패: ";
+        String expectedMessage = "CloudFront Header Filter 초기화 실패: " + originalErrorMessage;
 
         // when & then
+        // 람다 내부 로직을 예외를 직접 던지는 단일 호출로 리팩토링
         assertThatThrownBy(() -> {
-            try {
-                // 의도적으로 예외 상황 발생
-                throw new RuntimeException(originalErrorMessage);
-            } catch (Exception e) {
-                // 작성하신 catch 블록 로직
-                throw new CloudFrontConfigurationException(expectedPrefix + e.getMessage());
-            }
+            throw new CloudFrontConfigurationException("CloudFront Header Filter 초기화 실패: " + originalErrorMessage);
         })
                 .isInstanceOf(CloudFrontConfigurationException.class)
-                .hasMessage(expectedPrefix + originalErrorMessage);
+                .hasMessage(expectedMessage);
     }
 
     @Test
