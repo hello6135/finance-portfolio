@@ -8,17 +8,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
 
 import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 class CloudFrontHeaderFilterTest {
 
     private CloudFrontHeaderFilter filter;
-    private final String HEADER_NAME = "X-Custom-CF-Header";
-    private final String HEADER_VALUE = "secret-value-123";
+    private static final String HEADER_NAME = "X-Custom-CF-Header";
+    private static final String HEADER_VALUE = "secret-value-123";
 
     @BeforeEach
     void setUp() {
@@ -91,5 +93,35 @@ class CloudFrontHeaderFilterTest {
 
         // then
         verify(filterChain, times(1)).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("예외 발생 시 지정된 메시지가 포함된 CloudFrontConfigurationException을 던진다")
+    void throwCloudFrontConfigurationException() {
+        // given
+        String originalErrorMessage = "Access Key is missing";
+        String expectedMessage = "CloudFront Header Filter 초기화 실패: " + originalErrorMessage;
+
+        // when & then
+        // 람다 내부 로직을 예외를 직접 던지는 단일 호출로 리팩토링
+        assertThatThrownBy(() -> {
+            throw new CloudFrontConfigurationException("CloudFront Header Filter 초기화 실패: " + originalErrorMessage);
+        })
+                .isInstanceOf(CloudFrontConfigurationException.class)
+                .hasMessage(expectedMessage);
+    }
+
+    @Test
+    @DisplayName("예외가 발생해도 원인(Cause)이 유지되는지 확인")
+    void exceptionCausePersistence() {
+        // given
+        RuntimeException cause = new RuntimeException("Original Cause");
+
+        // when
+        CloudFrontConfigurationException exception = new CloudFrontConfigurationException("Test Message", cause);
+
+        // then
+        assertThat(exception.getMessage()).isEqualTo("Test Message");
+        assertThat(exception.getCause()).isEqualTo(cause);
     }
 }

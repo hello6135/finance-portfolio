@@ -82,7 +82,7 @@ const JoinPage = () => {
 
                             <div className="mb-3">
                                 <label htmlFor="password" className="form-label">
-                                    비밀번호
+                                    비밀번호{' '}
                                     <span className="text-muted ms-1" style={{ fontSize: '0.8rem' }}>
                                         (4자 이상)
                                     </span>

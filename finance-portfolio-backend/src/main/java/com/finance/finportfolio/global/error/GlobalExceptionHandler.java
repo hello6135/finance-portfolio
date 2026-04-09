@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
 import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
 import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
 
@@ -112,6 +113,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDuplicateException(DuplicateResourceException e) {
         String message = resolveMessage(e.getMessage(), "🛠이미 존재하는 리소스입니다.");
         return buildErrorResponse(HttpStatus.CONFLICT, "DUPLICATE_RESOURCE", message);
+    }
+
+    // 500 INTERNAL_SERVER_ERROR
+    // CloudFrontConfigurationException: CloudFront Header Filter 쪽 런타임 에러.
+    @ExceptionHandler(CloudFrontConfigurationException.class)
+    public ResponseEntity<ErrorResponse> handleCloudFrontConfigurationException(Exception e) {
+        log.error("CloudFront 설정 에러 발생!", e.getMessage(), e);
+        String message = resolveMessage(e.getMessage(), "시스템 보안 설정에 문제가 발생했습니다.");
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "CLOUDFRONT_CONFIG_ERROR", message);
     }
 
     // 500 INTERNAL_SERVER_ERROR
