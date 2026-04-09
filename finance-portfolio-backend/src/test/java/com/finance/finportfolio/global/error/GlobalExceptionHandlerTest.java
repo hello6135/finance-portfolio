@@ -43,6 +43,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("UsernameNotFoundException 발생 시 401 에러와 전용 코드를 반환한다")
+    void handleUsernameNotFoundExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/user-not-found"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("🛠존재하지 않는 사용자입니다."))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("BadCredentialsException 발생 시 401 에러와 전용 코드를 반환한다")
     void handleBadCredentialsTest() throws Exception {
         mockMvc.perform(get("/test/bad-credentials"))
@@ -72,6 +83,17 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.code").value("DUPLICATE_RESOURCE"))
                 .andExpect(jsonPath("$.message").value("이미 가입된 이메일입니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("CloudFront 설정 에러 발생 시 500 에러를 반환한다")
+    void handleCloudFrontConfigurationExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/cloudfront-config-error"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.code").value("CLOUDFRONT_CONFIG_ERROR"))
+                .andExpect(jsonPath("$.message").value("시스템 보안 설정에 문제가 발생했습니다."))
                 .andDo(print());
     }
 
