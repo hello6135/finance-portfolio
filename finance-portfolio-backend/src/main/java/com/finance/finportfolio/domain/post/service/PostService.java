@@ -13,12 +13,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.finance.finportfolio.domain.category.entity.Category;
+import com.finance.finportfolio.domain.category.repository.CategoryRepository;
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
 import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
 import com.finance.finportfolio.domain.post.entity.Post;
 import com.finance.finportfolio.domain.post.repository.PostRepository;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,12 +39,9 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final FileService fileService;
+    private final CategoryRepository categoryRepository;
 
     // Jsoup 소독 메서드
-    private String cleanText(String text) {
-        return (text == null || text.isEmpty()) ? "" : Jsoup.clean(text, Safelist.none());
-    }
-
     private String cleanHtml(String text) {
         return (text == null || text.isEmpty()) ? "" : Jsoup.clean(text, HTML_SAFE_LIST);
     }
@@ -85,12 +85,11 @@ public class PostService {
         String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
-        Post post = Post.builder()
-                .author(cleanText(requestDto.author()))
-                .title(cleanText(requestDto.title()))
-                .content(cleanedContent)
-                .hasImage(hasImage)
-                .build();
+        // 카테고리 존재 여부 확인 및 조회
+        Category category = categoryRepository.findById(requestDto.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
+
+        Post post = requestDto.toEntity(category, cleanedContent, hasImage);
 
         return postRepository.save(post).getId();
     }
@@ -106,8 +105,11 @@ public class PostService {
         String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
+        Category category = categoryRepository.findById(requestDto.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
+
         // 여기서 엔티티 값 바꿔서 스냅샷이랑 차이나게 -> 더티체킹으로 DB update
-        post.update(cleanText(requestDto.title()), cleanedContent, hasImage);
+        post.update(category, requestDto.title(), cleanedContent, hasImage);
     }
 
     // 게시글 삭제

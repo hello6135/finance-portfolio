@@ -6,13 +6,18 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.finance.finportfolio.domain.category.entity.Category;
+
 // JPA
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners; //JPA 시간용
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Builder;
 // Lombok
@@ -29,6 +34,12 @@ public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Category DB와 JOIN
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     private String author;
 
     private String title;
@@ -43,14 +54,16 @@ public class Post {
     private LocalDateTime createdAt;
 
     @Builder
-    private Post(String author, String title, String content, boolean hasImage) {
+    private Post(Category category, String author, String title, String content, boolean hasImage) {
+        this.category = category;
         this.author = author;
         this.title = title;
         this.content = content;
         this.hasImage = hasImage;
     }
 
-    public void update(String title, String content, boolean hasImage) {
+    public void update(Category category, String title, String content, boolean hasImage) {
+        this.category = category;
         this.title = title;
         this.content = content;
         this.hasImage = hasImage;

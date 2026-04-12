@@ -1,8 +1,11 @@
 package com.finance.finportfolio.domain.post.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.NonNull;
 
 import com.finance.finportfolio.domain.post.entity.Post;
@@ -17,4 +20,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @NonNull
     Page<Post> findAll(@NonNull Pageable pageable);
+
+    // n+1 방지
+    @Query("select p from Post p join fetch p.category")
+    List<Post> findAllWithCategory();
 }

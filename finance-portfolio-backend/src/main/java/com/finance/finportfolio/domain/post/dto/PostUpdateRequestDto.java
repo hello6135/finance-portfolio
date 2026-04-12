@@ -4,7 +4,8 @@ import lombok.Builder;
 
 @Builder
 public record PostUpdateRequestDto(
-                String title,
-                String content,
-                Boolean hasImage) {
+        Long categoryId,
+        String title,
+        String content,
+        Boolean hasImage) {
 }
