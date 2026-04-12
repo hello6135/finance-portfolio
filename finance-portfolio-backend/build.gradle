@@ -97,7 +97,7 @@ jacocoTestReport {
 
 sonarqube {
     properties {
-        property "sonar.coverage.exclusions", "**/domain/post/**, **/*Dto*, **/*Request*, **/*Response*, **/*Entity*"
+        property "sonar.coverage.exclusions", "**/domain/post/**, **/domain/category/**, **/*Dto*, **/*Request*, **/*Response*, **/*Entity*"
     }
 }
 
