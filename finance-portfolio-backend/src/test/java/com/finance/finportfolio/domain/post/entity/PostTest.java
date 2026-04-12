@@ -3,6 +3,8 @@ package com.finance.finportfolio.domain.post.entity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.finance.finportfolio.domain.category.entity.Category;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostTest {
@@ -42,12 +44,17 @@ class PostTest {
                 .hasImage(false)
                 .build();
 
+        Category newCategory = Category.builder()
+                .name("수정된 카테고리")
+                .sortOrder(2)
+                .build();
+
         String newTitle = "수정된 제목";
         String newContent = "<h1>수정된 내용</h1>";
         boolean newHasImage = true;
 
         // when
-        post.update(newTitle, newContent, newHasImage);
+        post.update(newCategory, newTitle, newContent, newHasImage);
 
         // then
         assertThat(post.getTitle()).isEqualTo(newTitle);
