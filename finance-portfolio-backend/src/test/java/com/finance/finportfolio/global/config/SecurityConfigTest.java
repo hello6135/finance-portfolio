@@ -1,5 +1,9 @@
 package com.finance.finportfolio.global.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finance.finportfolio.domain.category.controller.CategoryController;
+import com.finance.finportfolio.domain.category.dto.CategoryRequestDto;
+import com.finance.finportfolio.domain.category.service.CategoryService;
 import com.finance.finportfolio.domain.member.controller.MemberController;
 import com.finance.finportfolio.domain.member.controller.TokenCookieManager;
 import com.finance.finportfolio.domain.member.service.MemberService;
@@ -16,15 +20,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 
 import java.util.List;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*; // 이 줄이 print()를 가능하게 합니다.
 
 /**
  * SecurityConfig의 authenticationEntryPoint 동작 검증 테스트
@@ -34,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
  * 2. 공개 허용 경로(GET /api/posts/**)는 인증 없이 통과
  * 3. 인증 후 보호된 리소스 접근 가능
  */
-@WebMvcTest({ PostController.class, MemberController.class })
+@WebMvcTest({ PostController.class, MemberController.class, CategoryController.class })
 @Import(SecurityConfig.class)
 class SecurityConfigTest {
 
@@ -53,10 +60,16 @@ class SecurityConfigTest {
         private MemberService memberService;
 
         @MockitoBean
+        private CategoryService categoryService;
+
+        @MockitoBean
         private JwtTokenProvider jwtTokenProvider;
 
         @MockitoBean
         private AuthenticationManager authenticationManager;
+
+        @Autowired
+        private ObjectMapper objectMapper;
 
         @Test
         @DisplayName("CORS Preflight 요청(OPTIONS)은 인증 없이 200 OK를 반환해야 한다")
@@ -169,4 +182,79 @@ class SecurityConfigTest {
                                 .andExpect(status().isUnauthorized())
                                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
         }
+
+        // 카테고리 api 관련
+
+        @Test
+        @DisplayName("GET /api/category 는 인증 없이도 200을 반환한다 (permitAll)")
+        void getCategories_NoAuth_Success() throws Exception {
+                mockMvc.perform(get("/api/category"))
+                                .andDo(print())
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(roles = "USER")
+        @DisplayName("POST: 일반 유저(USER)는 카테고리를 생성할 수 없어야 한다 (403 Forbidden)")
+        void saveCategory_UserRole_Forbidden() throws Exception {
+                CategoryRequestDto dto = new CategoryRequestDto("Investment", 1);
+                String json = objectMapper.writeValueAsString(dto);
+
+                mockMvc.perform(post("/api/category")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("POST: 관리자 권한이면 서비스 호출까지 도달해야 한다")
+        void saveCategory_Success() throws Exception {
+                // Service가 어떤 DTO를 받든 1L을 리턴하도록 가짜 설정 (500 에러 방지)
+                given(categoryService.save(any())).willReturn(1L);
+
+                CategoryRequestDto dto = new CategoryRequestDto("Stock", 1);
+                String json = objectMapper.writeValueAsString(dto);
+
+                mockMvc.perform(post("/api/category")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                                .andExpect(status().isOk()); // 이제 서비스 로직 에러 없이 200이 뜹니다.
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("POST: 관리자(ADMIN)는 카테고리를 생성할 수 있어야 한다 (200 OK)")
+        void saveCategory_AdminRole_Success() throws Exception {
+                CategoryRequestDto dto = new CategoryRequestDto("Stock", 1);
+                String json = objectMapper.writeValueAsString(dto);
+
+                mockMvc.perform(post("/api/category")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(roles = "USER")
+        @DisplayName("PATCH: 일반 유저(USER)는 카테고리를 수정할 수 없어야 한다 (403 Forbidden)")
+        void updateCategory_UserRole_Forbidden() throws Exception {
+                CategoryRequestDto dto = new CategoryRequestDto("Updated Name", 2);
+                String json = objectMapper.writeValueAsString(dto);
+
+                mockMvc.perform(patch("/api/category/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(roles = "ADMIN")
+        @DisplayName("DELETE: 관리자(ADMIN)는 카테고리를 삭제할 수 있어야 한다 (200 OK)")
+        void deleteCategory_AdminRole_Success() throws Exception {
+                mockMvc.perform(delete("/api/category/1"))
+                                .andDo(print())
+                                .andExpect(status().isOk());
+        }
+
 }
