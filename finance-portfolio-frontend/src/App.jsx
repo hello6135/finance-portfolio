@@ -4,6 +4,7 @@ import authStore from './store/authStore';
 import './App.css';
 
 import Layout from './components/layout/Layout';
+import PostLayout from './components/layout/PostLayout';
 
 import PostList from './pages/posts/PostList';
 import PostDetail from './pages/posts/PostDetail';
@@ -63,8 +64,10 @@ function App() {
       <Route element={<Layout />}>
 
         {/* 공개 라우트 - 게시판 */}
-        <Route path="/" element={<PostList />} />
-        <Route path="/posts" element={<PostList />} />
+        <Route element={<PostLayout />}> {/* 카테고리 네비게이션 포함 */}
+          <Route path="/" element={<PostList />} />
+          <Route path="/posts" element={<PostList />} />
+        </Route>
         <Route path="/detail/:id" element={<PostDetail />} />
         {/* 공개 라우트 - 금융계산기 */}
         <Route path="/finance/fair" element={<FairValuePage />} />
