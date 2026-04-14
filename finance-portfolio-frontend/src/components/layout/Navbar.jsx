@@ -26,7 +26,7 @@ const Navbar = () => {
 
     // 활성화 된 페이지 표시
     const navLinkClass = ({ isActive }) => {
-        return `nav-link ${isActive ? 'text-white fw-bold' : 'text-secondary'}`;
+        return `nav-link text-nowrap ${isActive ? 'text-white fw-bold' : 'text-secondary'}`;
     }
 
     return (
@@ -76,12 +76,12 @@ const Navbar = () => {
                     <div className="d-flex align-items-center gap-3">
                         {authStore.isLoggedIn() ? (
                             <>
-                                <span className="badge bg-secondary px-3 py-2 fw-normal">
+                                <span className="badge bg-secondary px-2 py-2 fw-normal text-nowrap">
                                     사용자님
                                 </span>
                                 <button
                                     onClick={onLogout}
-                                    className="btn btn-outline-light btn-sm"
+                                    className="btn btn-outline-light btn-sm px-2 text-nowrap"
                                 >
                                     로그아웃
                                 </button>
@@ -89,7 +89,7 @@ const Navbar = () => {
                         ) : (
                             <button
                                 onClick={() => navigate('/login')}
-                                className="btn btn-primary btn-sm px-4"
+                                className="btn btn-primary btn-sm px-2 text-nowrap"
                             >
                                 로그인
                             </button>

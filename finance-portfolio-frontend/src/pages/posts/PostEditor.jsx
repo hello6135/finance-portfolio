@@ -16,6 +16,7 @@ import {
 import 'ckeditor5/ckeditor5.css';
 
 import { getPostById, createPost, updatePost, imageUploadAdapter } from '../../api/postApi';
+import { getCategories } from '../../api/categoryApi';
 
 const PostEditor = () => {
     const { id } = useParams();
@@ -24,11 +25,18 @@ const PostEditor = () => {
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const [categories, setCategories] = useState([]); // 카테고리 목록
+    const [categoryId, setCategoryId] = useState(''); // 선택된 카테고리 ID
+
     useEffect(() => {
+        // 1. 카테고리 목록 로드
+        getCategories().then(setCategories).catch(console.error);
+
         if (id) {
             getPostById(id).then(data => {
                 setTitle(data.title);
                 setContent(data.content);
+                setCategoryId(data.categoryId || ''); // 기존 카테고리 설정
             }).catch(err => {
                 console.error("데이터 로딩 실패", err);
                 alert("게시글을 불러올 수 없습니다.");
@@ -37,11 +45,15 @@ const PostEditor = () => {
     }, [id]);
 
     const handleSave = async () => {
-        if (!title.trim() || !content.trim()) {
-            alert("제목과 내용을 모두 입력해주세요.");
+        if (!title.trim() || !content.trim() || !categoryId) {
+            alert("제목과 내용, 카테고리를 모두 입력해주세요.");
             return;
         }
-        const postData = { title, content };
+        const postData = {
+            title,
+            content,
+            categoryId: Number(categoryId)
+        };
         setLoading(true);
         try {
             if (id) {
@@ -71,6 +83,24 @@ const PostEditor = () => {
                 <h2 className="mb-0">{id ? '게시글 수정' : '새 게시글 작성'}</h2>
             </div>
             <div className="card p-4 shadow-sm">
+                {/* 카테고리 선택 */}
+                <div className="mb-3">
+                    <label htmlFor="category" className="form-label">카테고리</label>
+                    <select
+                        id="category"
+                        className="form-select"
+                        value={categoryId}
+                        onChange={(e) => setCategoryId(e.target.value)}
+                    >
+                        <option value="">카테고리를 선택하세요</option>
+                        {categories.map(category => (
+                            <option key={category.id} value={category.id}>
+                                {category.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="mb-3">
                     <label htmlFor="title" className="form-label">제목</label>
                     <input
