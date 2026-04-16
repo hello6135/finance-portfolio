@@ -1,5 +1,8 @@
 package com.finance.finportfolio.domain.member.controller;
 
+import com.finance.finportfolio.domain.member.dto.LoginResultDto;
+import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
+import com.finance.finportfolio.domain.member.entity.Role;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.config.SecurityConfig;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
@@ -26,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hamcrest.Matchers;
@@ -53,38 +57,62 @@ class TokenReissueControllerTest {
 
         @Test
         @WithMockUser
-        @DisplayName("유효한 Refresh Token 쿠키로 요청 시 새 토큰이 발급된다")
+        @DisplayName("유효한 Refresh Token 쿠키로 요청 시 새 토큰과 플래그 쿠키가 발급된다")
         void reissue_Success() throws Exception {
                 // given
                 String oldRefreshToken = "validOldRefreshToken";
                 String newAccessToken = "newAccessToken";
                 String newRefreshToken = "newRefreshToken";
+                String rawNickname = "테스터"; // 원본 닉네임
 
-                // 1. 추출 로직 Mocking
+                // 검증 시 사용할 인코딩된 닉네임 미리 정의
+                String encodedNickname = java.net.URLEncoder.encode(rawNickname,
+                                java.nio.charset.StandardCharsets.UTF_8);
+
+                MemberResponseDto memberResponseDto = new MemberResponseDto(rawNickname, Role.USER);
+
+                // 서비스 응답 객체 (LoginResultDto)
+                LoginResultDto loginResult = new LoginResultDto(newAccessToken, newRefreshToken, memberResponseDto);
+
+                // 1. 쿠키 추출 로직 Mocking
                 org.mockito.Mockito.doReturn(oldRefreshToken)
-                                .when(tokenCookieManager).extractRefreshTokenFromCookie(any());
+                                .when(tokenCookieManager)
+                                .extractRefreshTokenFromCookie(any());
 
-                // 2. 서비스 로직 Mocking
-                given(memberService.reissue(oldRefreshToken))
-                                .willReturn(new String[] { newAccessToken, newRefreshToken });
+                // 2. 서비스 로직 Mocking (새로운 DTO 반환 타입 적용)
+                given(memberService.reissue(oldRefreshToken)).willReturn(loginResult);
 
-                // 3. (중요) 실제 Response에 쿠키를 심어주는 동작 정의
+                // 3. TokenCookieManager의 setAuthCookies 동작 정의
+                // 파라미터: (response, refreshToken, memberResponseDto) - 총 3개
                 org.mockito.Mockito.doAnswer(invocation -> {
                         jakarta.servlet.http.HttpServletResponse response = invocation.getArgument(0);
                         String token = invocation.getArgument(1);
-                        // 테스트용 간이 쿠키 추가
-                        response.addCookie(new Cookie("refreshToken", token));
-                        response.addCookie(new Cookie("isLoggedIn", "true"));
+                        MemberResponseDto dto = invocation.getArgument(2);
+
+                        // 실제 로직과 유사하게 테스트용 쿠키 주입
+                        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE,
+                                        "refreshToken=" + token + "; Secure; HttpOnly; Path=/");
+                        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE,
+                                        "userNickname=" + encodedNickname + "; Secure; Path=/");
+                        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE,
+                                        "isLoggedIn=true; Secure; Path=/");
+                        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE,
+                                        "userRole=" + dto.role().name() + "; Secure; Path=/");
                         return null;
-                }).when(tokenCookieManager).setAuthCookies(any(), any());
+                }).when(tokenCookieManager).setAuthCookies(any(), any(), any());
 
                 // when & then
-                mockMvc.perform(post("/api/auth/reissue")
+                mockMvc.perform(post("/api/auth/reissue") // 엔드포인트 경로 확인 필요
                                 .cookie(new Cookie("refreshToken", oldRefreshToken)))
-                                .andDo(print()) // 이제 출력이 정상적으로 나옵니다.
                                 .andExpect(status().isOk())
+                                // Access Token 헤더 검증
+                                .andExpect(header().string("Authorization", "Bearer " + newAccessToken))
+                                // Refresh Token 및 플래그 쿠키 검증
                                 .andExpect(cookie().value("refreshToken", newRefreshToken))
-                                .andExpect(cookie().value("isLoggedIn", "true"));
+                                .andDo(print())
+                                .andExpect(cookie().value("isLoggedIn", "true"))
+                                .andExpect(cookie().value("userNickname", encodedNickname))
+                                .andExpect(cookie().value("userRole", "USER"));
         }
 
         // ── Refresh Token 없는 경우 ────────────────────────────────

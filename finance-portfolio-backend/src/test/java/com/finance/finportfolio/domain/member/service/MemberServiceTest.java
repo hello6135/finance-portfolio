@@ -1,5 +1,6 @@
 package com.finance.finportfolio.domain.member.service;
 
+import com.finance.finportfolio.domain.member.dto.LoginResultDto;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
 import com.finance.finportfolio.domain.member.entity.Member;
@@ -102,25 +103,37 @@ class MemberServiceTest {
         // ── login ──────────────────────────────────────────────────
 
         @Test
-        @DisplayName("로그인 성공 - Access Token과 Refresh Token이 반환된다")
+        @DisplayName("로그인 성공 - Access Token, Refresh Token 및 회원 정보가 반환된다")
         void login_Success() {
+                // given
                 MemberLoginRequestDto request = new MemberLoginRequestDto("testId", "rawPassword");
-                Member member = createMember("testId");
+                Member member = createMember("testId"); // 닉네임, 역할 등이 포함된 Member 객체
 
                 Authentication authentication = new UsernamePasswordAuthenticationToken(
                                 "testId", null,
                                 List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
                 given(authenticationManager.authenticate(any())).willReturn(authentication);
                 given(memberRepository.findByLoginId("testId")).willReturn(Optional.of(member));
                 given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("accessToken");
                 given(jwtTokenProvider.createRefreshToken(any())).willReturn("refreshToken");
+
+                // 최초 로그인 시나리오 (기존 토큰 없음)
                 given(refreshTokenRepository.findByMember(member)).willReturn(Optional.empty());
 
-                String[] tokens = memberService.login(request);
+                // when
+                // 리턴 타입 반영: String[] -> LoginResultDto
+                LoginResultDto result = memberService.login(request);
 
-                assertThat(tokens[0]).isEqualTo("accessToken");
-                assertThat(tokens[1]).isEqualTo("refreshToken");
-                // 최초 로그인 → save 호출 확인
+                // then
+                assertThat(result.accessToken()).isEqualTo("accessToken");
+                assertThat(result.refreshToken()).isEqualTo("refreshToken");
+
+                // 추가된 회원 정보(플래그 쿠키용) 검증
+                assertThat(result.memberResponseDto().nickname()).isEqualTo(member.getNickname());
+                assertThat(result.memberResponseDto().role().name()).isEqualTo("USER");
+
+                // 최초 로그인 시 RefreshToken 엔티티가 새롭게 저장(save)되는지 검증
                 verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
         }
 
@@ -192,8 +205,9 @@ class MemberServiceTest {
         // ── reissue ────────────────────────────────────────────────
 
         @Test
-        @DisplayName("토큰 재발급 성공 - 새 토큰 2개가 반환되고 DB 토큰이 교체된다")
+        @DisplayName("토큰 재발급 성공 - 새 토큰과 회원 정보가 반환되고 DB 토큰이 교체된다")
         void reissue_Success() {
+                // given
                 Member member = createMember("testId");
                 RefreshToken savedToken = RefreshToken.builder()
                                 .member(member)
@@ -204,14 +218,23 @@ class MemberServiceTest {
                 given(jwtTokenProvider.getLoginId("validRefreshToken")).willReturn("testId");
                 given(memberRepository.findByLoginId("testId")).willReturn(Optional.of(member));
                 given(refreshTokenRepository.findByMember(member)).willReturn(Optional.of(savedToken));
+
+                // 새 토큰들 생성 Mocking
                 given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("newAccessToken");
                 given(jwtTokenProvider.createRefreshToken(any())).willReturn("newRefreshToken");
 
-                String[] tokens = memberService.reissue("validRefreshToken");
+                // when
+                // 리턴 타입이 String[]에서 LoginResultDto로 변경됨
+                LoginResultDto result = memberService.reissue("validRefreshToken");
 
-                assertThat(tokens[0]).isEqualTo("newAccessToken");
-                assertThat(tokens[1]).isEqualTo("newRefreshToken");
-                // DB 토큰이 rotate()로 교체됐는지 확인
+                // then
+                assertThat(result.accessToken()).isEqualTo("newAccessToken");
+                assertThat(result.refreshToken()).isEqualTo("newRefreshToken");
+
+                // 닉네임과 역할 정보도 함께 오는지 확인 (플래그 쿠키 생성용)
+                assertThat(result.memberResponseDto().nickname()).isEqualTo(member.getNickname());
+
+                // DB 토큰이 rotate()를 통해 교체되었는지 확인
                 assertThat(savedToken.getToken()).isEqualTo("newRefreshToken");
         }
 

@@ -1,5 +1,6 @@
 package com.finance.finportfolio.domain.member.controller;
 
+import com.finance.finportfolio.domain.member.dto.LoginResultDto;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
 import com.finance.finportfolio.domain.member.service.MemberService;
@@ -33,16 +34,14 @@ public class MemberController {
             HttpServletResponse response) {
 
         try {
-            // 1. 로그인 처리 → Access Token + Refresh Token 발급
-            String[] tokens = memberService.login(loginRequest);
-            String accessToken = tokens[0];
-            String refreshToken = tokens[1];
+            // 1. 로그인 처리 → Access Token + Refresh Token + 고객정보 발급
+            LoginResultDto loginResult = memberService.login(loginRequest);
 
             // 2. 토큰 쿠키 전달 (리프레쉬 토큰, 로그인 플래그)
-            tokenCookieManager.setAuthCookies(response, refreshToken);
+            tokenCookieManager.setAuthCookies(response, loginResult.refreshToken(), loginResult.memberResponseDto());
 
             // 3. Access Token → 응답 헤더로 전달 (프론트에서 authStore 메모리에 저장)
-            response.setHeader("Authorization", "Bearer " + accessToken);
+            response.setHeader("Authorization", "Bearer " + loginResult.accessToken());
 
             return ResponseEntity.ok("로그인이 완료되었습니다.");
         } catch (Exception e) {

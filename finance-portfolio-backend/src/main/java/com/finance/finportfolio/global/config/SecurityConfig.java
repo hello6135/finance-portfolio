@@ -33,6 +33,7 @@ public class SecurityConfig {
 
         private final JwtTokenProvider jwtTokenProvider;
 
+        // 기본 Rounds 10(실무 표준은 10~12, 복잡도는 1상승 시 2배 씩 증가)
         @Bean
         public PasswordEncoder passwordEncoder() {
                 return new BCryptPasswordEncoder();
