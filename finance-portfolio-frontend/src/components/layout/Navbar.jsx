@@ -10,7 +10,7 @@ const Navbar = () => {
 
     // 쿠키에서 실시간 닉네임 호출(메모리 상태와 무관), 디코딩 예외 대비
     const rawNickname = Cookies.get('userNickname') || '';
-    const nickname = rawNickname ? decodeURIComponent(rawNickname.replace(/\+/g, ' ')) : '사용자';
+    const nickname = rawNickname ? decodeURIComponent(rawNickname.replaceAll(/\+/g, ' ')) : '사용자';
 
     const onLogout = async () => {
         try {
