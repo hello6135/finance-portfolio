@@ -2,10 +2,15 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import authStore from '../../store/authStore';
 import { logoutMember } from '../../api/memberApi';
+import Cookies from 'js-cookie';
 
 
 const Navbar = () => {
     const navigate = useNavigate();
+
+    // 쿠키에서 실시간 닉네임 호출(메모리 상태와 무관), 디코딩 예외 대비
+    const rawNickname = Cookies.get('userNickname') || '';
+    const nickname = rawNickname ? decodeURIComponent(rawNickname.replaceAll(/\+/g, ' ')) : '사용자';
 
     const onLogout = async () => {
         try {
@@ -20,6 +25,12 @@ const Navbar = () => {
         } finally {
             // 로그아웃은 에러가 나도 클라이언트 상태는 정리
             authStore.clearToken();
+
+            // 비보안 플래그 쿠키들 직접 제거 (클라이언트 사이드에서도 정리)
+            Cookies.remove('userNickname');
+            Cookies.remove('userRole');
+            Cookies.remove('isLoggedIn');
+
             navigate('/', { replace: true });
         }
     };
@@ -77,7 +88,7 @@ const Navbar = () => {
                         {authStore.isLoggedIn() ? (
                             <>
                                 <span className="badge bg-secondary px-2 py-2 fw-normal text-nowrap">
-                                    사용자님
+                                    {nickname}님
                                 </span>
                                 <button
                                     onClick={onLogout}

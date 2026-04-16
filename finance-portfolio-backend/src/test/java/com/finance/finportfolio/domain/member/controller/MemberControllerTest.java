@@ -1,8 +1,11 @@
 package com.finance.finportfolio.domain.member.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.finance.finportfolio.domain.member.dto.LoginResultDto;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
+import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
+import com.finance.finportfolio.domain.member.entity.Role;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.config.SecurityConfig;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
@@ -26,10 +29,14 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @WebMvcTest(MemberController.class)
 @Import({ SecurityConfig.class, TokenCookieManager.class })
@@ -108,12 +115,20 @@ class MemberControllerTest {
     @WithMockUser
     @DisplayName("로그인 성공 시 Authorization 헤더와 refreshToken 쿠키가 반환된다")
     void login_Success() throws Exception {
+
+        String nickname = "테스터";
+        String encodedNickname = URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+
         MemberLoginRequestDto loginRequest = new MemberLoginRequestDto("testId", "password123");
-        given(memberService.login(any())).willReturn(new String[] { "accessToken", "refreshToken" });
+        MemberResponseDto memberResponseDto = new MemberResponseDto("테스터", Role.USER);
+        LoginResultDto loginResult = new LoginResultDto("accessToken", "refreshToken", memberResponseDto);
+
+        given(memberService.login(any(MemberLoginRequestDto.class))).willReturn(loginResult);
 
         mockMvc.perform(post("/api/member/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().string("로그인이 완료되었습니다."))
                 // Access Token 검증
@@ -121,18 +136,27 @@ class MemberControllerTest {
                 // Refresh Token 쿠키 검증 (HttpOnly)
                 .andExpect(cookie().value("refreshToken", "refreshToken"))
                 .andExpect(cookie().httpOnly("refreshToken", true))
+                .andExpect(cookie().secure("refreshToken", true))
                 // isLoggedIn 플래그 쿠키 검증 (JS 접근 가능)
                 .andExpect(cookie().value("isLoggedIn", "true"))
-                .andExpect(cookie().httpOnly("isLoggedIn", false));
+                .andExpect(cookie().httpOnly("isLoggedIn", false))
+                .andExpect(cookie().value("userNickname", encodedNickname))
+                .andExpect(cookie().value("userRole", "USER"));
     }
 
     @Test
     @WithMockUser
-    @DisplayName("JWT 방식에서는 CSRF 없이도 로그인 요청이 성공한다")
+    @DisplayName("JWT 방식(Stateless)이므로 CSRF 토큰 없이도 로그인 요청이 성공한다")
     void login_Success_WithoutCsrf() throws Exception {
+        // given
         MemberLoginRequestDto loginRequest = new MemberLoginRequestDto("testId", "password123");
-        given(memberService.login(any())).willReturn(new String[] { "accessToken", "refreshToken" });
+        MemberResponseDto memberResponseDto = new MemberResponseDto("테스터", Role.USER);
+        // 서비스 응답 객체 생성 (기존 String[]에서 LoginResultDto로 변경)
+        LoginResultDto loginResult = new LoginResultDto("accessToken", "refreshToken", memberResponseDto);
 
+        given(memberService.login(any(MemberLoginRequestDto.class))).willReturn(loginResult);
+
+        // when & then
         mockMvc.perform(post("/api/member/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))

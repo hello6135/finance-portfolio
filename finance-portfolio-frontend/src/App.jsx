@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import authStore from './store/authStore';
 import './App.css';
+import Cookies from 'js-cookie';
 
 import Layout from './components/layout/Layout';
 import PostLayout from './components/layout/PostLayout';
+import PrivateRoute from './components/auth/PrivateRoute';
 
 import PostList from './pages/posts/PostList';
 import PostDetail from './pages/posts/PostDetail';
@@ -13,9 +15,9 @@ import FairValuePage from './pages/finances/FinanceFair';
 import LoginPage from './pages/members/LoginPage';
 import JoinPage from './pages/members/JoinPage';
 import ErrorPage from './pages/common/ErrorPage';
-import PrivateRoute from './components/auth/PrivateRoute';
-import { reissueMember } from './api/memberApi';
 import LoadingPage from './pages/common/LoadingPage';
+
+import { reissueMember } from './api/memberApi';
 
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -25,7 +27,7 @@ function App() {
     // 1. async 로직을 별도 함수로 분리
     const initAuth = async () => {
       const pathname = globalThis.location.pathname;
-      const hasAuthCookie = document.cookie.includes('isLoggedIn=true');
+      const hasAuthCookie = Cookies.get('isLoggedIn') === 'true';
 
       // 로그인/회원가입 페이지에서는 silent refresh 시도 안 함
       // 로그인 흔적도 없으면 silent refresh 시도 안 함

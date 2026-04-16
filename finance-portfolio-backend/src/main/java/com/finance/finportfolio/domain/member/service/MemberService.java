@@ -1,7 +1,9 @@
 package com.finance.finportfolio.domain.member.service;
 
+import com.finance.finportfolio.domain.member.dto.LoginResultDto;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
+import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
 import com.finance.finportfolio.domain.member.entity.Member;
 import com.finance.finportfolio.domain.member.entity.RefreshToken;
 import com.finance.finportfolio.domain.member.entity.Role;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,24 +57,29 @@ public class MemberService {
                 return memberRepository.save(member).getId();
         }
 
-        // ── 로그인 → [accessToken, refreshToken] 반환 ─────────────
+        // ── 로그인 ─────────────
+        // LoginResultDto: 서버 내부 DTO [accessToken, refreshToken, MemberResponseDto]
+        // MemberResponseDto: 프론트 반환 DTO [nickname, role]
         @Transactional
-        public String[] login(MemberLoginRequestDto request) {
+        public LoginResultDto login(MemberLoginRequestDto request) {
 
-                // 1. 아이디/비밀번호 인증
+                // 아이디/비밀번호 인증
                 Authentication authentication = authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(
                                                 request.loginId(), request.password()));
 
                 String loginId = authentication.getName();
-                String role = authentication.getAuthorities().iterator().next().getAuthority();
 
-                // 2. 토큰 생성
-                String accessToken = jwtTokenProvider.createAccessToken(loginId, role);
-                String refreshToken = jwtTokenProvider.createRefreshToken(loginId);
-
-                // 3. Refresh Token DB 저장 (없으면 insert, 있으면 rotate)
+                // DB에서 loginId로 Member find
                 Member member = findMemberByLoginId(loginId);
+
+                // 고객 정보 get
+                String nickName = member.getNickname();
+                Role role = member.getRole();
+
+                // 토큰 생성
+                String accessToken = jwtTokenProvider.createAccessToken(loginId, role.name());
+                String refreshToken = jwtTokenProvider.createRefreshToken(loginId);
 
                 refreshTokenRepository.findByMember(member)
                                 .ifPresentOrElse(
@@ -84,7 +92,13 @@ public class MemberService {
                                                         refreshTokenRepository.save(newToken);
                                                 });
 
-                return new String[] { accessToken, refreshToken };
+                // 토큰 및 고객정보 반환
+                MemberResponseDto memberResponseDto = new MemberResponseDto(nickName, role);
+                return LoginResultDto.builder()
+                                .accessToken(accessToken)
+                                .refreshToken(refreshToken)
+                                .memberResponseDto(memberResponseDto)
+                                .build();
         }
 
         // ── 로그아웃 → Refresh Token DB에서 삭제 ──────────────────
@@ -97,8 +111,10 @@ public class MemberService {
         }
 
         // ── 토큰 재발급 (Refresh Token Rotation) ──────────────────
+        // LoginResultDto: 서버 내부 DTO [accessToken, refreshToken, MemberResponseDto]
+        // MemberResponseDto: 프론트 반환 DTO [nickname, role]
         @Transactional
-        public String[] reissue(String refreshToken) {
+        public LoginResultDto reissue(String refreshToken) {
 
                 // 1. Refresh Token 유효성 검증
                 if (!jwtTokenProvider.validateToken(refreshToken)) {
@@ -107,10 +123,10 @@ public class MemberService {
 
                 String loginId = jwtTokenProvider.getLoginId(refreshToken);
 
-                // 2. DB에 저장된 토큰과 일치 여부 확인 (탈취 감지)
-
+                // DB에서 loginId로 Member find
                 Member member = findMemberByLoginId(loginId);
 
+                // 토큰 생성
                 RefreshToken savedToken = refreshTokenRepository.findByMember(member)
                                 .orElseThrow(() -> new IllegalStateException("로그인 상태가 아닙니다."));
 
@@ -120,13 +136,22 @@ public class MemberService {
                         throw new IllegalStateException("Refresh Token이 일치하지 않습니다.");
                 }
 
-                // 3. 새 토큰 발급 + Rotation
-                String role = member.getRole().getKey();
-                String newAccessToken = jwtTokenProvider.createAccessToken(loginId, role);
-                String newRefreshToken = jwtTokenProvider.createRefreshToken(loginId);
+                // 고객 정보 get
+                String nickName = member.getNickname();
+                Role role = member.getRole();
 
+                // 새 토큰 발급
+                String newAccessToken = jwtTokenProvider.createAccessToken(loginId, role.name());
+                String newRefreshToken = jwtTokenProvider.createRefreshToken(loginId);
+                // 더티 체킹 업데이트
                 savedToken.rotate(newRefreshToken);
 
-                return new String[] { newAccessToken, newRefreshToken };
+                // 토큰 및 고객정보 반환
+                MemberResponseDto memberResponseDto = new MemberResponseDto(nickName, role);
+                return LoginResultDto.builder()
+                                .accessToken(newAccessToken)
+                                .refreshToken(newRefreshToken)
+                                .memberResponseDto(memberResponseDto)
+                                .build();
         }
 }

@@ -1,9 +1,9 @@
 package com.finance.finportfolio.domain.member.controller;
 
+import com.finance.finportfolio.domain.member.dto.LoginResultDto;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Arrays;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,13 +36,11 @@ public class TokenReissueController {
         }
 
         try {
-            String[] tokens = memberService.reissue(refreshToken);
-            String newAccessToken = tokens[0];
-            String newRefreshToken = tokens[1];
+            LoginResultDto loginResult = memberService.reissue(refreshToken);
 
-            tokenCookieManager.setAuthCookies(response, newRefreshToken);
+            tokenCookieManager.setAuthCookies(response, loginResult.refreshToken(), loginResult.memberResponseDto());
 
-            response.setHeader("Authorization", "Bearer " + newAccessToken);
+            response.setHeader("Authorization", "Bearer " + loginResult.accessToken());
 
             return ResponseEntity.ok("토큰이 재발급되었습니다.");
         } catch (Exception e) {
