@@ -54,16 +54,9 @@ jobs:
     - name: Security Audit (npm audit)
       run: npm audit --audit-level=high
 
-    # [NPM] 빌드(중복 발견!!! 빌드 시간 차이 확인 후 삭제!)
+    # [NPM] 빌드: 환경별 API 주소 주입 (React 기준)
     - name: Build Project
-      working-directory: ./finance-portfolio-frontend
-      run: npm run build
-
-    # [NPM] 빌드
-    - name: Build Project
-      run: |
-        # 빌드 시 환경별 API 주소 주입 (React 기준)
-        VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }} npm run build
+      run: VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }} npm run build        
 
     # [SONAR] 소나 실행 엔진 캐싱 (성능: 빌드 시간 단축)
     - name: Cache SonarCloud packages
