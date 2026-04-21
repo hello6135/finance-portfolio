@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,14 +30,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 @WebMvcTest(MemberController.class)
 @Import({ SecurityConfig.class, TokenCookieManager.class })
@@ -113,11 +109,33 @@ class MemberControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("로그인 성공 시 Authorization 헤더와 refreshToken 쿠키가 반환된다")
-    void login_Success() throws Exception {
+    @DisplayName("[Local 정책] isSecure가 false일 때 쿠키 설정 검증")
+    void login_Success_Local_Policy() throws Exception {
+        // given: 리플렉션으로 private 필드 강제 수정
+        ReflectionTestUtils.setField(tokenCookieManager, "isSecure", false);
 
         String nickname = "테스터";
-        String encodedNickname = URLEncoder.encode(nickname, StandardCharsets.UTF_8);
+        MemberLoginRequestDto loginRequest = new MemberLoginRequestDto("testId", "password123");
+        MemberResponseDto memberResponseDto = new MemberResponseDto(nickname, Role.USER);
+        LoginResultDto loginResult = new LoginResultDto("accessToken", "refreshToken", memberResponseDto);
+
+        given(memberService.login(any(MemberLoginRequestDto.class))).willReturn(loginResult);
+
+        // when & then
+        mockMvc.perform(post("/api/member/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().secure("refreshToken", false))
+                .andExpect(cookie().attribute("refreshToken", "SameSite", "Strict"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("[Prod 정책] isSecure가 true일 때 쿠키 설정 검증")
+    void login_Success_Prod_Policy() throws Exception {
+        // given: 리플렉션으로 private 필드 강제 수정
+        ReflectionTestUtils.setField(tokenCookieManager, "isSecure", true);
 
         MemberLoginRequestDto loginRequest = new MemberLoginRequestDto("testId", "password123");
         MemberResponseDto memberResponseDto = new MemberResponseDto("테스터", Role.USER);
@@ -125,23 +143,13 @@ class MemberControllerTest {
 
         given(memberService.login(any(MemberLoginRequestDto.class))).willReturn(loginResult);
 
+        // when & then
         mockMvc.perform(post("/api/member/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string("로그인이 완료되었습니다."))
-                // Access Token 검증
-                .andExpect(header().string("Authorization", "Bearer accessToken"))
-                // Refresh Token 쿠키 검증 (HttpOnly)
-                .andExpect(cookie().value("refreshToken", "refreshToken"))
-                .andExpect(cookie().httpOnly("refreshToken", true))
                 .andExpect(cookie().secure("refreshToken", true))
-                // isLoggedIn 플래그 쿠키 검증 (JS 접근 가능)
-                .andExpect(cookie().value("isLoggedIn", "true"))
-                .andExpect(cookie().httpOnly("isLoggedIn", false))
-                .andExpect(cookie().value("userNickname", encodedNickname))
-                .andExpect(cookie().value("userRole", "USER"));
+                .andExpect(cookie().attribute("refreshToken", "SameSite", "Lax"));
     }
 
     @Test

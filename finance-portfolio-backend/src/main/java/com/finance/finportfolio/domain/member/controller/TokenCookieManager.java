@@ -4,6 +4,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,14 @@ import lombok.NonNull;
 public class TokenCookieManager {
 
     private static final int COOKIE_MAX_AGE = 7 * 24 * 60 * 60;
+
+    private final boolean isSecure;
+
+    public TokenCookieManager(
+            @Value("${spring.profiles.active:local}") String activeProfile) {
+        // local 프로파일이면 Secure 비활성화
+        this.isSecure = !activeProfile.contains("local");
+    }
 
     // 쿠키 생성
     public void setAuthCookies(HttpServletResponse response,
@@ -74,10 +83,10 @@ public class TokenCookieManager {
 
         return ResponseCookie.from(name, safeValue)
                 .httpOnly(httpOnly)
-                .secure(true) // HTTPS 필수
+                .secure(isSecure) // HTTPS 필수
                 .path("/")
                 .maxAge(maxAge) // maxAge가 0이면 삭제용, 그 외에는 생성용
-                .sameSite("Lax") // CSRF 방지(Lax: 링크 타고 온 건 허용)
+                .sameSite(isSecure ? "Lax" : "Strict") // CSRF 방지(Lax: 링크 타고 온 건 허용)
                 .build();
     }
 
