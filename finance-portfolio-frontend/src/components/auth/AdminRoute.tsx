@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode'; // 설치 필요: npm install jwt-decode
+import { jwtDecode } from 'jwt-decode';
+import authStore from '../../store/authStore';
 
 interface TokenPayload {
     role: string;
@@ -8,7 +9,7 @@ interface TokenPayload {
 }
 
 const AdminRoute = () => {
-    const token = localStorage.getItem('token');
+    const token = authStore.getToken();
 
     if (!token) return <Navigate to="/login" replace />;
 

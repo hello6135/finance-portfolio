@@ -74,11 +74,11 @@ const Navbar = () => {
                                 금융계산기
                             </NavLink>
                         </li>
-                        <li className="nav-item">
-                            <NavLink to="/admin" className={navLinkClass}>
-                                관리자
-                            </NavLink>
-                        </li>
+                        {authStore.getUserRole() === 'ADMIN' && (
+                            <li className="nav-item">
+                                <NavLink to="/admin" className={navLinkClass}>관리자</NavLink>
+                            </li>
+                        )}
                     </ul>
 
                     <br />
