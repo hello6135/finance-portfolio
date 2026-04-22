@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import authStore from './store/authStore';
 import './App.css';
-import Cookies from 'js-cookie';
 
 import Layout from './components/layout/Layout';
 import PostLayout from './components/layout/PostLayout';
 import PrivateRoute from './components/auth/PrivateRoute';
+import AdminRoute from './components/auth/AdminRoute';
 
 import PostList from './pages/posts/PostList';
 import PostDetail from './pages/posts/PostDetail';
@@ -16,43 +16,18 @@ import LoginPage from './pages/members/LoginPage';
 import JoinPage from './pages/members/JoinPage';
 import ErrorPage from './pages/common/ErrorPage';
 import LoadingPage from './pages/common/LoadingPage';
+import AdminDashboard from './pages/admins/AdminDashboard';
 
-import { reissueMember } from './api/memberApi';
 
 function App() {
   const [authChecked, setAuthChecked] = useState(false);
 
   // 새로고침 혹은 사이트 처음 접속 시 실행
   useEffect(() => {
-    // 1. async 로직을 별도 함수로 분리
-    const initAuth = async () => {
-      const pathname = globalThis.location.pathname;
-      const hasAuthCookie = Cookies.get('isLoggedIn') === 'true';
-
-      // 로그인/회원가입 페이지에서는 silent refresh 시도 안 함
-      // 로그인 흔적도 없으면 silent refresh 시도 안 함
-      if (pathname === '/login' || pathname === '/join' || !hasAuthCookie) {
-        setAuthChecked(true);
-        return;
-      }
-
-      try {
-        // Silent Refresh 시도
-        const response = await reissueMember();
-        // memberApi의 응답 구조에 따라 적절히 수정 (예: response.data)
-        const { status, token } = response;
-
-        if ((status === 200 || status === 201) && token) {
-          authStore.setToken(token);
-        }
-      } catch {
-        authStore.clearToken();
-      } finally {
-        setAuthChecked(true);
-      }
-    };
-
-    initAuth();
+    // silent refresh
+    authStore.initAuth().then(() => {
+      setAuthChecked(true); // 전역 로딩 해제
+    });
   }, []);
 
 
@@ -81,6 +56,11 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/editor" element={<PostEditor />} />
           <Route path="/editor/:id" element={<PostEditor />} />
+        </Route>
+
+        {/* 관리자 라우트 */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminDashboard />} />
         </Route>
 
         {/* 에러 라우트 */}
