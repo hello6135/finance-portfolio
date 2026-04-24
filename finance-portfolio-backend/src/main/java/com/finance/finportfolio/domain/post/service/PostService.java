@@ -63,8 +63,6 @@ public class PostService {
 
         Page<Post> postPage;
 
-        log.info("asdasd: {}", categoryId);
-
         if (categoryId != null && categoryId > 0) {
             postPage = postRepository.findByCategoryId(categoryId, pageable);
         } else {
