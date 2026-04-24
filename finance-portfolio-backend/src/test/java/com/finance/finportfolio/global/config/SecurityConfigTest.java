@@ -143,7 +143,7 @@ class SecurityConfigTest {
         void getAllPosts_WithoutAuth_Returns200() throws Exception {
                 Page<PostResponseDto> emptyPage = new PageImpl<>(List.of());
                 // postService.getPostList(page, size)는 기본 Mock → 빈 리스트를 포함하는 Page 객체 반환
-                org.mockito.BDDMockito.given(postService.getPostList(0, 10))
+                org.mockito.BDDMockito.given(postService.getPostList(0, 10, 1L))
                                 .willReturn(emptyPage);
 
                 mockMvc.perform(get("/api/posts/list") // 엔드포인트 경로 확인 (/list 추가 여부)

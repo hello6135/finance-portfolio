@@ -5,6 +5,7 @@ import authStore from '../../store/authStore';
 // 인증 필요 라우트 접근시 동작
 const PrivateRoute = () => {
     const isLogged = authStore.isLoggedIn();
+
     // 로그인이 안 되어 있다면 로그인 페이지로
     if (!isLogged) {
         return <Navigate to="/login" replace />;

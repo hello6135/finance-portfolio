@@ -5,6 +5,7 @@ import './App.css';
 
 import Layout from './components/layout/Layout';
 import PostLayout from './components/layout/PostLayout';
+import AdminLayout from './components/layout/AdminLayout';
 import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
 
@@ -17,6 +18,7 @@ import JoinPage from './pages/members/JoinPage';
 import ErrorPage from './pages/common/ErrorPage';
 import LoadingPage from './pages/common/LoadingPage';
 import AdminDashboard from './pages/admins/AdminDashboard';
+import AdminCategoryManager from './pages/admins/AdminCategoryManager';
 
 
 function App() {
@@ -60,7 +62,10 @@ function App() {
 
         {/* 관리자 라우트 */}
         <Route element={<AdminRoute />}>
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/categoryManager" element={<AdminCategoryManager />} />
+          </Route>
         </Route>
 
         {/* 에러 라우트 */}

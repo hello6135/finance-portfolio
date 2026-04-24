@@ -13,11 +13,11 @@ const AdminDashboard = () => {
     ];
 
     return (
-        <div className="container py-5" style={{ minHeight: 'calc(100vh - 56px)' }}>
+        <div className="container py-4">
             {/* 상단 헤더 */}
-            <div className="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
+            <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 className="fw-bold mb-0">관리자 대시보드</h2>
+                    <h2 className="mb-0">관리자 대시보드</h2>
                     <p className="text-muted mb-0">시스템 현황 및 콘텐츠를 관리합니다.</p>
                 </div>
                 <button onClick={() => navigate('/')} className="btn btn-outline-secondary btn-sm">
