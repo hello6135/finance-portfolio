@@ -15,6 +15,12 @@ const AdminRoute = () => {
 
     try {
         const decoded: TokenPayload = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+
+        if (decoded.exp < currentTime) {
+            authStore.clearToken(); // 만료된 토큰 정리
+            return <Navigate to="/login" replace />;
+        }
 
         // DB의 role이 'ADMIN'이므로 이에 맞춰 조건 확인
         if (decoded.role !== 'ADMIN') {

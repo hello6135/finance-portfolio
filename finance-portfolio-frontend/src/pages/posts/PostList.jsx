@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-import { getPostList, cleanUpFiles } from '../../api/postApi';
+import { getPostList } from '../../api/postApi';
 import LoadingPage from '../common/LoadingPage';
-import { navRef } from '../../utils/history';
 
 const PostList = () => {
     const [posts, setPosts] = useState([]);
@@ -13,12 +12,18 @@ const PostList = () => {
         totalElements: 0
     });
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
 
-    const fetchPostList = async (page = 0, size = 10) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    // 1. URL에서 카테고리 ID 추출
+    const queryParams = new URLSearchParams(location.search);
+    const categoryId = queryParams.get('category');
+
+    const fetchPostList = useCallback(async (page = 0, size = 10) => {
         setLoading(true);
         try {
-            const data = await getPostList(page, size);
+            const data = await getPostList(page, size, categoryId);
             const { content, number, totalPages, totalElements } = data;
 
             setPosts(content);
@@ -32,14 +37,11 @@ const PostList = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [categoryId]);
 
     useEffect(() => {
         fetchPostList(0, 10);
-    }, []);
-
-
-
+    }, [fetchPostList]);
 
     if (loading) return <LoadingPage />;
 
@@ -48,7 +50,9 @@ const PostList = () => {
         <div className="container py-4">
             {/* 페이지 헤더 */}
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="mb-0">카테고리 명(카테고리 추가 후 동적으로 변경)</h2>
+                <h2 className="mb-0">
+                    {categoryId ? (posts[0]?.categoryName || '카테고리') : '전체 글'}
+                </h2>
                 <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>
             </div>
 

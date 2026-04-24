@@ -6,8 +6,8 @@ import { history } from '../utils/history';
 const axiosInstance = axios.create({
     // 환경 변수에서 기본 주소를 가져옵니다.
     baseURL: '/api',
-    // 요청 타임아웃 설정 (5초)
-    timeout: 5000,
+    // 요청 타임아웃 설정 (10초)
+    timeout: 10000,
     // CSRF 방지용 토큰
     withCredentials: true,
     headers: {

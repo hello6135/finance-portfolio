@@ -76,7 +76,7 @@ const Navbar = () => {
                         </li>
                         {authStore.getUserRole() === 'ADMIN' && (
                             <li className="nav-item">
-                                <NavLink to="/admin" className={navLinkClass}>관리자</NavLink>
+                                <NavLink to="/admin/dashboard" className={navLinkClass}>관리자</NavLink>
                             </li>
                         )}
                     </ul>

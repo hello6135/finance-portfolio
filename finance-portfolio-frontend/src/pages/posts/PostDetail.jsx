@@ -52,6 +52,10 @@ const PostDetail = () => {
             <table className="table table-bordered" style={{ color: 'black', backgroundColor: 'white' }}>
                 <tbody>
                     <tr>
+                        <th className="table-light" style={{ width: '20%' }}>카테고리</th>
+                        <td>{post.categoryName}</td>
+                    </tr>
+                    <tr>
                         <th className="table-light" style={{ width: '20%' }}>제목</th>
                         <td>{post.title}</td>
                     </tr>

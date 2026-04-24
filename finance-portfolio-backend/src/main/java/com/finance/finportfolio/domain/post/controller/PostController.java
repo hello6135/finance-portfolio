@@ -33,10 +33,11 @@ public class PostController {
     @GetMapping("/list") // posts 게시글 리스트 조회(페이징)
     public ResponseEntity<Page<PostResponseDto>> getPosts(
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(required = false) Long categoryId) {
 
         // 서비스 레이어에 page와 size를 전달하여 페이징 결과 수신
-        Page<PostResponseDto> postPage = postService.getPostList(page, size);
+        Page<PostResponseDto> postPage = postService.getPostList(page, size, categoryId);
         return ResponseEntity.ok(postPage);
     }
 
