@@ -83,8 +83,8 @@ axiosInstance.interceptors.response.use(
                 console.error(`[API Error] Status: ${status}, Message: ${message}`);
             }
 
-            // 로그인 요청(`/auth/login`)에서 발생한 에러는 비지니스 로직상 실패: 에러 페이지로 보내지 않음!
-            const isLoginRequest = originalRequest.url.includes('/auth/login');
+            // 로그인 요청(`/member/login`)에서 발생한 에러는 비지니스 로직상 실패: 에러 페이지로 보내지 않음!
+            const isLoginRequest = originalRequest.url.includes('/member/login');
 
             if (!isLoginRequest && (status === 404 || status >= 500)) {
                 // 쿼리 스트링으로 데이터 전달
