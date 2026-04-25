@@ -34,7 +34,7 @@ public class PostService {
 
     // jsoup 커스텀 설정 본문용(utext)
     private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
-            .addAttributes("img", "style", "alt", "width", "height") // 이미지 관련 속성 허용
+            .addAttributes("img", "alt", "width", "height") // 이미지 관련 속성 허용
             .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
 
     private final PostRepository postRepository;
