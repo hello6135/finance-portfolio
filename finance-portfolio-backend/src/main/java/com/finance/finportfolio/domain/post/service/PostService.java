@@ -86,7 +86,7 @@ public class PostService {
 
     // 게시글 저장, return: 저장된 게시글 ID
     @Transactional
-    public Long savePost(PostSaveRequestDto requestDto) {
+    public Long savePost(PostSaveRequestDto requestDto, String author) {
         // jsoup 살균과 Cdn삭제(키 추출)
         String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
@@ -95,7 +95,7 @@ public class PostService {
         Category category = categoryRepository.findById(requestDto.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
 
-        Post post = requestDto.toEntity(category, cleanedContent, hasImage);
+        Post post = requestDto.toEntity(category, author, cleanedContent, hasImage);
 
         return postRepository.save(post).getId();
     }

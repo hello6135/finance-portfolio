@@ -56,6 +56,10 @@ const PostDetail = () => {
                         <td>{post.categoryName}</td>
                     </tr>
                     <tr>
+                        <th className="table-light" style={{ width: '20%' }}>작성자</th>
+                        <td>{post.author}</td>
+                    </tr>
+                    <tr>
                         <th className="table-light" style={{ width: '20%' }}>제목</th>
                         <td>{post.title}</td>
                     </tr>
