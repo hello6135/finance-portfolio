@@ -26,7 +26,8 @@ public record PostResponseDto(
                 Optional.ofNullable(post.getCategory())
                         .map(Category::getName)
                         .orElse("미분류"),
-                post.getAuthor(),
+                Optional.ofNullable(post.getAuthor())
+                        .orElse("익명"),
                 post.getTitle(),
                 processedContent,
                 post.isHasImage(),

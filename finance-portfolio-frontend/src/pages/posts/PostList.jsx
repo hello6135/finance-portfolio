@@ -63,6 +63,7 @@ const PostList = () => {
                     <tr>
                         <th>ID</th>
                         <th>제목</th>
+                        <th>작성자</th>
                         <th>시간</th>
                     </tr>
                 </thead>
@@ -76,10 +77,10 @@ const PostList = () => {
                                     {post.hasImage && <span className="badge bg-info me-1">📷</span>}
                                     {post.title}
                                 </td>
+                                <td>{post.author}</td>
                                 <td>
                                     {new Intl.DateTimeFormat('ko-KR', {
                                         year: 'numeric', month: '2-digit', day: '2-digit',
-                                        hour: '2-digit', minute: '2-digit', hour12: false,
                                     }).format(new Date(post.createdAt))}
                                 </td>
                             </tr>

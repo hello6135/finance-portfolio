@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -49,9 +50,10 @@ public class PostController {
     }
 
     @PostMapping // 새 post - portfolio_db에 저장
-    public ResponseEntity<Long> createPost(@RequestBody PostSaveRequestDto requestDto) {
+    public ResponseEntity<Long> createPost(@RequestBody PostSaveRequestDto requestDto,
+            @AuthenticationPrincipal String loginId) {
         log.info("게시글 저장 시도 - 제목: {}", requestDto.title());
-        Long postId = postService.savePost(requestDto);
+        Long postId = postService.savePost(requestDto, loginId);
         return ResponseEntity.status(201).body(postId);
     }
 
