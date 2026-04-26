@@ -15,13 +15,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.finance.finportfolio.domain.category.entity.Category;
 import com.finance.finportfolio.domain.category.repository.CategoryRepository;
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
 import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
 import com.finance.finportfolio.domain.post.entity.Post;
 import com.finance.finportfolio.domain.post.repository.PostRepository;
 
-import lombok.NonNull;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,6 +42,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final FileService fileService;
     private final CategoryRepository categoryRepository;
+    private final MemberRepository memberRepository;
 
     // Jsoup 소독 메서드
     private String cleanHtml(String text) {
@@ -86,7 +89,13 @@ public class PostService {
 
     // 게시글 저장, return: 저장된 게시글 ID
     @Transactional
-    public Long savePost(PostSaveRequestDto requestDto, String author) {
+    public Long savePost(PostSaveRequestDto requestDto, String loginId) {
+
+        Member member = memberRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        String nickname = member.getNickname(); // 유저의 실제 닉네임
+
         // jsoup 살균과 Cdn삭제(키 추출)
         String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
@@ -95,7 +104,7 @@ public class PostService {
         Category category = categoryRepository.findById(requestDto.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
 
-        Post post = requestDto.toEntity(category, author, cleanedContent, hasImage);
+        Post post = requestDto.toEntity(category, nickname, cleanedContent, hasImage);
 
         return postRepository.save(post).getId();
     }
