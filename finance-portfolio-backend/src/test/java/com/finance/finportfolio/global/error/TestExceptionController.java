@@ -4,6 +4,8 @@ import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationEx
 import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
 import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
 
+import io.jsonwebtoken.ExpiredJwtException;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -35,6 +37,11 @@ public class TestExceptionController {
     @GetMapping("/test/refresh-token-not-found")
     public void throwRefreshTokenNotFound() {
         throw new RefreshTokenNotFoundException("");
+    }
+
+    @GetMapping("/test/expired-token")
+    public void throwExpiredJWT() {
+        throw new ExpiredJwtException(null, null, "");
     }
 
     @GetMapping("/test/duplicate")

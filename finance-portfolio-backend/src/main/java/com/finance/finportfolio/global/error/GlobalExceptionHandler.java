@@ -15,6 +15,7 @@ import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationEx
 import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
 import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -105,6 +106,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRefreshTokenNotFoundException(RefreshTokenNotFoundException e) {
         String message = resolveMessage(e.getMessage(), "🛠Refresh Token이 없습니다.");
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_NOT_FOUND", message);
+    }
+
+    // 401 UNAUTHORIZED
+    // EXPIRED_JWT: 리프레쉬 토큰 없음
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException e) {
+        String message = resolveMessage(e.getMessage(), "🛠토큰이 만료되었습니다.");
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", message);
     }
 
     // 409 CONFLICT

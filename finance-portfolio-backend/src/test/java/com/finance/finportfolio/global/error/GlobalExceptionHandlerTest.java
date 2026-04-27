@@ -75,6 +75,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("BadCredentialsException 발생 시 401 에러와 전용 코드를 반환한다")
+    void ExpiredJwtExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/expired-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.code").value("EXPIRED_TOKEN"))
+                .andExpect(jsonPath("$.message").value("🛠토큰이 만료되었습니다."))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("DuplicateResourceException 발생 시 409 에러를 반환한다")
     void handleDuplicateExceptionTest() throws Exception {
         mockMvc.perform(get("/test/duplicate"))
