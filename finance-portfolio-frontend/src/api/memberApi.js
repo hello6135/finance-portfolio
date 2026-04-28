@@ -47,7 +47,7 @@ export const loginMember = async (form) => {
 // status: 400, data: "로그인 상태가 아닙니다."
 // status: 400, data: "Refresh Token이 일치하지 않습니다."
 export const reissueMember = async () => {
-    const response = await axiosInstance.post('/auth/reissue');
+    const response = await axiosInstance.post('/member/reissue');
     // 토큰 필요!
     return parseAuthResponse(response);
 };

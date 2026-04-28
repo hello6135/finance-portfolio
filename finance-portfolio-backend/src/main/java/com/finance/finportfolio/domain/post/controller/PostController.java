@@ -78,10 +78,4 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/showLog")
-    public ResponseEntity<Void> showLog() {
-        log.info("서버에서 응답!");
-        return ResponseEntity.noContent().build();
-    }
-
 }
