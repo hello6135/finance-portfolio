@@ -20,8 +20,14 @@ const Navbar = () => {
                 alert(message);
             }
         } catch (error) {
-            const message = error.response?.data || "로그아웃 중 오류가 발생했습니다."
-            alert(message);
+            const status = error.response?.status;
+            const errorMessage = error.response?.data || "로그아웃 중 오류가 발생했습니다.";
+
+            // 401 에러(이미 토큰 만료)인 경우 alert 생략
+            // 그 외의 에러(500 등)인 경우에만 사용자에게 알림
+            if (status !== 401) {
+                alert(errorMessage);
+            }
         } finally {
             // 로그아웃은 에러가 나도 클라이언트 상태는 정리
             authStore.clearToken();
