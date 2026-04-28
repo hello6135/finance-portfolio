@@ -38,6 +38,10 @@ public class SecurityConfig {
 
         private final JwtTokenProvider jwtTokenProvider;
 
+        // 중복방지용 상수처리
+        public static final String USER = "USER";
+        public static final String ADMIN = "ADMIN";
+
         // 기본 Rounds 10(실무 표준은 10~12, 복잡도는 1상승 시 2배 씩 증가)
         @Bean
         public PasswordEncoder passwordEncoder() {
@@ -86,21 +90,21 @@ public class SecurityConfig {
                                                 .requestMatchers("/error").permitAll()
                                                 // 게시판
                                                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                                                .requestMatchers("/api/posts/**").hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers("/api/posts/**").hasAnyRole(USER, ADMIN)
                                                 .requestMatchers(HttpMethod.POST, "/api/image/upload")
-                                                .hasAnyRole("USER", "ADMIN")
+                                                .hasAnyRole(USER, ADMIN)
                                                 // 게시판 카테고리(관리는 ADMIN 제한)
                                                 .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
-                                                .requestMatchers("/api/category/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/category/**").hasRole(ADMIN)
                                                 // 회원관리
                                                 .requestMatchers("/api/member/join", "/api/member/login",
                                                                 "/api/member/reissue")
                                                 .permitAll()
-                                                .requestMatchers("/api/member/logout").hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers("/api/member/logout").hasAnyRole(USER, ADMIN)
                                                 // 금융 계산기 등
                                                 .requestMatchers("/api/finance/**").permitAll()
                                                 // 관리자 기능
-                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/admin/**").hasRole(ADMIN)
                                                 // 명시되지 않은 경로 모두 차단
                                                 .anyRequest().denyAll())
 
