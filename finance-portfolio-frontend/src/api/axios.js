@@ -19,7 +19,7 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
     (config) => {
         // reissue 요청일 때는 기존 토큰을 첨부하지 않음
-        if (config.url?.includes('/auth/reissue')) {
+        if (config.url?.includes('/member/reissue')) {
             return config;
         }
 
@@ -56,7 +56,7 @@ axiosInstance.interceptors.response.use(
         const originalRequest = error.config;
 
         // reissue 요청 자체가 실패했을 때
-        if (originalRequest.url === '/auth/reissue') {
+        if (originalRequest.url === '/member/reissue') {
             authStore.clearToken();
             isRefreshing = false;
             processPendingQueue(error); // 대기 중인 다른 요청들 종료
@@ -110,13 +110,13 @@ axiosInstance.interceptors.response.use(
         // 실제 엑세스 토큰 재발급 파트
         try {
             // Refresh Token은 HttpOnly 쿠키로 자동 전송(서버가 직접 쏨)
-            // 엑세스 토큰 재발급 `axiosInstance.post('/auth/reissue')`
+            // 엑세스 토큰 재발급 `axiosInstance.post('/member/reissue')`
             // status: 200, data: "토큰이 재발급되었습니다."
             // status: 400, data: "유효하지 않은 Refresh Token입니다."
             // status: 400, data: "존재하지 않는 회원입니다."
             // status: 400, data: "로그인 상태가 아닙니다."
             // status: 400, data: "Refresh Token이 일치하지 않습니다."
-            const response = await axiosInstance.post('/auth/reissue');
+            const response = await axiosInstance.post('/member/reissue');
             const authHeader = response.headers['authorization'] || response.headers['Authorization'];
             const newToken = authHeader?.replace('Bearer ', '');
 

@@ -1,6 +1,8 @@
 package com.finance.finportfolio.global.config;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,6 +32,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @SuppressWarnings("java:S4502")
 public class SecurityConfig {
+
+        @Value("${cloudfront.custom.header.name}")
+        private String cfHeaderName;
 
         private final JwtTokenProvider jwtTokenProvider;
 
@@ -75,14 +80,29 @@ public class SecurityConfig {
 
                                 // ── 인가 설정 ────────────────────────────────────────────
                                 .authorizeHttpRequests(auth -> auth
+                                                // 예비요청(OPTIONS)
+                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                // 에러페이지
                                                 .requestMatchers("/error").permitAll()
+                                                // 게시판
                                                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                                                .requestMatchers("/api/posts/**").hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers(HttpMethod.POST, "/api/image/upload")
+                                                .hasAnyRole("USER", "ADMIN")
+                                                // 게시판 카테고리(관리는 ADMIN 제한)
                                                 .requestMatchers(HttpMethod.GET, "/api/category/**").permitAll()
                                                 .requestMatchers("/api/category/**").hasRole("ADMIN")
-                                                .requestMatchers("/api/member/join", "/api/member/login").permitAll()
-                                                .requestMatchers("/api/auth/reissue").permitAll()
+                                                // 회원관리
+                                                .requestMatchers("/api/member/join", "/api/member/login",
+                                                                "/api/member/reissue")
+                                                .permitAll()
+                                                .requestMatchers("/api/member/logout").hasAnyRole("USER", "ADMIN")
+                                                // 금융 계산기 등
+                                                .requestMatchers("/api/finance/**").permitAll()
+                                                // 관리자 기능
                                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                                .anyRequest().authenticated())
+                                                // 명시되지 않은 경로 모두 차단
+                                                .anyRequest().denyAll())
 
                                 // 인증되지 않은 사용자가 보호된 리소스에 접근 시 응답 설정
                                 .exceptionHandling(ex -> ex
@@ -90,6 +110,11 @@ public class SecurityConfig {
                                                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                                                         response.setContentType("application/json;charset=UTF-8");
                                                         response.getWriter().write("{\"error\": \"UNAUTHORIZED\"}");
+                                                })
+                                                .accessDeniedHandler((request, response, authException) -> {
+                                                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                                        response.setContentType("application/json;charset=UTF-8");
+                                                        response.getWriter().write("{\"error\": \"FORBIDDEN\"}");
                                                 }))
 
                                 // ── JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 등록 ──
@@ -109,7 +134,12 @@ public class SecurityConfig {
                                 "https://www.ljh-finance.com",
                                 "https://dev.ljh-finance.com"));
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setAllowedHeaders(List.of(
+                                "Authorization", // JWT 토큰용
+                                "Content-Type", // JSON 데이터 전송용
+                                "X-Requested-With", // AJAX 요청 식별용
+                                cfHeaderName // CloudFront 커스텀헤더 (EC2 접근용)
+                ));
                 configuration.setAllowCredentials(true);
                 configuration.setExposedHeaders(List.of("Authorization"));
                 configuration.setMaxAge(3600L);

@@ -102,7 +102,7 @@ class TokenReissueControllerTest {
                 }).when(tokenCookieManager).setAuthCookies(any(), any(), any());
 
                 // when & then
-                mockMvc.perform(post("/api/auth/reissue") // 엔드포인트 경로 확인 필요
+                mockMvc.perform(post("/api/member/reissue") // 엔드포인트 경로 확인 필요
                                 .cookie(new Cookie("refreshToken", oldRefreshToken)))
                                 .andExpect(status().isOk())
                                 // Access Token 헤더 검증
@@ -126,7 +126,7 @@ class TokenReissueControllerTest {
                                 .when(tokenCookieManager).extractRefreshTokenFromCookie(any());
 
                 // when & then
-                mockMvc.perform(post("/api/auth/reissue"))
+                mockMvc.perform(post("/api/member/reissue"))
                                 .andExpect(status().isUnauthorized())
                                 .andExpect(jsonPath("$.code").value("REFRESH_TOKEN_NOT_FOUND"))
                                 .andExpect(jsonPath("$.message", Matchers.containsString("Refresh Token이 없습니다.")));
@@ -146,7 +146,7 @@ class TokenReissueControllerTest {
                 given(memberService.reissue(any()))
                                 .willThrow(new IllegalStateException("유효하지 않은 Refresh Token입니다."));
 
-                mockMvc.perform(post("/api/auth/reissue")
+                mockMvc.perform(post("/api/member/reissue")
                                 .cookie(new Cookie("refreshToken", "invalidToken")))
                                 .andExpect(status().isBadRequest());
         }
@@ -163,7 +163,7 @@ class TokenReissueControllerTest {
                 given(memberService.reissue(any()))
                                 .willThrow(new IllegalStateException("Refresh Token이 일치하지 않습니다."));
 
-                mockMvc.perform(post("/api/auth/reissue")
+                mockMvc.perform(post("/api/member/reissue")
                                 .cookie(new Cookie("refreshToken", "stolenToken")))
                                 .andExpect(status().isBadRequest());
         }
