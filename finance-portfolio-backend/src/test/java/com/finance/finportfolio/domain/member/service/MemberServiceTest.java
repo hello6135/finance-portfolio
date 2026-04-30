@@ -55,6 +55,9 @@ class MemberServiceTest {
         @Mock
         private JwtTokenProvider jwtTokenProvider;
 
+        @Mock
+        private LoginAttemptService loginAttemptService;
+
         // 테스트용 Member 생성 헬퍼
         private Member createMember(String loginId) {
                 Member member = Member.builder()
@@ -165,18 +168,33 @@ class MemberServiceTest {
         }
 
         @Test
-        @DisplayName("로그인 실패 - 잘못된 비밀번호면 예외가 발생한다")
-        void login_Fail_WrongPassword() {
-                MemberLoginRequestDto request = new MemberLoginRequestDto("testId", "wrongPassword");
-                given(authenticationManager.authenticate(any()))
-                                .willThrow(new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다."));
+        @DisplayName("로그인 실패 - 잘못된 비밀번호면 실패 카운트 서비스가 호출된다")
+        void login_Fail_IncreaseCount() {
+                // given
+                String loginId = "testId";
+                Long fakeMemberId = 1L;
+                MemberLoginRequestDto request = new MemberLoginRequestDto(loginId, "wrongPassword");
 
+                // Member 생성 및 Reflection을 통한 ID 주입
+                Member member = Member.builder()
+                                .loginId(loginId)
+                                .build();
+                ReflectionTestUtils.setField(member, "id", fakeMemberId);
+
+                given(memberRepository.findByLoginId(loginId)).willReturn(Optional.of(member));
+                given(authenticationManager.authenticate(any()))
+                                .willThrow(new BadCredentialsException("아이디 또는 비밀번호가 일치하지 않습니다."));
+
+                // when & then
                 assertThatThrownBy(() -> memberService.login(request))
                                 .isInstanceOf(BadCredentialsException.class);
 
+                // 검증: member.getId()로 전달된 1L이 updateFailCount의 인자로 정확히 호출되었는지 확인
+                verify(loginAttemptService, times(1)).updateFailCount(fakeMemberId);
+
+                // 검증: 성공 로직은 실행되지 않아야 함
                 verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
         }
-
         // ── logout ─────────────────────────────────────────────────
 
         @Test
