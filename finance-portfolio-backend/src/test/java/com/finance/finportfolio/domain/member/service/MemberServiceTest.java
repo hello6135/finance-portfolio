@@ -23,7 +23,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -196,30 +195,6 @@ class MemberServiceTest {
                 // 검증: 성공 로직은 실행되지 않아야 함
                 verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
         }
-
-        @Test
-        @DisplayName("메인 트랜잭션이 롤백되어도 실패 카운트 서비스가 호출되어야 한다")
-        void updateFailCount_ShouldBeCalledEvenIfMainTransactionRollsBack() {
-                // given
-                Long memberId = 1L;
-
-                // when
-                try {
-                        executeMainLogicWithRollback(memberId);
-                } catch (RuntimeException e) {
-                        // 의도적 롤백 발생 처리
-                }
-
-                // then
-                // 단위 테스트에서는 실제 DB 반영을 확인할 수 없으므로, 서비스 호출 여부를 검증합니다.
-                verify(loginAttemptService, times(1)).updateFailCount(memberId);
-        }
-
-        private void executeMainLogicWithRollback(Long memberId) {
-                loginAttemptService.updateFailCount(memberId);
-                throw new RuntimeException("Main Transaction Rollback!");
-        }
-
         // ── logout ─────────────────────────────────────────────────
 
         @Test
