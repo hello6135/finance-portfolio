@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -114,6 +115,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException e) {
         String message = resolveMessage(e.getMessage(), "🛠토큰이 만료되었습니다.");
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", message);
+    }
+
+    // 401 UNAUTHORIZED
+    // ACCOUNT_LOCKED: 계정 잠금
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ErrorResponse> handleLockedException(LockedException e) {
+        String message = resolveMessage(e.getMessage(), "🛠계정이 잠겼습니다. 잠시 후 다시 시도해주세요.");
+        return buildErrorResponse(HttpStatus.TOO_MANY_REQUESTS, "ACCOUNT_LOCKED", message);
     }
 
     // 409 CONFLICT

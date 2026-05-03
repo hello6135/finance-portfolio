@@ -27,17 +27,9 @@ spring:
   thymeleaf:
     check-template-location: false
 
-bucket4j:
-  enabled: true
-  methods:
-    - name: ip_login_limit
-      cache-name: ip_buckets # [Caffeine] 저장 공간 이름
-      rate-limit:
-        bandwidths:
-          - capacity: 10 # 1분 간 API 호출 10회 가능!(API 호출 자체라 성공해도 차감됨!)
-            time: 1
-            unit: minutes
-            refill-speed: interval
+  main:
+    allow-bean-definition-overriding: true
+
 
 server:
   error:
