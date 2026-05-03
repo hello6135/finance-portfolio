@@ -117,7 +117,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", message);
     }
 
-    // 401 UNAUTHORIZED
+    // 429 TOO_MANY_REQUESTS
     // ACCOUNT_LOCKED: 계정 잠금
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<ErrorResponse> handleLockedException(LockedException e) {
