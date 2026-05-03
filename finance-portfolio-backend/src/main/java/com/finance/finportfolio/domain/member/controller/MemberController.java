@@ -5,12 +5,10 @@ import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
 import com.finance.finportfolio.domain.member.service.MemberService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
