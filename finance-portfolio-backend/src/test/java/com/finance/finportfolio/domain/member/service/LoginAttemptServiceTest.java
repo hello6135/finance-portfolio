@@ -162,7 +162,7 @@ class LoginAttemptServiceTest {
             member.loginSuccess();
 
             // then
-            assertThat(member.getLoginFailCount()).isNotZero();
+            assertThat(member.getLoginFailCount()).isZero();
             assertThat(member.isLocked()).isFalse();
         }
 
