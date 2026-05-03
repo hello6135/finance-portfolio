@@ -86,6 +86,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("LockedException 발생 시 429 에러와 전용 코드를 반환한다")
+    void LockedExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/account-locked"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.status").value(429))
+                .andExpect(jsonPath("$.code").value("ACCOUNT_LOCKED"))
+                .andExpect(jsonPath("$.message").value("🛠계정이 잠겼습니다. 잠시 후 다시 시도해주세요."))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("DuplicateResourceException 발생 시 409 에러를 반환한다")
     void handleDuplicateExceptionTest() throws Exception {
         mockMvc.perform(get("/test/duplicate"))

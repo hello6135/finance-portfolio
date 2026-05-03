@@ -3,6 +3,7 @@ package com.finance.finportfolio.global.config;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,9 +21,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.finance.finportfolio.global.security.filter.IpRateLimitFilter;
 import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
+import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
@@ -60,6 +63,11 @@ public class SecurityConfig {
         }
 
         @Bean
+        public IpRateLimitFilter ipRateLimitFilter() {
+                return new IpRateLimitFilter();
+        }
+
+        @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http
                                 // ── CSRF: JWT 방식은 세션 미사용 → CSRF 불필요 ──────────
@@ -90,6 +98,7 @@ public class SecurityConfig {
                                                 .requestMatchers("/error").permitAll()
                                                 // 게시판
                                                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                                                .requestMatchers("/api/posts/cleanup").hasRole(ADMIN)
                                                 .requestMatchers("/api/posts/**").hasAnyRole(USER, ADMIN)
                                                 .requestMatchers(HttpMethod.POST, "/api/image/upload")
                                                 .hasAnyRole(USER, ADMIN)
@@ -120,8 +129,10 @@ public class SecurityConfig {
                                                         response.setContentType("application/json;charset=UTF-8");
                                                         response.getWriter().write("{\"error\": \"FORBIDDEN\"}");
                                                 }))
-
-                                // ── JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 등록 ──
+                                // api 다중 호출 제한 필터
+                                .addFilterBefore(ipRateLimitFilter(),
+                                                UsernamePasswordAuthenticationFilter.class)
+                                // ── JWT 필터 ──
                                 .addFilterBefore(jwtAuthenticationFilter(),
                                                 UsernamePasswordAuthenticationFilter.class);
 

@@ -1,7 +1,6 @@
 package com.finance.finportfolio.domain.member.service;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
@@ -163,7 +162,7 @@ class LoginAttemptServiceTest {
             member.loginSuccess();
 
             // then
-            assertThat(member.getLoginFailCount()).isEqualTo(0);
+            assertThat(member.getLoginFailCount()).isZero();
             assertThat(member.isLocked()).isFalse();
         }
 

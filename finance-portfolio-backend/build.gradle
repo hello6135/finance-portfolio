@@ -51,9 +51,8 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
-	// Bucket4j & Redis Integration(로그인 무차별 대입 방어)
-    implementation 'com.giffing.bucket4j.spring.boot.starter:bucket4j-spring-boot-starter:0.12.0'
-    implementation 'com.github.ben-manes.caffeine:caffeine'
+	// Bucket4j 코어(무차별 대입 공격 방어)
+	implementation 'com.bucket4j:bucket4j-core:8.10.1'
 }
 
 tasks.named('test') {
