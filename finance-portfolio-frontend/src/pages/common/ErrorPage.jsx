@@ -10,12 +10,24 @@ const ErrorPage = ({ status: propStatus, message: propMessage }) => {
     // 메모리로 값 수신
     const location = useLocation();
 
-    // 엔드포인트(인터셉터) || props(라우트) || 메모리(네비게이트) || 기본 문구
-    const status = searchParams.get('status') || location.state?.status || propStatus || '오류';
-    const message = searchParams.get('message') || location.state?.message || propMessage || '알 수 없는 오류가 발생했습니다.';
+    console.log('Current Location Object:', location);
+    console.log('State Message:', location.state?.message);
 
-    console.log(searchParams.get('status'));
-    console.log(location.state?.status);
+    // 엔드포인트(인터셉터) || 메모리(네비게이트) || props(라우트) || 기본 문구
+    const status = searchParams.get('status') || location.state?.status || propStatus || 'Error';
+
+    let rawMessage = location.state?.message || searchParams.get('message') || propMessage;
+
+    let message = '알 수 없는 오류가 발생했습니다.';
+    if (rawMessage) {
+        try {
+            message = decodeURIComponent(rawMessage);
+        } catch {
+            message = rawMessage;
+        }
+    }
+
+    const subMessage = location.state?.subMessage;
 
     return (
         <div className="d-flex align-items-center justify-content-center"
@@ -23,6 +35,7 @@ const ErrorPage = ({ status: propStatus, message: propMessage }) => {
             <div className="text-center">
                 <h1 className="display-1 fw-bold text-muted">{status}</h1>
                 <p className="fs-5 mb-4">{message}</p>
+                {subMessage && <p className="text-muted small mb-4">{subMessage}</p>}
                 <button onClick={() => navigate('/')} className="btn btn-primary">
                     홈으로
                 </button>
