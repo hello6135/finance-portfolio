@@ -8,6 +8,7 @@ import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
 import com.finance.finportfolio.domain.member.entity.Role;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.config.SecurityConfig;
+import com.finance.finportfolio.global.security.filter.IpRateLimitFilter;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import org.junit.jupiter.api.DisplayName;
@@ -24,9 +25,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -56,8 +62,23 @@ class MemberControllerTest {
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
+    @MockitoBean
+    private IpRateLimitFilter ipRateLimitFilter;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    // IpRateLimitFilter Mock 설정: 항상 체인을 통과시킴
+    @org.junit.jupiter.api.BeforeEach
+    void bypassRateLimitFilter() throws Exception {
+        doAnswer(invocation -> {
+            HttpServletRequest req = invocation.getArgument(0);
+            HttpServletResponse res = invocation.getArgument(1);
+            FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(req, res);
+            return null;
+        }).when(ipRateLimitFilter).doFilter(any(), any(), any());
+    }
 
     @Test
     @DisplayName("SecurityConfig 빈 정상 로드 확인")

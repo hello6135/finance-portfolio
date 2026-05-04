@@ -55,6 +55,10 @@ axiosInstance.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        const status = error.response?.status;
+        // 비지니스 로직상 실패: 에러 페이지로 보내지 않음
+        const isLoginRequest = originalRequest.url.includes('/member/login');
+
         // reissue 요청 자체가 실패했을 때
         if (originalRequest.url === '/member/reissue') {
             authStore.clearToken();
@@ -66,7 +70,7 @@ axiosInstance.interceptors.response.use(
             throw error;
         }
 
-        // 일반 API 에러
+        // 토큰 만료 여부
         // ACCESS_TOKEN_EXPIRED 에러이고 재시도 안 한 요청이면 재발급 시도
         const isExpired =
             error.response?.status === 401 &&
@@ -75,7 +79,6 @@ axiosInstance.interceptors.response.use(
 
         // 토큰 만료 이외 에러 
         if (!isExpired) {
-            const status = error.response?.status || 500;
             const message = error.response?.data?.message || '알 수 없는 오류가 발생했습니다.';
 
             // 개발 환경에서만 에러 상세 출력
@@ -83,12 +86,30 @@ axiosInstance.interceptors.response.use(
                 console.error(`[API Error] Status: ${status}, Message: ${message}`);
             }
 
-            // 로그인 요청(`/member/login`)에서 발생한 에러는 비지니스 로직상 실패: 에러 페이지로 보내지 않음!
-            const isLoginRequest = originalRequest.url.includes('/member/login');
+            // Brute force 방어
+            if (status === 429) {
+                // 로그인 요청에서 발생한 429는 에러 페이지로 보내지 않음
+                if (isLoginRequest) {
+                    throw error;
+                }
+
+                // 일반 API 요청 중 발생한 429는 에러 페이지로 이동
+                const retryAfterHeader = error.response.headers['retry-after'];
+                const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : 60;
+
+                history.push('/error?status=429', {
+                    message: "요청 한도를 초과했습니다.",
+                    subMessage: `${retryAfter}초 후에 다시 시도할 수 있습니다.`,
+                    retryAfter: retryAfter
+                });
+                throw error;
+            }
 
             if (!isLoginRequest && (status === 404 || status >= 500)) {
                 // 쿼리 스트링으로 데이터 전달
-                history.push(`/error?status=${status}&message=${encodeURIComponent(message)}`);
+                history.push(`/error?status=${status}`, {
+                    message: message
+                });
             }
 
             throw error;

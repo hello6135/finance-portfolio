@@ -27,10 +27,6 @@ spring:
   thymeleaf:
     check-template-location: false
 
-  main:
-    allow-bean-definition-overriding: true
-
-
 server:
   error:
     include-stacktrace: never      # 스택트레이스 노출 차단 (필수)

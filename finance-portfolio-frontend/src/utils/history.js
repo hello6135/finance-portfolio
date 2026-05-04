@@ -3,12 +3,10 @@ export const navRef = {
 };
 
 export const history = {
-    push(url) {
+    push(url, state = null) {
         if (navRef.navigate) {
-            // 리액트 엔진이 로드된 상태라면 SPA 라우팅 실행 (깜빡임 X)
-            navRef.navigate(url);
+            navRef.navigate(url, state ? { state } : undefined);
         } else {
-            // 만약 앱 로딩 전이나 특수 상황이라면 브라우저 강제 이동 (Fallback)
             console.warn("Navigation 호출 시점에 리액트 엔진이 준비되지 않았습니다.");
             globalThis.location.href = url;
         }
@@ -16,15 +14,15 @@ export const history = {
 
     goBack() {
         if (navRef.navigate) {
-            navRef.navigate(-1); // 리액트 라우터의 뒤로 가기 방식
+            navRef.navigate(-1);
         } else {
-            globalThis.history.back(); // 브라우저 네이티브 뒤로 가기
+            globalThis.history.back();
         }
     },
 
-    replace(url) {
+    replace(url, state = null) {
         if (navRef.navigate) {
-            navRef.navigate(url, { replace: true });
+            navRef.navigate(url, { replace: true, ...(state && { state }) });
         } else {
             globalThis.location.replace(url);
         }
