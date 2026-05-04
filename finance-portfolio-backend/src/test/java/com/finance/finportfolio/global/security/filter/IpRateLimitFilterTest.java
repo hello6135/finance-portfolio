@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -95,38 +97,22 @@ class IpRateLimitFilterTest {
     // ──────────────────────────────────────────────
     // 3. 제외 경로 - filterChain을 그대로 통과해야 함
     // ──────────────────────────────────────────────
-    @Test
-    @DisplayName("제외 경로(/api/member/logout)는 rate limit 없이 통과한다")
-    void excludedPath_logout_passesThrough() throws ServletException, IOException {
-        MockHttpServletRequest request = createRequest("/api/member/logout", "POST", "127.0.0.1");
+    @ParameterizedTest
+    @CsvSource({
+            "/api/member/logout, POST",
+            "/api/member/reissue, POST",
+            "/error, GET"
+    })
+    @DisplayName("제외 경로는 Rate Limit 없이 통과한다")
+    void excludedPaths_passThrough(String path, String method) throws ServletException, IOException {
+        // Given
+        MockHttpServletRequest request = createRequest(path, method, "127.0.0.1");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
+        // When
         filter.doFilter(request, response, filterChain);
 
-        verify(filterChain, times(1)).doFilter(request, response);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-    }
-
-    @Test
-    @DisplayName("제외 경로(/api/member/reissue)는 rate limit 없이 통과한다")
-    void excludedPath_reissue_passesThrough() throws ServletException, IOException {
-        MockHttpServletRequest request = createRequest("/api/member/reissue", "POST", "127.0.0.1");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        filter.doFilter(request, response, filterChain);
-
-        verify(filterChain, times(1)).doFilter(request, response);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-    }
-
-    @Test
-    @DisplayName("제외 경로(/error)는 rate limit 없이 통과한다")
-    void excludedPath_error_passesThrough() throws ServletException, IOException {
-        MockHttpServletRequest request = createRequest("/error", "GET", "127.0.0.1");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        filter.doFilter(request, response, filterChain);
-
+        // Then
         verify(filterChain, times(1)).doFilter(request, response);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
     }
