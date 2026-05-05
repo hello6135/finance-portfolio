@@ -34,16 +34,13 @@ server:
     include-exception: false       # 예외 클래스명 노출 차단
     include-binding-errors: never  # 파라미터 바인딩 에러 노출 차단
 
-cloudfront:
-  custom:
-    header:
-      name: X-Custom-Access-Key
-      value: ${CF_SECRET_KEY}
-
 jwt:
   secret: ${JWT_SECRET_KEY}  # 32자 이상
   access-token-expiration: 900000       # 15분 (ms)
   refresh-token-expiration: 604800000   # 7일 (ms)      
+
+cloudfront:
+  enabled: false
 ---
 spring:
   config:
@@ -91,6 +88,13 @@ spring:
       s3:
         bucket-name: finportfolio-s3-bucket-dev-9806
         cloudfront-domain: d24842uv7pd3qd.cloudfront.net
+
+cloudfront:
+  enabled: true
+  custom:
+    header:
+      name: X-Custom-Access-Key
+      value: ${CF_SECRET_KEY}
 ---
 spring:
   config:
@@ -114,3 +118,10 @@ spring:
       s3:
         bucket-name: finportfolio-s3-bucket-prod-9806
         cloudfront-domain: d2m4qtzslhorm2.cloudfront.net
+
+cloudfront:
+  enabled: true
+  custom:
+    header:
+      name: X-Custom-Access-Key
+      value: ${CF_SECRET_KEY}

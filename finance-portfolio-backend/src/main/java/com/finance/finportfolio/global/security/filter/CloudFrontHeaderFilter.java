@@ -5,23 +5,29 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
 
 import java.io.IOException;
 
-// Component에 등록하면 호출과 무관하게 헤더 검증 로직이 작동하는 문제가 있음!: @Value 사용 불가
+@Component // 빈 등록은 하되
+@ConditionalOnProperty( // dev/prod 프로파일에서만 활성화
+        name = "cloudfront.enabled", havingValue = "true")
 public class CloudFrontHeaderFilter extends OncePerRequestFilter {
 
     private final String cfHeaderName;
     private final String cfHeaderValue;
 
-    // 생성자를 통해 값을 직접 주입받음
-    public CloudFrontHeaderFilter(String name, String value) {
-        this.cfHeaderName = name;
-        this.cfHeaderValue = value;
+    public CloudFrontHeaderFilter(
+            @Value("${cloudfront.custom.header.name}") String cfHeaderName,
+            @Value("${cloudfront.custom.header.value}") String cfHeaderValue) {
+        this.cfHeaderName = cfHeaderName;
+        this.cfHeaderValue = cfHeaderValue;
     }
 
     @Override
