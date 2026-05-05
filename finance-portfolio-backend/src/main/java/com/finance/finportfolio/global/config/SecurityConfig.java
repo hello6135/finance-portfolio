@@ -2,13 +2,11 @@ package com.finance.finportfolio.global.config;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,25 +19,27 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.finance.finportfolio.global.security.filter.CloudFrontHeaderFilter;
 import com.finance.finportfolio.global.security.filter.IpRateLimitFilter;
 import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
-import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
-import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
 
+// Spring Security 및 보안 필터 체인 설정 클래스
+// 인증 인가 정책
+// 웹 보안 설정
+// 핵심 보안 필터(CloudFront 헤더 검증, IP Rate Limit, JWT 인가) 순서 제어
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 @SuppressWarnings("java:S4502")
 public class SecurityConfig {
 
-        @Value("${cloudfront.custom.header.name}")
-        private String cfHeaderName;
-
-        private final JwtTokenProvider jwtTokenProvider;
+        private final ObjectProvider<CloudFrontHeaderFilter> cfFilterProvider;
+        private final IpRateLimitFilter ipRateLimitFilter;
+        private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
         // 중복방지용 상수처리
         public static final String USER = "USER";
@@ -55,16 +55,6 @@ public class SecurityConfig {
         public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig)
                         throws Exception {
                 return authConfig.getAuthenticationManager();
-        }
-
-        @Bean
-        public JwtAuthenticationFilter jwtAuthenticationFilter() {
-                return new JwtAuthenticationFilter(jwtTokenProvider);
-        }
-
-        @Bean
-        public IpRateLimitFilter ipRateLimitFilter() {
-                return new IpRateLimitFilter();
         }
 
         @Bean
@@ -128,13 +118,18 @@ public class SecurityConfig {
                                                         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                                                         response.setContentType("application/json;charset=UTF-8");
                                                         response.getWriter().write("{\"error\": \"FORBIDDEN\"}");
-                                                }))
-                                // api 다중 호출 제한 필터
-                                .addFilterBefore(ipRateLimitFilter(),
-                                                UsernamePasswordAuthenticationFilter.class)
+                                                }));
+
+                CloudFrontHeaderFilter cfFilter = cfFilterProvider.getIfAvailable();
+                // 로컬에선 삽입X
+                if (cfFilter != null) {
+                        http.addFilterBefore(cfFilter, UsernamePasswordAuthenticationFilter.class);
+                }
+
+                // api 다중 호출 제한 필터[Brute-force 방어]
+                http.addFilterBefore(ipRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                                 // ── JWT 필터 ──
-                                .addFilterBefore(jwtAuthenticationFilter(),
-                                                UsernamePasswordAuthenticationFilter.class);
+                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
         }
@@ -153,7 +148,7 @@ public class SecurityConfig {
                                 "Authorization", // JWT 토큰용
                                 "Content-Type", // JSON 데이터 전송용
                                 "X-Requested-With", // AJAX 요청 식별용
-                                cfHeaderName // CloudFront 커스텀헤더 (EC2 접근용)
+                                "X-Custom-Access-Key" // CloudFront 커스텀헤더 (EC2 접근용)
                 ));
                 configuration.setAllowCredentials(true);
                 configuration.setExposedHeaders(List.of("Authorization"));

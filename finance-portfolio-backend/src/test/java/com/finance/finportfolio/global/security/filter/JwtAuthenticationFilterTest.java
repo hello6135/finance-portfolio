@@ -14,7 +14,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import java.io.IOException;
