@@ -8,29 +8,30 @@ import com.finance.finportfolio.domain.post.entity.Post;
 
 // PostResponseDto - Post 엔티티 Get용 DTO
 public record PostResponseDto(
-        Long id,
-        String categoryName,
-        String author,
-        String title,
-        String content,
-        boolean hasImage,
-        LocalDateTime createdAt) {
-    // Entity -> DTO 변환을 위한 생성자
-    public PostResponseDto(Post post) {
-        this(post, post.getContent());
-    }
+                Long id,
+                String categoryName,
+                String author,
+                String title,
+                String content,
+                boolean hasImage,
+                LocalDateTime createdAt) {
+        // 원본 호출용
+        public static PostResponseDto from(Post post) {
+                return PostResponseDto.ofForJsoup(post, post.getContent());
+        }
 
-    public PostResponseDto(Post post, String processedContent) {
-        this(
-                post.getId(),
-                Optional.ofNullable(post.getCategory())
-                        .map(Category::getName)
-                        .orElse("미분류"),
-                Optional.ofNullable(post.getAuthor())
-                        .orElse("익명"),
-                post.getTitle(),
-                processedContent,
-                post.isHasImage(),
-                post.getCreatedAt());
-    }
+        // 살균 Content 호출용
+        public static PostResponseDto ofForJsoup(Post post, String processedContent) {
+                return new PostResponseDto(
+                                post.getId(),
+                                Optional.ofNullable(post.getCategory())
+                                                .map(Category::getName)
+                                                .orElse("미분류"),
+                                Optional.ofNullable(post.getAuthor())
+                                                .orElse("익명"),
+                                post.getTitle(),
+                                processedContent,
+                                post.isHasImage(),
+                                post.getCreatedAt());
+        }
 }

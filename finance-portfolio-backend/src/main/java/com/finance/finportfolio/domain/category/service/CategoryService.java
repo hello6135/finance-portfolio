@@ -45,7 +45,7 @@ public class CategoryService {
     // 목록 조회
     public List<CategoryResponseDto> findAllOrderByOrder() {
         return categoryRepository.findAllByOrderBySortOrderAsc().stream()
-                .map(CategoryResponseDto::new)
+                .map(CategoryResponseDto::from)
                 .toList();
     }
 }

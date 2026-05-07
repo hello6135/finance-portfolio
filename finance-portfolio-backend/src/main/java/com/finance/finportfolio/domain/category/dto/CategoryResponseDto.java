@@ -7,8 +7,8 @@ public record CategoryResponseDto(
         String name,
         int sortOrder) {
     // Entity -> DTO 변환 생성자
-    public CategoryResponseDto(Category category) {
-        this(
+    public static CategoryResponseDto from(Category category) {
+        return new CategoryResponseDto(
                 category.getId(),
                 category.getName(),
                 category.getSortOrder());
