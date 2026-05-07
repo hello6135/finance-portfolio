@@ -73,7 +73,7 @@ public class PostService {
         }
 
         // Entity를 DTO로 변환하여 반환
-        return postPage.map(PostResponseDto::new);
+        return postPage.map(PostResponseDto::from);
     }
 
     // ID로 게시글 조회, return: 게시글
@@ -84,7 +84,7 @@ public class PostService {
 
         String processedContent = fileService.convertToCdnUrls(post.getContent());
 
-        return new PostResponseDto(post, processedContent);
+        return PostResponseDto.ofForJsoup(post, processedContent);
     }
 
     // 게시글 저장, return: 저장된 게시글 ID
