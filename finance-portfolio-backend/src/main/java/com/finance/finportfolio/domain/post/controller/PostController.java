@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -43,8 +45,11 @@ public class PostController {
     }
 
     @GetMapping("/{id}") // post detail, editor 페이지에서 조회
-    public ResponseEntity<PostResponseDto> getPostById(@PathVariable("id") Long id) {
-        PostResponseDto post = postService.getPostById(id);
+    public ResponseEntity<PostResponseDto> getPostById(@PathVariable("id") Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String currentLoginId = (userDetails != null) ? userDetails.getUsername() : null;
+        log.info("userDetails: {}, currentLoginId: {}", userDetails, currentLoginId);
+        PostResponseDto post = postService.getPostById(id, currentLoginId);
         log.info("게시글 상세 조회 - ID: {}, 제목: {}", id, post.title());
         return ResponseEntity.ok(post);
     }
@@ -58,13 +63,16 @@ public class PostController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Long> updatePost(@PathVariable("id") Long id, @RequestBody PostUpdateRequestDto requestDto) {
+    @PreAuthorize("hasRole('ADMIN') or @postService.isPostOwner(#id, authentication.name)")
+    public ResponseEntity<Long> updatePost(@PathVariable("id") Long id,
+            @RequestBody PostUpdateRequestDto requestDto) {
         log.info("게시글 수정 시도 - ID: {}, 제목: {}", id, requestDto.title());
         postService.updatePost(id, requestDto);
         return ResponseEntity.ok(id);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @postService.isPostOwner(#id, authentication.name)")
     public ResponseEntity<Long> deletePost(@PathVariable("id") Long id) {
         log.info("게시글 삭제 시도 - ID: {}", id);
         postService.deletePost(id);
