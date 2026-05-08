@@ -10,6 +10,7 @@ import com.finance.finportfolio.domain.post.entity.Post;
 // PostResponseDto - Post 엔티티 Get용 DTO
 public record PostResponseDto(
                 Long id,
+                Long categoryId,
                 String categoryName,
                 String author,
                 String title,
@@ -31,6 +32,9 @@ public record PostResponseDto(
 
                 return new PostResponseDto(
                                 post.getId(),
+                                Optional.ofNullable(post.getCategory())
+                                                .map(Category::getId)
+                                                .orElse(null),
                                 Optional.ofNullable(post.getCategory())
                                                 .map(Category::getName)
                                                 .orElse("미분류"),

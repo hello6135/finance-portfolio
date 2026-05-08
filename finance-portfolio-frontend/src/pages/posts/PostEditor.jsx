@@ -36,7 +36,7 @@ const PostEditor = () => {
             getPostById(id).then(data => {
                 setTitle(data.title);
                 setContent(data.content);
-                setCategoryId(data.categoryId || ''); // 기존 카테고리 설정
+                setCategoryId(data.categoryId ? String(data.categoryId) : '');
             }).catch(err => {
                 console.error("데이터 로딩 실패", err);
                 alert("게시글을 불러올 수 없습니다.");
@@ -89,12 +89,12 @@ const PostEditor = () => {
                     <select
                         id="category"
                         className="form-select"
-                        value={categoryId}
+                        value={String(categoryId)}
                         onChange={(e) => setCategoryId(e.target.value)}
                     >
                         <option value="">카테고리를 선택하세요</option>
                         {categories.map(category => (
-                            <option key={category.id} value={category.id}>
+                            <option key={category.id} value={String(category.id)}>
                                 {category.name}
                             </option>
                         ))}
