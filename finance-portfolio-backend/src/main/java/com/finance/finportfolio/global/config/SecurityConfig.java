@@ -27,7 +27,6 @@ import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.util.Arrays;
 import java.util.List;
 
 // Spring Security 및 보안 필터 체인 설정 클래스
@@ -144,18 +143,10 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                List<String> profiles = Arrays.asList(env.getActiveProfiles());
-                boolean isLocalDevelopment = profiles.contains("local") || profiles.isEmpty()
-                                || profiles.contains("default");
-
-                if (isLocalDevelopment) {
-                        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-                        configuration.setAllowCredentials(true);
-                } else {
-                        // prod, dev 등 명시적 프로파일이 있는 경우 (운영 환경)
-                        configuration.setAllowedOrigins(List.of());
-                }
-
+                configuration.setAllowedOrigins(List.of(
+                                "http://localhost:3000",
+                                "https://www.ljh-finance.com",
+                                "https://dev.ljh-finance.com"));
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of(
                                 "Authorization", // JWT 토큰용
@@ -163,7 +154,9 @@ public class SecurityConfig {
                                 "X-Requested-With", // AJAX 요청 식별용
                                 "X-Custom-Access-Key" // CloudFront 커스텀헤더 (EC2 접근용)
                 ));
+                configuration.setAllowCredentials(true);
                 configuration.setExposedHeaders(List.of("Authorization"));
+                configuration.setMaxAge(3600L);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", configuration); // 모든 경로에 적용
