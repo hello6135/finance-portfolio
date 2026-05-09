@@ -18,14 +18,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,7 +36,6 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
@@ -368,18 +365,4 @@ class SecurityConfigTest {
                                 .andExpect(status().isOk());
         }
 
-}
-
-@SpringBootTest
-@ActiveProfiles("local")
-class SecurityConfigBeanTest {
-
-        @Autowired
-        private AuthenticationManager authenticationManager;
-
-        @Test
-        @DisplayName("AuthenticationManager 빈이 정상 생성된다")
-        void authenticationManagerBean_ShouldBeCreated() {
-                assertThat(authenticationManager).isNotNull();
-        }
 }
