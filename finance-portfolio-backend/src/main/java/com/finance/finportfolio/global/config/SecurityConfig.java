@@ -58,7 +58,6 @@ public class SecurityConfig {
         }
 
         @Bean
-        @SuppressWarnings("java:S4830")
         public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig)
                         throws Exception {
                 return authConfig.getAuthenticationManager();
