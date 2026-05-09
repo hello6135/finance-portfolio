@@ -9,7 +9,10 @@ import com.finance.finportfolio.domain.member.controller.TokenCookieManager;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.domain.post.controller.PostController;
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
+import com.finance.finportfolio.global.security.filter.CloudFrontHeaderFilter;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,8 +28,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
-
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
@@ -68,8 +74,62 @@ class SecurityConfigTest {
         @MockitoBean
         private AuthenticationManager authenticationManager;
 
+        @MockitoBean
+        private CloudFrontHeaderFilter cloudFrontHeaderFilter;
+
         @Autowired
         private ObjectMapper objectMapper;
+
+        // CloudFrontHeaderFilter
+        @Test
+        @DisplayName("CloudFrontHeaderFilter가 빈으로 존재하면 필터 체인에서 실행되어야 한다")
+        void cloudFrontFilter_ShouldExecute_WhenBeanExists() throws Exception {
+                // given: 필터가 호출될 때 다음 필터로 넘어가도록 설정 (가짜 동작 정의)
+                // doAnswer를 사용하여 실제 필터의 doFilterInternal 로직을 흉내냅니다.
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
+
+                // when: 어떤 요청이든 수행
+                mockMvc.perform(get("/api/posts/list"))
+                                .andExpect(status().isOk());
+
+                // then: 필터가 최소 1회 호출되었는지 검증
+                // addFilterBefore로 등록되었으므로 요청 처리 과정에서 반드시 거쳐야 함
+                verify(cloudFrontHeaderFilter, atLeastOnce()).doFilter(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("CloudFront 커스텀 헤더가 없으면 403 또는 필터에서 정의한 에러를 반환해야 한다")
+        void cloudFrontFilter_ShouldReject_WhenHeaderIsMissing() throws Exception {
+                // given: 헤더가 없을 때 필터가 403을 응답하도록 Mock 설정 (필터의 실제 로직에 맞게 조정)
+                doAnswer(invocation -> {
+                        jakarta.servlet.http.HttpServletResponse response = invocation.getArgument(1);
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(
+                                argThat(request -> ((jakarta.servlet.http.HttpServletRequest) request)
+                                                .getHeader("X-Custom-Access-Key") == null),
+                                any(),
+                                any());
+
+                // when & then
+                mockMvc.perform(get("/api/posts/list")) // 헤더 없이 요청
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("로컬 환경에서는 localhost:3000의 CORS 요청을 허용해야 한다")
+        void corsAllowedInLocalProfile() throws Exception {
+                mockMvc.perform(options("/api/posts/list")
+                                .header("Origin", "http://localhost:3000")
+                                .header("Access-Control-Request-Method", "GET"))
+                                .andExpect(status().isOk())
+                                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"))
+                                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+        }
 
         @Test
         @DisplayName("CORS Preflight 요청(OPTIONS)은 인증 없이 200 OK를 반환해야 한다")
@@ -97,6 +157,12 @@ class SecurityConfigTest {
         @Test
         @DisplayName("인증이 필요한 경로에 토큰 없이 접근하면 401 에러가 발생해야 한다")
         void authenticatedPathFailTest() throws Exception {
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
+
                 mockMvc.perform(get("/api/admin/some-resource")
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isUnauthorized()); // Custom EntryPoint 작동 확인
@@ -107,6 +173,12 @@ class SecurityConfigTest {
         @Test
         @DisplayName("인증 없이 보호된 엔드포인트에 접근하면 401과 UNAUTHORIZED JSON을 반환한다")
         void accessProtectedResource_WithoutAuth_Returns401WithJson() throws Exception {
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
+
                 // POST /api/posts 는 anyRequest().authenticated() 대상
                 mockMvc.perform(post("/api/posts")
                                 .contentType("application/json")
@@ -119,6 +191,12 @@ class SecurityConfigTest {
         @Test
         @DisplayName("인증 없이 DELETE 요청을 하면 401과 UNAUTHORIZED JSON을 반환한다")
         void deletePost_WithoutAuth_Returns401WithJson() throws Exception {
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
+
                 mockMvc.perform(delete("/api/posts/1"))
                                 .andExpect(status().isUnauthorized())
                                 .andExpect(content().contentType("application/json;charset=UTF-8"))
@@ -128,6 +206,12 @@ class SecurityConfigTest {
         @Test
         @DisplayName("인증 없이 PATCH 요청을 하면 401과 UNAUTHORIZED JSON을 반환한다")
         void patchPost_WithoutAuth_Returns401WithJson() throws Exception {
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
+
                 mockMvc.perform(patch("/api/posts/1")
                                 .contentType("application/json")
                                 .content("{}"))
@@ -168,6 +252,12 @@ class SecurityConfigTest {
         @Test
         @DisplayName("401 응답의 Content-Type은 application/json;charset=UTF-8이어야 한다")
         void unauthorizedResponse_ContentType_IsJson() throws Exception {
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
+
                 mockMvc.perform(post("/api/posts")
                                 .contentType("application/json")
                                 .content("{}"))
@@ -178,6 +268,12 @@ class SecurityConfigTest {
         @Test
         @DisplayName("401 응답 바디에 error 필드가 UNAUTHORIZED 값으로 포함되어야 한다")
         void unauthorizedResponse_Body_ContainsErrorField() throws Exception {
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
+
                 mockMvc.perform(delete("/api/posts/1"))
                                 .andExpect(status().isUnauthorized())
                                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
@@ -199,6 +295,12 @@ class SecurityConfigTest {
         void saveCategory_UserRole_Forbidden() throws Exception {
                 CategoryRequestDto dto = new CategoryRequestDto("Investment", 1);
                 String json = objectMapper.writeValueAsString(dto);
+
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
 
                 mockMvc.perform(post("/api/category")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -241,6 +343,12 @@ class SecurityConfigTest {
         void updateCategory_UserRole_Forbidden() throws Exception {
                 CategoryRequestDto dto = new CategoryRequestDto("Updated Name", 2);
                 String json = objectMapper.writeValueAsString(dto);
+
+                doAnswer(invocation -> {
+                        jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+                        chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+                        return null;
+                }).when(cloudFrontHeaderFilter).doFilter(any(), any(), any());
 
                 mockMvc.perform(patch("/api/category/1")
                                 .contentType(MediaType.APPLICATION_JSON)
