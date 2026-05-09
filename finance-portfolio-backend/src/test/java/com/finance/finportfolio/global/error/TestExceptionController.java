@@ -8,6 +8,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -43,6 +44,11 @@ public class TestExceptionController {
     @GetMapping("/test/expired-token")
     public void throwExpiredJWT() {
         throw new ExpiredJwtException(null, null, "");
+    }
+
+    @GetMapping("/test/access-denied")
+    public void throwAccessDenied() {
+        throw new AccessDeniedException("");
     }
 
     @GetMapping("/test/account-locked")
