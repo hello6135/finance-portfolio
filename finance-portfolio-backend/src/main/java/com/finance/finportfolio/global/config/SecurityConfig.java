@@ -143,7 +143,10 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                configuration.setAllowCredentials(true);
+                configuration.setAllowedOrigins(List.of(
+                                "http://localhost:3000",
+                                "https://www.ljh-finance.com",
+                                "https://dev.ljh-finance.com"));
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of(
                                 "Authorization", // JWT 토큰용
@@ -151,8 +154,9 @@ public class SecurityConfig {
                                 "X-Requested-With", // AJAX 요청 식별용
                                 "X-Custom-Access-Key" // CloudFront 커스텀헤더 (EC2 접근용)
                 ));
+                configuration.setAllowCredentials(true);
                 configuration.setExposedHeaders(List.of("Authorization"));
-                configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+                configuration.setMaxAge(3600L);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", configuration); // 모든 경로에 적용
