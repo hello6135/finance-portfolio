@@ -7,6 +7,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.finance.finportfolio.domain.category.entity.Category;
+import com.finance.finportfolio.domain.member.entity.Member;
 
 // JPA
 import jakarta.persistence.Column;
@@ -40,7 +41,12 @@ public class Post {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    private String author;
+    // Member DB와 JOIN
+    @ManyToOne(fetch = FetchType.LAZY)
+    // DB에는 작성자 String이 아닌 고유한 숫자 ID가 저장됨
+    // 작성자 이름 변경 시에도 유지
+    @JoinColumn(name = "member_id")
+    private Member author;
 
     private String title;
     @Column(columnDefinition = "TEXT") // CKEditor : HTML 문자열로 저장
@@ -54,7 +60,7 @@ public class Post {
     private LocalDateTime createdAt;
 
     @Builder
-    private Post(Category category, String author, String title, String content, boolean hasImage) {
+    private Post(Category category, Member author, String title, String content, boolean hasImage) {
         this.category = category;
         this.author = author;
         this.title = title;

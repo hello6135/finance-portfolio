@@ -81,6 +81,12 @@ axiosInstance.interceptors.response.use(
         if (!isExpired) {
             const message = error.response?.data?.message || '알 수 없는 오류가 발생했습니다.';
 
+            // 403 Forbidden: 권한 부족 처리 추가
+            if (status === 403) {
+                alert("권한이 없습니다.");
+                throw error;
+            }
+
             // 개발 환경에서만 에러 상세 출력
             if (import.meta.env.DEV) {
                 console.error(`[API Error] Status: ${status}, Message: ${message}`);

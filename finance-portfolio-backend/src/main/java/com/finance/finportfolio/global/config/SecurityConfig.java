@@ -5,9 +5,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -25,6 +27,7 @@ import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.Arrays;
 import java.util.List;
 
 // Spring Security 및 보안 필터 체인 설정 클래스
@@ -34,12 +37,15 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@EnableMethodSecurity // 매서드 보안 활성화 (@PreAuthorize)
 @SuppressWarnings("java:S4502")
 public class SecurityConfig {
 
         private final ObjectProvider<CloudFrontHeaderFilter> cfFilterProvider;
         private final IpRateLimitFilter ipRateLimitFilter;
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+        private final Environment env;
 
         // 중복방지용 상수처리
         public static final String USER = "USER";
@@ -138,11 +144,18 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
 
-                // CloudFront 통합 관리로 자기 경로 참조하기 때문에 Origin 허용 필수는 아님
-                configuration.setAllowedOrigins(List.of(
-                                "http://localhost:3000",
-                                "https://www.ljh-finance.com",
-                                "https://dev.ljh-finance.com"));
+                List<String> profiles = Arrays.asList(env.getActiveProfiles());
+                boolean isLocalDevelopment = profiles.contains("local") || profiles.isEmpty()
+                                || profiles.contains("default");
+
+                if (isLocalDevelopment) {
+                        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+                        configuration.setAllowCredentials(true);
+                } else {
+                        // prod, dev 등 명시적 프로파일이 있는 경우 (운영 환경)
+                        configuration.setAllowedOrigins(List.of());
+                }
+
                 configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(List.of(
                                 "Authorization", // JWT 토큰용
@@ -150,9 +163,7 @@ public class SecurityConfig {
                                 "X-Requested-With", // AJAX 요청 식별용
                                 "X-Custom-Access-Key" // CloudFront 커스텀헤더 (EC2 접근용)
                 ));
-                configuration.setAllowCredentials(true);
                 configuration.setExposedHeaders(List.of("Authorization"));
-                configuration.setMaxAge(3600L);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", configuration); // 모든 경로에 적용

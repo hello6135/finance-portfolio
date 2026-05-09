@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 import LoadingPage from '../common/LoadingPage';
 import { getPostById, deletePost } from '../../api/postApi';
+import authStore from '../../store/authStore';
 
 const PostDetail = () => {
     const { id } = useParams();
@@ -26,14 +27,17 @@ const PostDetail = () => {
         fetchPost();
     }, [id, navigate]);
 
+    // 권한 체크: 서버가 준 isOwner가 true이거나, 현재 사용자가 관리자인 경우
+    const canManage = post?.isOwner || authStore.getUserRole() === 'ADMIN';
+
     const onDelete = async () => {
         if (globalThis.confirm('정말 삭제하시겠습니까?')) {
             try {
                 await deletePost(id);
+                alert("삭제되었습니다.");
                 navigate('/posts');
             } catch (error) {
                 console.error("삭제 중 오류 발생:", error);
-                alert("삭제에 실패했습니다.");
             }
         }
     };
@@ -90,8 +94,13 @@ const PostDetail = () => {
 
             <div className="mt-3 d-flex gap-2">
                 <button onClick={() => navigate('/posts')} className="btn btn-secondary">목록으로</button>
-                <button onClick={() => navigate(`/editor/${id}`)} className="btn btn-warning">수정</button>
-                <button onClick={onDelete} className="btn btn-danger">삭제</button>
+                {/* 권한이 있을 때만 수정/삭제 버튼 렌더링 */}
+                {canManage && (
+                    <>
+                        <button onClick={() => navigate(`/editor/${id}`)} className="btn btn-warning">수정</button>
+                        <button onClick={onDelete} className="btn btn-danger">삭제</button>
+                    </>
+                )}
             </div>
         </div>
     );

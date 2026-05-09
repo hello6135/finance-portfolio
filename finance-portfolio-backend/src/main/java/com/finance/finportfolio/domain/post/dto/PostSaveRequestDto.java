@@ -1,6 +1,7 @@
 package com.finance.finportfolio.domain.post.dto;
 
 import com.finance.finportfolio.domain.category.entity.Category;
+import com.finance.finportfolio.domain.member.entity.Member;
 import com.finance.finportfolio.domain.post.entity.Post;
 
 import lombok.Builder;
@@ -22,7 +23,7 @@ public record PostSaveRequestDto(
         }
 
         // DTO -> Entity 변환 (DB 저장용 builder)
-        public Post toEntity(Category category, String author, String cleanedContent, Boolean hasImage) {
+        public Post toEntity(Category category, Member author, String cleanedContent, Boolean hasImage) {
                 return Post.builder()
                                 .category(category)
                                 .author(author)

@@ -115,6 +115,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("AccessDeniedException 발생 시 403 에러와 전용 코드를 반환한다")
+    void AccessDeniedExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/access-denied"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"))
+                .andExpect(jsonPath("$.message").value("🛠권한이 부족합니다."))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("LockedException 발생 시 429 에러와 전용 코드를 반환한다")
     void LockedExceptionTest() throws Exception {
         mockMvc.perform(get("/test/account-locked"))

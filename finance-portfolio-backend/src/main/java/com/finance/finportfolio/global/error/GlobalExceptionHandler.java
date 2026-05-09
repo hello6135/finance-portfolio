@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
@@ -115,6 +116,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException e) {
         String message = resolveMessage(e.getMessage(), "🛠토큰이 만료되었습니다.");
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", message);
+    }
+
+    // 403 FORBIDDEN
+    // ACCESS_DENIED: 권한 부족
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
+        String message = resolveMessage(e.getMessage(), "🛠권한이 부족합니다.");
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "ACCESS_DENIED", message);
     }
 
     // 429 TOO_MANY_REQUESTS

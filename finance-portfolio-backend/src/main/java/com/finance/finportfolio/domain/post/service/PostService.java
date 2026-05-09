@@ -29,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 
 // PostService - 게시판 로직 처리
 @Slf4j
-@Service
+@Service("postService")
 @Transactional
 @RequiredArgsConstructor
 public class PostService {
@@ -58,6 +58,22 @@ public class PostService {
         return !doc.select("img").isEmpty();
     }
 
+    // 작성자 체크
+    @Transactional(readOnly = true)
+    public boolean isPostOwner(Long id, String memberId) {
+        if (id == null) {
+            return false;
+        }
+        return postRepository.findById(id)
+                .map(post -> {
+                    if (post.getAuthor() == null) {
+                        return false;
+                    }
+                    return post.getAuthor().getLoginId().equals(memberId);
+                })
+                .orElse(false);
+    }
+
     // 게시글 페이지 조회(페이징), return: 게시글 목록
     @Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(int page, int size, Long categoryId) {
@@ -78,13 +94,13 @@ public class PostService {
 
     // ID로 게시글 조회, return: 게시글
     @Transactional(readOnly = true)
-    public PostResponseDto getPostById(Long id) {
+    public PostResponseDto getPostById(Long id, String currentLoginId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
         String processedContent = fileService.convertToCdnUrls(post.getContent());
 
-        return PostResponseDto.ofForJsoup(post, processedContent);
+        return PostResponseDto.ofForJsoup(post, processedContent, currentLoginId);
     }
 
     // 게시글 저장, return: 저장된 게시글 ID
@@ -94,17 +110,15 @@ public class PostService {
         Member member = memberRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
-        String nickname = member.getNickname(); // 유저의 실제 닉네임
+        // 카테고리 존재 여부 확인 및 조회
+        Category category = categoryRepository.findById(requestDto.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
 
         // jsoup 살균과 Cdn삭제(키 추출)
         String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
         boolean hasImage = checkImage(cleanedContent);
 
-        // 카테고리 존재 여부 확인 및 조회
-        Category category = categoryRepository.findById(requestDto.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
-
-        Post post = requestDto.toEntity(category, nickname, cleanedContent, hasImage);
+        Post post = requestDto.toEntity(category, member, cleanedContent, hasImage);
 
         return postRepository.save(post).getId();
     }
