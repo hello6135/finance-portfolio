@@ -47,125 +47,112 @@ const processPendingQueue = (error, token = null) => {
     pendingQueue = [];
 };
 
+
+// 로그아웃
+const handleLogout = () => {
+    authStore.clearToken();
+    isRefreshing = false;
+    history.push('/login');
+};
+
+// 판별함수
+const isReissueRequest = (config) => config.url === '/member/reissue';
+const isLoginRequest = (config) => config.url.includes('/member/login');
+const isTokenExpiredError = (error) =>
+    error.response?.status === 401 &&
+    error.response?.data?.error === 'ACCESS_TOKEN_EXPIRED' &&
+    !error.config._retry;
+
+// 전역 에러 처리(각 코드에 맞게)
+const handleGlobalError = (error) => {
+    const { status, data, headers } = error.response || {};
+    const message = data?.message || '알 수 없는 오류가 발생했습니다.';
+
+    if (isLoginRequest(error.config)) return;
+
+    switch (status) {
+        case 403:
+            alert("권한이 없습니다.");
+            break;
+        case 429: {
+            const retryAfter = Number.parseInt(headers?.['retry-after'] || '60', 10);
+            history.push('/error?status=429', {
+                message: "요청 한도를 초과했습니다.",
+                subMessage: `${retryAfter}초 후에 다시 시도할 수 있습니다.`,
+                retryAfter
+            });
+            break;
+        }
+        case 404:
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+            history.push(`/error?status=${status}`, { message });
+            break;
+    }
+};
+
+// 토큰 재발급 핵심 로직
+const handleTokenRefresh = async (originalRequest) => {
+    if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+            pendingQueue.push({ resolve, reject });
+        }).then((token) => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            return axiosInstance(originalRequest);
+        });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+        const response = await axiosInstance.post('/member/reissue');
+        const authHeader = response.headers['authorization'] || response.headers['Authorization'];
+        const newToken = authHeader?.replace('Bearer ', '');
+
+        if (!newToken) throw new Error('No Token');
+
+        authStore.setToken(newToken);
+        processPendingQueue(null, newToken);
+
+        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        return axiosInstance(originalRequest);
+    } catch (reissueError) {
+        processPendingQueue(reissueError);
+        handleLogout();
+        throw reissueError;
+    } finally {
+        isRefreshing = false;
+    }
+};
+
 // ── 응답 인터셉터(RESPONSE): 에러 처리, 만료 토큰 재발급 ───────────────
 axiosInstance.interceptors.response.use(
     // 정상 response는 response 그대로 전달
     (response) => response,
     // 에러가 난 경우에는 토큰 재발급 절차 진행
     async (error) => {
-        const originalRequest = error.config;
-
-        const status = error.response?.status;
-        // 비지니스 로직상 실패: 에러 페이지로 보내지 않음
-        const isLoginRequest = originalRequest.url.includes('/member/login');
+        const { config } = error;
 
         // reissue 요청 자체가 실패했을 때
-        if (originalRequest.url === '/member/reissue') {
-            authStore.clearToken();
-            isRefreshing = false;
-            processPendingQueue(error); // 대기 중인 다른 요청들 종료
-
-            // 리프레시 토큰도 만료된 것이므로 로그인 페이지로 이동
-            history.push('/login');
+        if (isReissueRequest(config)) {
+            handleLogout();
+            // 대기 중인 다른 요청들 종료
+            processPendingQueue(error);
             throw error;
         }
 
-        // 토큰 만료 여부
-        // ACCESS_TOKEN_EXPIRED 에러이고 재시도 안 한 요청이면 재발급 시도
-        const isExpired =
-            error.response?.status === 401 &&
-            error.response?.data?.error === 'ACCESS_TOKEN_EXPIRED' &&
-            !originalRequest._retry;
-
-        // 토큰 만료 이외 에러 
-        if (!isExpired) {
-            const message = error.response?.data?.message || '알 수 없는 오류가 발생했습니다.';
-
-            // 403 Forbidden: 권한 부족 처리 추가
-            if (status === 403) {
-                alert("권한이 없습니다.");
-                throw error;
-            }
-
-            // 개발 환경에서만 에러 상세 출력
-            if (import.meta.env.DEV) {
-                console.error(`[API Error] Status: ${status}, Message: ${message}`);
-            }
-
-            // Brute force 방어
-            if (status === 429) {
-                // 로그인 요청에서 발생한 429는 에러 페이지로 보내지 않음
-                if (isLoginRequest) {
-                    throw error;
-                }
-
-                // 일반 API 요청 중 발생한 429는 에러 페이지로 이동
-                const retryAfterHeader = error.response.headers['retry-after'];
-                const retryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : 60;
-
-                history.push('/error?status=429', {
-                    message: "요청 한도를 초과했습니다.",
-                    subMessage: `${retryAfter}초 후에 다시 시도할 수 있습니다.`,
-                    retryAfter: retryAfter
-                });
-                throw error;
-            }
-
-            if (!isLoginRequest && (status === 404 || status >= 500)) {
-                // 쿼리 스트링으로 데이터 전달
-                history.push(`/error?status=${status}`, {
-                    message: message
-                });
-            }
-
-            throw error;
+        // 토큰 만료 에러인 경우 재발급 시도
+        if (isTokenExpiredError(error)) {
+            return handleTokenRefresh(config);
         }
 
-        // 재발급이 이미 진행 중이면 대기열에 추가
-        if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-                pendingQueue.push({ resolve, reject });
-            }).then((token) => {
-                originalRequest.headers['Authorization'] = `Bearer ${token}`;
-                return axiosInstance(originalRequest);
-            });
-        }
+        // 그 외 일반 에러 처리
+        handleGlobalError(error);
 
-        originalRequest._retry = true;
-        isRefreshing = true;
-
-        // 실제 엑세스 토큰 재발급 파트
-        try {
-            // Refresh Token은 HttpOnly 쿠키로 자동 전송(서버가 직접 쏨)
-            // 엑세스 토큰 재발급 `axiosInstance.post('/member/reissue')`
-            // status: 200, data: "토큰이 재발급되었습니다."
-            // status: 400, data: "유효하지 않은 Refresh Token입니다."
-            // status: 400, data: "존재하지 않는 회원입니다."
-            // status: 400, data: "로그인 상태가 아닙니다."
-            // status: 400, data: "Refresh Token이 일치하지 않습니다."
-            const response = await axiosInstance.post('/member/reissue');
-            const authHeader = response.headers['authorization'] || response.headers['Authorization'];
-            const newToken = authHeader?.replace('Bearer ', '');
-
-
-            if (!newToken) throw new Error('재발급된 토큰이 없습니다.');
-
-            authStore.setToken(newToken);
-            processPendingQueue(null, newToken);
-
-            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-            return axiosInstance(originalRequest);
-
-        } catch (reissueError) {
-            // 재발급 실패 = Refresh Token도 만료 → 강제 로그아웃
-            authStore.clearToken();
-            processPendingQueue(reissueError);
-            // 로그인 페이지로 이동 
-            history.push('/login');
-            throw reissueError;
-        } finally {
-            isRefreshing = false;
-        }
+        throw error;
     }
 );
 
