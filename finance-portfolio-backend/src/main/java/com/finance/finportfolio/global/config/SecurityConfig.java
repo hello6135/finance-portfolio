@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -43,8 +42,6 @@ public class SecurityConfig {
         private final ObjectProvider<CloudFrontHeaderFilter> cfFilterProvider;
         private final IpRateLimitFilter ipRateLimitFilter;
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-        private final Environment env;
 
         // 중복방지용 상수처리
         public static final String USER = "USER";
