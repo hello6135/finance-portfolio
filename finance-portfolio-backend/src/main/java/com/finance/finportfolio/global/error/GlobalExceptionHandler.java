@@ -1,5 +1,6 @@
 package com.finance.finportfolio.global.error;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -12,9 +13,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
 import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
+import com.finance.finportfolio.global.error.exception.FileStorageException;
 import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -73,6 +76,17 @@ public class GlobalExceptionHandler {
                 .orElse("🛠입력값이 올바르지 않습니다.");
 
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
+    }
+
+    // 400 BAD_REQUEST
+    // CKEditor 전용 포맷으로 처리해야함(Map<String, Object>)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "uploaded", false,
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "code", "FILE_SIZE_LIMIT_EXCEEDED",
+                "error", Map.of("message", "파일 용량이 너무 큽니다. (최대 1MB)")));
     }
 
     // 401 UNAUTHORIZED
@@ -149,6 +163,15 @@ public class GlobalExceptionHandler {
         log.error("CloudFront 설정 에러 발생!", e.getMessage(), e);
         String message = resolveMessage(e.getMessage(), "시스템 보안 설정에 문제가 발생했습니다.");
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "CLOUDFRONT_CONFIG_ERROR", message);
+    }
+
+    // 500 INTERNAL_SERVER_ERROR
+    // STORAGE_ERROR: S3 파일 업로드 쪽 런타임 에러
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorageException(FileStorageException e) {
+        log.error("S3 파일 업로드 장애", e);
+        String message = resolveMessage(e.getMessage(), "파일 업로드 간 시스템 오류가 발생했습니다. 관리자에게 문의하세요.");
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_ERROR", message);
     }
 
     // 500 INTERNAL_SERVER_ERROR

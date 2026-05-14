@@ -5,7 +5,6 @@ import java.util.Objects;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.safety.Safelist;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,27 +33,17 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PostService {
 
-    // jsoup 커스텀 설정 본문용(utext)
-    private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
-            .addAttributes("img", "alt", "width", "height") // 이미지 관련 속성 허용
-            .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
-
     private final PostRepository postRepository;
     private final FileService fileService;
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
 
-    // Jsoup 소독 메서드
-    private String cleanHtml(String text) {
-        return (text == null || text.isEmpty()) ? "" : Jsoup.clean(text, HTML_SAFE_LIST);
-    }
-
+    // 실제 <img> 태그가 1개 이상 존재하는지 "객체" 단위로 확인
     private boolean checkImage(String htmlContent) {
         if (htmlContent == null || htmlContent.isEmpty())
             return false;
 
         Document doc = Jsoup.parseBodyFragment(htmlContent);
-        // 실제 <img> 태그가 1개 이상 존재하는지 "객체" 단위로 확인
         return !doc.select("img").isEmpty();
     }
 
@@ -114,8 +103,8 @@ public class PostService {
         Category category = categoryRepository.findById(requestDto.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
 
-        // jsoup 살균과 Cdn삭제(키 추출)
-        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
+        // Cdn삭제(키 추출)
+        String cleanedContent = fileService.removeCdnUrls(requestDto.content());
         boolean hasImage = checkImage(cleanedContent);
 
         Post post = requestDto.toEntity(category, member, cleanedContent, hasImage);
@@ -130,8 +119,8 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
-        // jsoup 살균과 Cdn삭제(키 추출)
-        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
+        // Cdn삭제(키 추출)
+        String cleanedContent = fileService.removeCdnUrls(requestDto.content());
         boolean hasImage = checkImage(cleanedContent);
 
         Category category = categoryRepository.findById(requestDto.categoryId())

@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.finance.finportfolio.global.error.exception.FileStorageException;
+
 import io.awspring.cloud.s3.S3Template;
 import io.awspring.cloud.s3.ObjectMetadata;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -23,11 +25,11 @@ public class S3FileHandler {
     private final S3Template s3Template;
     private final S3Properties s3Properties;
 
-    public String uploadFile(MultipartFile file, String savedFileName) {
+    public String uploadFile(MultipartFile file, String savedFileName, String mimeType) {
         try {
             // 1. 메타데이터 객체 생성 및 설정 (빌더 패턴 활용)
             ObjectMetadata metadata = ObjectMetadata.builder()
-                    .contentType(file.getContentType())
+                    .contentType(mimeType)
                     .contentLength(file.getSize())
                     .build();
 
@@ -45,10 +47,10 @@ public class S3FileHandler {
 
         } catch (IOException e) {
             log.error("S3 파일 읽기 에러: {}", e.getMessage());
-            throw new RuntimeException("S3 파일 업로드 중 오류 발생", e);
+            throw new FileStorageException("S3 파일 업로드 중 오류 발생", e);
         } catch (S3Exception e) {
             log.error("AWS S3 서비스 에러: {}", e.awsErrorDetails().errorMessage());
-            throw new RuntimeException("AWS S3 서비스 오류", e);
+            throw new FileStorageException("AWS S3 서비스 오류", e);
         }
     }
 

@@ -24,6 +24,11 @@ spring:
         static: ap-northeast-2
         instance-profile: false
 
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 2MB
+
   thymeleaf:
     check-template-location: false
 

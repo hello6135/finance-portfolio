@@ -42,28 +42,34 @@ export const imageUploadAdapter = (loader) => {
     return {
         upload: async () => {
             try {
-                // 1. 파일 로드 (await로 뎁스 제거)
+                // 파일 로드
                 const file = await loader.file;
 
-                // 2. FormData 준비
+                // 프론트 사전 검증 (CKEditor 기본 제한 우회, 서버 제한과 맞춰야함)
+                if (file.size > 1 * 1024 * 1024) {
+                    throw new Error('파일 용량이 너무 큽니다. (최대 1MB)');
+                }
+
+                // FormData 준비
                 const formData = new FormData();
                 formData.append('upload', file);
 
-                // 3. API 호출
+                // API 호출
                 const response = await axiosInstance.post('/image/upload', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
+                    headers: { 'Content-Type': 'multipart/form-data' },
                 });
 
-                // 4. 성공 시 결과 반환
-                return {
-                    default: response.data.url
-                };
+                // 파일 업로드 실패시 예외처리
+                if (!response.data.uploaded) {
+                    throw new Error(response.data.error?.message || '업로드 실패');
+                }
+
+                // 성공 시 결과 반환
+                return { default: response.data.url };
+
             } catch (err) {
-                // 5. 에러 핸들링
-                const errorMessage = err.response?.data?.message || '업로드 실패';
-                throw errorMessage; // async 함수에서 에러는 throw하면 reject와 동일합니다.
+                const raw = err.response?.data?.error?.message || err.message || '이미지 업로드에 실패했습니다.';
+                throw new Error(raw.replace(/^Error:\s*/, ''));
             }
         }
     };

@@ -3,6 +3,7 @@ package com.finance.finportfolio.domain.post.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,29 +24,26 @@ public class EditorImageController {
     private final S3Properties s3Properties;
 
     @PostMapping("/api/image/upload")
-    public Map<String, Object> upload(@RequestParam("upload") MultipartFile file) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<Map<String, Object>> upload(@RequestParam("upload") MultipartFile file) {
 
         try {
-            // 1. 파일을 저장하고 저장된 파일명을 받아옴
+            // 파일을 저장하고 저장된 파일명을 받아옴
             String savedFileName = fileService.uploadFile(file);
 
+            // cdn url로
             String cdnUrl = String.format("https://%s/%s",
                     s3Properties.cloudfrontDomain(),
                     savedFileName);
 
-            // 2. CKEditor 5 전용 성공 응답 규격
-            response.put("uploaded", true);
-            response.put("url", cdnUrl);
-
-            log.info("CKEditor image uploaded successfully: {}", savedFileName);
+            return ResponseEntity.ok(Map.of(
+                    "uploaded", true,
+                    "url", cdnUrl));
         } catch (Exception e) {
             log.error("CKEditor image upload failed", e);
-
-            response.put("uploaded", false);
-            response.put("error", Map.of("message", "이미지 업로드 실패: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(
+                    "uploaded", false,
+                    "error", Map.of("message", e.getMessage()) // 백엔드 메시지 그대로 전달
+            ));
         }
-
-        return response; // 맵 객체를 최종 반환 (JSON으로 자동 변환됨)
     }
 }
