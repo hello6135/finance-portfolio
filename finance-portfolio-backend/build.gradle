@@ -103,6 +103,10 @@ jacocoTestReport {
 sonarqube {
     properties {
         property "sonar.coverage.exclusions", "**/domain/post/**, **/domain/category/**, **/*Dto*, **/*Request*, **/*Response*, **/entity/**"
+
+		// 소스 코드와 테스트 코드의 경로를 명확히 분리 지정
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", "src/test/java"
     }
 }
 
