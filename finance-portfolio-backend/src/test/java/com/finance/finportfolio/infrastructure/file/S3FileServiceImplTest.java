@@ -152,8 +152,9 @@ class S3FileServiceImplTest {
             String result = s3FileService.removeCdnUrls(inputHtml);
 
             // then
-            assertThat(result).contains("img src=\"" + pureKey + "\"");
-            assertThat(result).doesNotContain("<script>"); // XSS 방어 살균 검증
+            assertThat(result)
+                    .contains("img src=\"" + pureKey + "\"")
+                    .doesNotContain("<script>"); // XSS 방어 살균 검증
         }
     }
 

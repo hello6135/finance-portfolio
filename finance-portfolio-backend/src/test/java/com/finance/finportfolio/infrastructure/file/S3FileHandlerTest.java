@@ -30,8 +30,8 @@ class S3FileHandlerTest {
     private S3FileHandler s3FileHandler;
 
     // 테스트 데이터 상수
-    private final String BUCKET_NAME = "test-bucket";
-    private final String CLOUDFRONT_DOMAIN = "https://cdn.example.com";
+    private static final String BUCKET_NAME = "test-bucket";
+    private static final String CLOUDFRONT_DOMAIN = "https://cdn.example.com";
 
     @BeforeEach
     void setUp() {
@@ -43,7 +43,7 @@ class S3FileHandlerTest {
 
     @Test
     @DisplayName("파일 업로드 시 S3Template의 upload 메서드가 호출되고 저장 파일명을 반환한다")
-    void uploadFileSuccessTest() throws IOException {
+    void uploadFileSuccessTest() {
         // given
         String savedFileName = "uuid-test.png";
         String contentType = "image/png";

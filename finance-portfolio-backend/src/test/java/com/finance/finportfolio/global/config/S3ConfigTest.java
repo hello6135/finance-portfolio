@@ -29,8 +29,9 @@ class S3ConfigTest {
         Tika registeredBean = applicationContext.getBean(Tika.class);
 
         // then
-        assertThat(registeredBean).isNotNull();
-        assertThat(registeredBean).isSameAs(tika);
+        assertThat(registeredBean)
+                .isNotNull()
+                .isSameAs(tika);
     }
 
     @Test
