@@ -71,6 +71,18 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("메시지 없이 MaxUploadSizeExceededException 발생 시 🛠 기본 메시지를 반환한다")
+    void handleMaxUploadSizeExceededExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/file-size-limit-exceeded"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.uploaded").value(false))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("FILE_SIZE_LIMIT_EXCEEDED"))
+                .andExpect(jsonPath("$.error.message").value("파일 용량이 너무 큽니다. (최대 1MB)"))
+                .andDo(print());
+    }
+
+    @Test
     @DisplayName("UsernameNotFoundException 발생 시 401 에러와 전용 코드를 반환한다")
     void handleUsernameNotFoundExceptionTest() throws Exception {
         mockMvc.perform(get("/test/user-not-found"))
@@ -155,6 +167,17 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.code").value("CLOUDFRONT_CONFIG_ERROR"))
                 .andExpect(jsonPath("$.message").value("시스템 보안 설정에 문제가 발생했습니다."))
+                .andDo(print());
+    }
+
+    @Test
+    @DisplayName("S3 파일 업로드 에러 발생 시 500 에러를 반환한다")
+    void handleFileStorageExceptionTest() throws Exception {
+        mockMvc.perform(get("/test/storage-error"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.code").value("STORAGE_ERROR"))
+                .andExpect(jsonPath("$.message").value("파일 업로드 간 시스템 오류가 발생했습니다. 관리자에게 문의하세요."))
                 .andDo(print());
     }
 

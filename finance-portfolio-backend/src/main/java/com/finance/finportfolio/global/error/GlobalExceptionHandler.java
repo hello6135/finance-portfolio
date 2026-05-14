@@ -84,6 +84,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         return ResponseEntity.badRequest().body(Map.of(
                 "uploaded", false,
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "code", "FILE_SIZE_LIMIT_EXCEEDED",
                 "error", Map.of("message", "파일 용량이 너무 큽니다. (최대 1MB)")));
     }
 
