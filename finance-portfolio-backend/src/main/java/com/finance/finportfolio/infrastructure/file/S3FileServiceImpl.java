@@ -1,5 +1,7 @@
 package com.finance.finportfolio.infrastructure.file;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -11,9 +13,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.imaging.ImageInfo;
+import org.apache.commons.imaging.Imaging;
+import org.apache.tika.Tika;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.safety.Safelist;
 import org.jsoup.select.Elements;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -31,16 +37,59 @@ import lombok.extern.slf4j.Slf4j;
 public class S3FileServiceImpl implements FileService {
 
     private final S3FileHandler s3FileHandler;
+    private final Tika tika;
+
+    // jsoup 커스텀 설정 본문용(utext)
+    private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
+            .addAttributes("img", "alt", "width", "height") // 이미지 관련 속성 허용
+            .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
+
+    // 용량, 해상도 제한
+    private static final long MAX_FILE_SIZE = 1 * 1024 * 1024;
+    private static final int MAX_PIXEL_SIZE = 1920;
+
+    // 1차 이미지 유효성 체크
+    private void validateFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException("파일 용량이 너무 큽니다.");
+        }
+    }
 
     @Override
     public String uploadFile(MultipartFile file) {
-        if (file == null || file.isEmpty() || file.getOriginalFilename() == null) {
-            return null;
+
+        validateFile(file);
+
+        // 2차 이미지 유효성 체크
+        try {
+            // MIME 타입 검증
+            String mimeType;
+            try (InputStream inputStream = file.getInputStream()) {
+                // S3Config의 tika 빈
+                mimeType = tika.detect(inputStream);
+            }
+            if (!mimeType.startsWith("image/")) {
+                throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
+            }
+
+            // 3. 해상도 검증(메모리 부하 방지)
+            try (InputStream inputStream = file.getInputStream()) {
+                ImageInfo imageInfo = Imaging.getImageInfo(inputStream, file.getOriginalFilename());
+                if (imageInfo.getWidth() > MAX_PIXEL_SIZE || imageInfo.getHeight() > MAX_PIXEL_SIZE) {
+                    throw new IllegalArgumentException("이미지 해상도가 너무 높습니다.");
+                }
+            }
+
+            String savedFileName = createFileName(file.getOriginalFilename());
+            return s3FileHandler.uploadFile(file, savedFileName, mimeType);
+
+        } catch (IOException e) {
+            log.error("이미지 분석 또는 파일 읽기 실패: {}", e.getMessage());
+            throw new IllegalArgumentException("올바르지 않은 이미지 형식 및 읽기 오류입니다.");
         }
-
-        String savedFileName = createFileName(file.getOriginalFilename());
-        return s3FileHandler.uploadFile(file, savedFileName);
-
     }
 
     private String createFileName(String originalFileName) {
@@ -83,6 +132,7 @@ public class S3FileServiceImpl implements FileService {
                 img.attr("src", cdnUrl);
             }
         }
+
         return doc.body().html();
     }
 
@@ -93,7 +143,9 @@ public class S3FileServiceImpl implements FileService {
             return "";
         }
 
-        Document doc = Jsoup.parseBodyFragment(content);
+        String cleanedHtml = Jsoup.clean(content, HTML_SAFE_LIST);
+
+        Document doc = Jsoup.parseBodyFragment(cleanedHtml);
         Elements imgs = doc.select("img[src]");
 
         for (Element img : imgs) {
@@ -103,9 +155,11 @@ public class S3FileServiceImpl implements FileService {
                 img.attr("src", pureKey);
             }
         }
-        log.info("살균된 content: {}", doc.body().html());
 
-        return doc.body().html();
+        String finalContent = doc.body().html();
+        log.info("살균된 content: {}", finalContent);
+
+        return finalContent;
     }
 
     // http:, CDN url 등 경로 쳐내고 키 값 추출

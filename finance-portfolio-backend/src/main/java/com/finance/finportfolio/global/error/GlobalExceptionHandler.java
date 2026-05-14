@@ -1,5 +1,6 @@
 package com.finance.finportfolio.global.error;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
 import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
@@ -73,6 +75,15 @@ public class GlobalExceptionHandler {
                 .orElse("🛠입력값이 올바르지 않습니다.");
 
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
+    }
+
+    // 400 BAD_REQUEST
+    // CKEditor 전용 포맷으로 처리해야함(Map<String, Object>)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "uploaded", false,
+                "error", Map.of("message", "파일 용량이 너무 큽니다. (최대 1MB)")));
     }
 
     // 401 UNAUTHORIZED

@@ -23,11 +23,11 @@ public class S3FileHandler {
     private final S3Template s3Template;
     private final S3Properties s3Properties;
 
-    public String uploadFile(MultipartFile file, String savedFileName) {
+    public String uploadFile(MultipartFile file, String savedFileName, String mimeType) {
         try {
             // 1. 메타데이터 객체 생성 및 설정 (빌더 패턴 활용)
             ObjectMetadata metadata = ObjectMetadata.builder()
-                    .contentType(file.getContentType())
+                    .contentType(mimeType)
                     .contentLength(file.getSize())
                     .build();
 

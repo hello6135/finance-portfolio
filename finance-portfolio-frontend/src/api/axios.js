@@ -70,6 +70,9 @@ const handleGlobalError = (error) => {
 
     if (isLoginRequest(error.config)) return;
 
+    // 이미지 업로드 실패는 호출한 쪽(어댑터)에서 처리
+    if (error.config?.url?.includes('/image/upload')) return;
+
     switch (status) {
         case 403:
             alert("권한이 없습니다.");
