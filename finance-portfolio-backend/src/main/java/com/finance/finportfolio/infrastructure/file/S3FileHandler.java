@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.finance.finportfolio.global.error.exception.FileStorageException;
+
 import io.awspring.cloud.s3.S3Template;
 import io.awspring.cloud.s3.ObjectMetadata;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -45,10 +47,10 @@ public class S3FileHandler {
 
         } catch (IOException e) {
             log.error("S3 파일 읽기 에러: {}", e.getMessage());
-            throw new RuntimeException("S3 파일 업로드 중 오류 발생", e);
+            throw new FileStorageException("S3 파일 업로드 중 오류 발생", e);
         } catch (S3Exception e) {
             log.error("AWS S3 서비스 에러: {}", e.awsErrorDetails().errorMessage());
-            throw new RuntimeException("AWS S3 서비스 오류", e);
+            throw new FileStorageException("AWS S3 서비스 오류", e);
         }
     }
 

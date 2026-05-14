@@ -45,7 +45,7 @@ public class S3FileServiceImpl implements FileService {
             .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
 
     // 용량, 해상도 제한
-    private static final long MAX_FILE_SIZE = 1 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 1L * 1024 * 1024;
     private static final int MAX_PIXEL_SIZE = 1920;
 
     // 1차 이미지 유효성 체크

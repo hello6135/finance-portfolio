@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
 import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
+import com.finance.finportfolio.global.error.exception.FileStorageException;
 import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -160,6 +161,15 @@ public class GlobalExceptionHandler {
         log.error("CloudFront 설정 에러 발생!", e.getMessage(), e);
         String message = resolveMessage(e.getMessage(), "시스템 보안 설정에 문제가 발생했습니다.");
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "CLOUDFRONT_CONFIG_ERROR", message);
+    }
+
+    // 500 INTERNAL_SERVER_ERROR
+    // STORAGE_ERROR: S3 파일 업로드 쪽 런타임 에러
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorageException(FileStorageException e) {
+        log.error("S3 파일 업로드 장애", e);
+        String message = resolveMessage(e.getMessage(), "파일 업로드 간 시스템 오류가 발생했습니다. 관리자에게 문의하세요.");
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_ERROR", message);
     }
 
     // 500 INTERNAL_SERVER_ERROR
