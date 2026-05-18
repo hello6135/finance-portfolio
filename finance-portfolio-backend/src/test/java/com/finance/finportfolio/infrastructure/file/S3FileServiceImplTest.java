@@ -9,6 +9,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -193,6 +194,21 @@ class S3FileServiceImplTest {
             // then
             verify(s3FileHandler, never()).getS3ObjectKeys();
             verify(s3FileHandler, never()).deleteFiles(any());
+        }
+
+        @Test
+        @DisplayName("S3 오브젝트 키 목록의 크기를 정상적으로 반환한다")
+        void s3ObjectCountSuccessTest() {
+            // given
+            List<String> mockKeys = List.of("images/file1.png", "images/file2.png", "images/file3.png");
+            when(s3FileHandler.getS3ObjectKeys()).thenReturn(mockKeys);
+
+            // when
+            int count = s3FileService.s3ObjectCount();
+
+            // then
+            assertThat(count).isEqualTo(3);
+            verify(s3FileHandler, times(1)).getS3ObjectKeys();
         }
     }
 }

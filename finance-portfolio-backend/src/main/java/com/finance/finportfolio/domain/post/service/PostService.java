@@ -63,6 +63,14 @@ public class PostService {
                 .orElse(false);
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getAllPostContents() {
+        return postRepository.findAll().stream()
+                .map(Post::getContent)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
     // 게시글 페이지 조회(페이징), return: 게시글 목록
     @Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(int page, int size, Long categoryId) {
@@ -145,16 +153,9 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    // 미참조 이미지 파일 삭제 - 버튼 식(차후 정기 실행으로 변경)
     @Transactional(readOnly = true)
-    public void cleanUpOrphanFiles() {
-        // DB에서 post의 모든 content 넘김
-        List<String> allPostContents = postRepository.findAll().stream()
-                .map(Post::getContent)
-                .filter(Objects::nonNull)
-                .toList();
-
-        fileService.cleanUpOrphanFiles(allPostContents);
+    public int s3ObjectCount() {
+        return fileService.s3ObjectCount();
     }
 
 }
