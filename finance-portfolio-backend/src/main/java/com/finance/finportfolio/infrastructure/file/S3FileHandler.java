@@ -2,6 +2,7 @@ package com.finance.finportfolio.infrastructure.file;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -85,7 +86,8 @@ public class S3FileHandler {
     public List<String> getS3ObjectKeys() {
         return s3Template.listObjects(s3Properties.bucketName(), "").stream()
                 .map(resource -> resource.getLocation().getObject())
-                .filter(filename -> filename != null && !filename.isEmpty())
+                .filter(Objects::nonNull)
+                .filter(filename -> !filename.isEmpty())
                 .toList();
     }
 }

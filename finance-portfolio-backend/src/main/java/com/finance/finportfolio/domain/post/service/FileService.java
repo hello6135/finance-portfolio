@@ -15,4 +15,6 @@ public interface FileService {
     String convertToCdnUrls(String content);
 
     String removeCdnUrls(String content);
+
+    int s3ObjectCount();
 }

@@ -214,6 +214,12 @@ public class S3FileServiceImpl implements FileService {
         }
     }
 
+    @Override
+    public int s3ObjectCount() {
+        List<String> s3Keys = s3FileHandler.getS3ObjectKeys();
+        return s3Keys.size();
+    }
+
     // HTML 본문에서 URL/파일명 리스트를 추출하는 정규식 로직
     private List<String> extractFileNamesFromContent(String content) {
         List<String> imageKeys = new ArrayList<>();

@@ -75,12 +75,4 @@ public class PostController {
         postService.deletePost(id);
         return ResponseEntity.noContent().build();
     }
-
-    @DeleteMapping("/cleanup")
-    public ResponseEntity<Void> cleanUpOrphanFiles() {
-        log.info("미참조 이미지 정리 시작");
-        postService.cleanUpOrphanFiles();
-        return ResponseEntity.noContent().build();
-    }
-
 }
