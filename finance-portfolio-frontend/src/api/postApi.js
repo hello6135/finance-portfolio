@@ -32,12 +32,7 @@ export const deletePost = async (id) => {
     await axiosInstance.delete(`/posts/${id}`);
 };
 
-// 6. 미참조 파일 정리 (DELETE /api/posts/cleanup)
-export const cleanUpFiles = async () => {
-    await axiosInstance.delete('/posts/cleanup');
-};
-
-// 7. CKeditor 전용 업로드 어댑터
+// 6. CKeditor 전용 업로드 어댑터
 export const imageUploadAdapter = (loader) => {
     return {
         upload: async () => {

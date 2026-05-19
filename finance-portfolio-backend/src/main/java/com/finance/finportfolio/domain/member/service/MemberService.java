@@ -33,6 +33,11 @@ public class MemberService {
         private final JwtTokenProvider jwtTokenProvider;
         private final LoginAttemptService loginAttemptService;
 
+        @Transactional(readOnly = true)
+        public long getTotalMemberCount() {
+                return memberRepository.count();
+        }
+
         private Member findMemberByLoginId(String loginId) {
                 return memberRepository.findByLoginId(loginId)
                                 .orElseThrow(() -> new IllegalStateException("존재하지 않는 회원입니다."));

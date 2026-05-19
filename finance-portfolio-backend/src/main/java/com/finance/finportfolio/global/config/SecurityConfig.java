@@ -88,9 +88,10 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                                 // 에러페이지
                                                 .requestMatchers("/error").permitAll()
+                                                // 관리자 기능
+                                                .requestMatchers("/api/admin/**").hasRole(ADMIN)
                                                 // 게시판
                                                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
-                                                .requestMatchers("/api/posts/cleanup").hasRole(ADMIN)
                                                 .requestMatchers("/api/posts/**").hasAnyRole(USER, ADMIN)
                                                 .requestMatchers(HttpMethod.POST, "/api/image/upload")
                                                 .hasAnyRole(USER, ADMIN)
@@ -104,8 +105,6 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/member/logout").hasAnyRole(USER, ADMIN)
                                                 // 금융 계산기 등
                                                 .requestMatchers("/api/finance/**").permitAll()
-                                                // 관리자 기능
-                                                .requestMatchers("/api/admin/**").hasRole(ADMIN)
                                                 // 명시되지 않은 경로 모두 차단
                                                 .anyRequest().denyAll())
 

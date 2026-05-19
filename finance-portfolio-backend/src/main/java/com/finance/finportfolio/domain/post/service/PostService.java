@@ -71,6 +71,16 @@ public class PostService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public long getTotalPostCount() {
+        return postRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long s3ObjectCount() {
+        return fileService.s3ObjectCount();
+    }
+
     // 게시글 페이지 조회(페이징), return: 게시글 목록
     @Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(int page, int size, Long categoryId) {
@@ -151,11 +161,6 @@ public class PostService {
 
         // DB 게시글 삭제
         postRepository.delete(post);
-    }
-
-    @Transactional(readOnly = true)
-    public int s3ObjectCount() {
-        return fileService.s3ObjectCount();
     }
 
 }
