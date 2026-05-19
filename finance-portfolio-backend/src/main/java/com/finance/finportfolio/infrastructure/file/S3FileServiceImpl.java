@@ -59,6 +59,12 @@ public class S3FileServiceImpl implements FileService {
     }
 
     @Override
+    public int s3ObjectCount() {
+        List<String> s3Keys = s3FileHandler.getS3ObjectKeys();
+        return s3Keys.size();
+    }
+
+    @Override
     public String uploadFile(MultipartFile file) {
 
         validateFile(file);
@@ -212,12 +218,6 @@ public class S3FileServiceImpl implements FileService {
             log.info("미참조 파일 삭제 실행: {} 건", orphanKeys.size());
             s3FileHandler.deleteFiles(orphanKeys);
         }
-    }
-
-    @Override
-    public int s3ObjectCount() {
-        List<String> s3Keys = s3FileHandler.getS3ObjectKeys();
-        return s3Keys.size();
     }
 
     // HTML 본문에서 URL/파일명 리스트를 추출하는 정규식 로직

@@ -1,16 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getDashboardSummary } from '../../api/adminApi';
+import LoadingPage from '../common/LoadingPage';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
 
-    // 임시 통계 데이터 (실제로는 API에서 호출)
+    const [dashboardData, setDashboardData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        getDashboardSummary()
+            .then((data) => {
+                setDashboardData(data);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error('대시보드 데이터 로드 실패:', err);
+                setError('데이터를 불러오는 중 오류가 발생했습니다.');
+                setLoading(false);
+            });
+    }, []);
+
     const stats = [
-        { title: '총 게시글', count: '128', unit: '개', color: 'text-primary' },
-        { title: '신규 회원', count: '12', unit: '명', color: 'text-success' },
-        { title: '오늘 방문자', count: '1,024', unit: '명', color: 'text-info' },
-        { title: '시스템 상태', count: '정상', unit: '', color: 'text-warning' },
+        { title: '총 게시글', count: dashboardData?.totalPostCount ?? 0, unit: '개', color: 'text-primary' },
+        { title: 'S3 오브젝트', count: dashboardData?.totalImageCount ?? 0, unit: '개', color: 'text-warning' },
+        { title: '총 회원 수', count: dashboardData?.totalMemberCount ?? 0, unit: '명', color: 'text-success' },
     ];
+
+    if (loading) return <LoadingPage />;
 
     return (
         <div className="container py-4">
@@ -33,7 +52,9 @@ const AdminDashboard = () => {
                             <div className="card-body">
                                 <h6 className="card-subtitle mb-2 text-muted fw-bold">{item.title}</h6>
                                 <div className={`h3 mb-0 fw-bold ${item.color}`}>
-                                    {item.count}<small className="fs-6 text-muted ms-1">{item.unit}</small>
+                                    {/* 1,000 단위 콤마 포맷팅 */}
+                                    {Number(item.count).toLocaleString()}
+                                    <small className="fs-6 text-muted ms-1">{item.unit}</small>
                                 </div>
                             </div>
                         </div>
