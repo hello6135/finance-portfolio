@@ -7,7 +7,7 @@ package com.finance.finportfolio.domain.finance.dto;
      * expectedYield: 기대수익률
      */
 public record CalculateFairRequestDto(
-        double dps,
-        double expectedYield,
-        double growthRate) {
+                double dps,
+                double expectedYield,
+                double growthRate) {
 }
