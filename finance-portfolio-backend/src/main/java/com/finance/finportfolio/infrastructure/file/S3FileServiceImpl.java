@@ -47,6 +47,7 @@ public class S3FileServiceImpl implements FileService {
             .addAttributes("img", "alt", "width", "height", "src")
             // 링크(a) 태그의 target 속성 허용 (새창 열기용)
             .addAttributes("a", "target", "rel")
+            .addProtocols("a", "href", "http", "https", "mailto")
             // 모든 허용된 태그에 대해 인라인 스타일(style) 속성 허용
             // (텍스트 정렬, 글자 색상, 배경색 유지)
             .addAttributes(":all", "style")
