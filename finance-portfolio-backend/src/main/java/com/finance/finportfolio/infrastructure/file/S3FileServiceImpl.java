@@ -41,8 +41,20 @@ public class S3FileServiceImpl implements FileService {
 
     // jsoup 커스텀 설정 본문용(utext)
     private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
-            .addAttributes("img", "alt", "width", "height") // 이미지 관련 속성 허용
-            .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
+            // CKEditor 필수 기본 태그 및 가로줄/줄바꿈 추가 허용
+            .addTags("hr", "br", "span", "div")
+            // 이미지 태그의 필수 속성 확장
+            .addAttributes("img", "alt", "width", "height", "src")
+            // 링크(a) 태그의 target 속성 허용 (새창 열기용)
+            .addAttributes("a", "target", "rel")
+            .addProtocols("a", "href", "http", "https", "mailto")
+            // 모든 허용된 태그에 대해 인라인 스타일(style) 속성 허용
+            // (텍스트 정렬, 글자 색상, 배경색 유지)
+            .addAttributes(":all", "style")
+            // 테이블(표) 서식 보존을 위한 속성 추가 허용
+            .addAttributes("table", "border", "cellspacing", "cellpadding")
+            .addAttributes("td", "colspan", "rowspan")
+            .addAttributes("th", "colspan", "rowspan");
 
     // 용량, 해상도 제한
     private static final long MAX_FILE_SIZE = 1L * 1024 * 1024;
