@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
 import LoadingPage from '../common/LoadingPage';
 import { getPostById, deletePost } from '../../api/postApi';
@@ -69,10 +70,11 @@ const PostDetail = () => {
                     </tr>
                     <tr>
                         <th className="table-light">내용</th>
-                        {/* dangerouslySetInnerHTML: 타임리프의 utext와 같은 기능 */}
+                        {/* dangerouslySetInnerHTML: 타임리프의 utext와 같은 기능
+                        dompurify를 통해 XSS 이중방어 */}
                         <td
                             className="post-content"
-                            dangerouslySetInnerHTML={{ __html: post.content }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
                             style={{ minHeight: '200px' }}
                         />
                     </tr>
