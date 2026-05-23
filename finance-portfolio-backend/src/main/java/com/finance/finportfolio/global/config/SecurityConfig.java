@@ -86,6 +86,8 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 // 예비요청(OPTIONS)
                                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                // 헬스체크(로드밸런서)
+                                                .requestMatchers("/api/health").permitAll()
                                                 // 에러페이지
                                                 .requestMatchers("/error").permitAll()
                                                 // 관리자 기능
