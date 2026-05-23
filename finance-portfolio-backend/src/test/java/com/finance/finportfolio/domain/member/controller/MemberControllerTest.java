@@ -170,7 +170,7 @@ class MemberControllerTest {
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(cookie().secure("refreshToken", true))
-                .andExpect(cookie().attribute("refreshToken", "SameSite", "Lax"));
+                .andExpect(cookie().attribute("refreshToken", "SameSite", "Strict"));
     }
 
     @Test

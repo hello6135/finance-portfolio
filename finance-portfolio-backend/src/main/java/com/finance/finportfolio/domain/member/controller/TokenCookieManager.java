@@ -86,7 +86,7 @@ public class TokenCookieManager {
                 .secure(isSecure) // HTTPS 필수
                 .path("/")
                 .maxAge(maxAge) // maxAge가 0이면 삭제용, 그 외에는 생성용
-                .sameSite(isSecure ? "Lax" : "Strict") // CSRF 방지(Lax: 링크 타고 온 건 허용)
+                .sameSite("Strict") // CSRF 방지
                 .build();
     }
 
