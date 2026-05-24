@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDashboardSummary } from '../../api/adminApi';
+import { getAwsStatus, getDashboardSummary } from '../../api/adminApi';
 import LoadingPage from '../common/LoadingPage';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
 
     const [dashboardData, setDashboardData] = useState(null);
+    const [awsStatus, setAwsStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        getDashboardSummary()
-            .then((data) => {
-                setDashboardData(data);
+        Promise.all([getDashboardSummary(), getAwsStatus()])
+            .then(([dashboardRes, awsRes]) => {
+                setDashboardData(dashboardRes);
+                setAwsStatus(awsRes);
                 setLoading(false);
             })
             .catch((err) => {
-                console.error('대시보드 데이터 로드 실패:', err);
+                console.error('데이터 로드 실패:', err);
                 setError('데이터를 불러오는 중 오류가 발생했습니다.');
                 setLoading(false);
             });
@@ -27,6 +29,20 @@ const AdminDashboard = () => {
         { title: '총 게시글', count: dashboardData?.totalPostCount ?? 0, unit: '개', color: 'text-primary' },
         { title: 'S3 오브젝트', count: dashboardData?.totalImageCount ?? 0, unit: '개', color: 'text-warning' },
         { title: '총 회원 수', count: dashboardData?.totalMemberCount ?? 0, unit: '명', color: 'text-success' },
+        {
+            title: "AWS S3",
+            count: awsStatus?.s3?.status || "DOWN",
+            unit: awsStatus?.s3?.status === "UP" ? "정상" : "점검필요",
+            color: awsStatus?.s3?.status === "UP" ? "text-success" : "text-danger",
+            isStatus: true
+        },
+        {
+            title: "AWS EC2",
+            count: awsStatus?.ec2?.instanceState?.toUpperCase() || "UNKNOWN",
+            unit: awsStatus?.ec2?.status === "UP" ? "연결됨" : "연결안됨",
+            color: awsStatus?.ec2?.instanceState === "running" ? "text-info" : "text-warning",
+            isStatus: true
+        },
     ];
 
     if (loading) return <LoadingPage />;
@@ -52,8 +68,12 @@ const AdminDashboard = () => {
                             <div className="card-body">
                                 <h6 className="card-subtitle mb-2 text-muted fw-bold">{item.title}</h6>
                                 <div className={`h3 mb-0 fw-bold ${item.color}`}>
-                                    {/* 1,000 단위 콤마 포맷팅 */}
-                                    {Number(item.count).toLocaleString()}
+                                    {item.isStatus ? (
+                                        <span>{item.count}</span>
+                                    ) : (
+                                        // 1000 단위 콤마
+                                        <span>{Number(item.count).toLocaleString()}</span>
+                                    )}
                                     <small className="fs-6 text-muted ms-1">{item.unit}</small>
                                 </div>
                             </div>

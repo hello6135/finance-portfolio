@@ -6,6 +6,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,7 @@ import org.springframework.context.annotation.FilterType;
 
 import com.finance.finportfolio.domain.admin.dto.AdminResponseDto;
 import com.finance.finportfolio.domain.admin.service.AdminService;
+import com.finance.finportfolio.domain.admin.service.AwsHealthCheckService;
 import com.finance.finportfolio.global.security.filter.JwtAuthenticationFilter;
 
 @WebMvcTest(value = AdminController.class, excludeFilters = {
@@ -35,6 +39,9 @@ class AdminControllerTest {
 
     @MockitoBean
     private AdminService adminService;
+
+    @MockitoBean
+    private AwsHealthCheckService awsHealthCheckService;
 
     @TestConfiguration
     static class TestSecurityConfig {
@@ -87,5 +94,46 @@ class AdminControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isForbidden()); // Spring Security 기본 익명 사용자 차단 정책
+    }
+
+    @Test
+    @DisplayName("관리자 권한으로 AWS 헬스체크 조회 성공")
+    @WithMockUser(roles = "ADMIN")
+    void getAwsStatus_Success_WhenAdmin() throws Exception {
+        // given
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("s3Status", "UP");
+        mockResponse.put("ec2Status", "RUNNING");
+
+        given(awsHealthCheckService.checkAwsStatus()).willReturn(mockResponse);
+
+        // when & then
+        mockMvc.perform(get("/api/admin/awsHealth")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.s3Status").value("UP"))
+                .andExpect(jsonPath("$.ec2Status").value("RUNNING"));
+    }
+
+    @Test
+    @DisplayName("권한이 없는 일반 사용자가 AWS 헬스체크 조회 시 403 Forbidden 반환")
+    @WithMockUser(roles = "USER")
+    void getAwsStatus_Forbidden_WhenUser() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/admin/awsHealth")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("인증되지 않은 비회원이 AWS 헬스체크 조회 시 403 Forbidden 반환")
+    void getAwsStatus_Unauthorized_WhenAnonymous() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/admin/awsHealth")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isForbidden());
     }
 }
