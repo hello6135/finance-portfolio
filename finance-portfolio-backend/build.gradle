@@ -56,6 +56,13 @@ dependencies {
 	// 이미지 파일 유효성 검증(MIME 타입 판별, 픽셀크기 등 이미지 메타데이터 추출)
 	implementation 'org.apache.tika:tika-core:3.3.0'
 	implementation 'org.apache.commons:commons-imaging:1.0.0-alpha5'
+
+	// AWS SDK v2
+    implementation platform('software.amazon.awssdk:bom:2.44.12')
+	implementation 'software.amazon.awssdk:s3'
+	implementation 'software.amazon.awssdk:ec2'
+    // Spring Web & Validation (기존 구성 선언 가정)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 }
 
 tasks.named('test') {

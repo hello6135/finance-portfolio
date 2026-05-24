@@ -18,12 +18,6 @@ spring:
       filter:
         enabled: true
 
-  cloud:
-    aws:
-      region:
-        static: ap-northeast-2
-        instance-profile: false
-
   servlet:
     multipart:
       max-file-size: 1MB
@@ -68,12 +62,16 @@ spring:
 
   cloud:
     aws:
+      region:
+        static: ap-northeast-2
       credentials:
         access-key: ${AWS_ACCESS_KEY_ID} 
         secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-local-9806
         cloudfront-domain: dt08rm0613jz4.cloudfront.net
+      ec2:
+        instance-id: i-0ad52267191315154
 ---
 spring:
   config:
@@ -87,12 +85,16 @@ spring:
 
   cloud:
     aws:
+      region:
+        static: ap-northeast-2
       credentials:
         access-key: ${AWS_ACCESS_KEY_ID} 
         secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-dev-9806
         cloudfront-domain: d24842uv7pd3qd.cloudfront.net
+      ec2:
+        instance-id: i-0ad52267191315154
 
 cloudfront:
   enabled: true
@@ -117,12 +119,16 @@ spring:
 
   cloud:
     aws:
+      region:
+        static: ap-northeast-2
       credentials:
         access-key: ${AWS_ACCESS_KEY_ID} 
         secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-prod-9806
         cloudfront-domain: d2m4qtzslhorm2.cloudfront.net
+      ec2:
+        instance-id: i-0ad52267191315154
 
 cloudfront:
   enabled: true
