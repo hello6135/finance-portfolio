@@ -19,6 +19,9 @@ public class AwsHealthCheckService {
     private final S3Client s3Client;
     private final Ec2Client ec2Client;
 
+    private static final String STATUS = "status";
+    private static final String MESSAGE = "message";
+
     @Value("${spring.cloud.aws.s3.bucket-name}")
     private String bucketName;
 
@@ -47,14 +50,14 @@ public class AwsHealthCheckService {
                     .build();
 
             s3Client.headBucket(headBucketRequest);
-            s3Result.put("status", "UP");
-            s3Result.put("message", "S3 Bucket access successful.");
+            s3Result.put(STATUS, "UP");
+            s3Result.put(MESSAGE, "S3 Bucket access successful.");
         } catch (S3Exception e) {
-            s3Result.put("status", "DOWN");
-            s3Result.put("message", "S3 Error: " + e.awsErrorDetails().errorMessage());
+            s3Result.put(STATUS, "DOWN");
+            s3Result.put(MESSAGE, "S3 Error: " + e.awsErrorDetails().errorMessage());
         } catch (Exception e) {
-            s3Result.put("status", "DOWN");
-            s3Result.put("message", "Unexpected Error: " + e.getMessage());
+            s3Result.put(STATUS, "DOWN");
+            s3Result.put(MESSAGE, "Unexpected Error: " + e.getMessage());
         }
         return s3Result;
     }
@@ -75,14 +78,14 @@ public class AwsHealthCheckService {
                     .name()
                     .toString();
 
-            ec2Result.put("status", "UP");
+            ec2Result.put(STATUS, "UP");
             ec2Result.put("instanceState", state);
         } catch (Ec2Exception e) {
-            ec2Result.put("status", "DOWN");
-            ec2Result.put("message", "EC2 Error: " + e.awsErrorDetails().errorMessage());
+            ec2Result.put(STATUS, "DOWN");
+            ec2Result.put(MESSAGE, "EC2 Error: " + e.awsErrorDetails().errorMessage());
         } catch (Exception e) {
-            ec2Result.put("status", "DOWN");
-            ec2Result.put("message", "Unexpected Error: " + e.getMessage());
+            ec2Result.put(STATUS, "DOWN");
+            ec2Result.put(MESSAGE, "Unexpected Error: " + e.getMessage());
         }
         return ec2Result;
     }

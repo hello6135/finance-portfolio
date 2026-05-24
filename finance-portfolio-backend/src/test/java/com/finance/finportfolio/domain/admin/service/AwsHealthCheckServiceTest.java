@@ -88,13 +88,15 @@ class AwsHealthCheckServiceTest {
 
                 @SuppressWarnings("unchecked")
                 Map<String, Object> s3Result = (Map<String, Object>) result.get("s3");
-                assertThat(s3Result.get("status")).isEqualTo("UP");
-                assertThat(s3Result.get("message")).isEqualTo("S3 Bucket access successful.");
+                assertThat(s3Result)
+                                .containsEntry("status", "UP")
+                                .containsEntry("message", "S3 Bucket access successful.");
 
                 @SuppressWarnings("unchecked")
                 Map<String, Object> ec2Result = (Map<String, Object>) result.get("ec2");
-                assertThat(ec2Result.get("status")).isEqualTo("UP");
-                assertThat(ec2Result.get("instanceState")).isEqualTo("running");
+                assertThat(ec2Result)
+                                .containsEntry("status", "UP")
+                                .containsEntry("instanceState", "running");
         }
 
         @Test
@@ -125,12 +127,12 @@ class AwsHealthCheckServiceTest {
                 // then
                 @SuppressWarnings("unchecked")
                 Map<String, Object> s3Result = (Map<String, Object>) result.get("s3");
-                assertThat(s3Result.get("status")).isEqualTo("DOWN");
+                assertThat(s3Result).containsEntry("status", "DOWN");
                 assertThat(s3Result.get("message").toString()).contains("S3 Error: Access Denied");
 
                 @SuppressWarnings("unchecked")
                 Map<String, Object> ec2Result = (Map<String, Object>) result.get("ec2");
-                assertThat(ec2Result.get("status")).isEqualTo("DOWN");
+                assertThat(ec2Result).containsEntry("status", "DOWN");
                 assertThat(ec2Result.get("message").toString()).contains("EC2 Error: The instance ID does not exist");
         }
 
@@ -149,12 +151,12 @@ class AwsHealthCheckServiceTest {
                 // then
                 @SuppressWarnings("unchecked")
                 Map<String, Object> s3Result = (Map<String, Object>) result.get("s3");
-                assertThat(s3Result.get("status")).isEqualTo("DOWN");
+                assertThat(s3Result).containsEntry("status", "DOWN");
                 assertThat(s3Result.get("message").toString()).contains("Unexpected Error: Connection Timeout");
 
                 @SuppressWarnings("unchecked")
                 Map<String, Object> ec2Result = (Map<String, Object>) result.get("ec2");
-                assertThat(ec2Result.get("status")).isEqualTo("DOWN");
+                assertThat(ec2Result).containsEntry("status", "DOWN");
                 assertThat(ec2Result.get("message").toString()).contains("Unexpected Error: Internal Service Error");
         }
 }
