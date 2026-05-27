@@ -38,6 +38,18 @@ public class Member {
     @Column(nullable = false)
     private Role role;
 
+    @Column(nullable = false)
+    private boolean isBanned = false;
+
+    // 관리자 제어
+    public void ban() {
+        this.isBanned = true;
+    }
+
+    public void unban() {
+        this.isBanned = false;
+    }
+
     // [무차별대입방어]
     @Column(nullable = false)
     private int loginFailCount = 0; // 로그인 실패 횟수
@@ -83,6 +95,7 @@ public class Member {
 
     public void loginSuccess() {
         // 성공시 초기화
+        // 관리자 수동 잠금 해제로 사용 가능
         this.loginFailCount = 0;
         this.lockedUntil = null;
     }

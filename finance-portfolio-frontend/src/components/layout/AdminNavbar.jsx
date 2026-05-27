@@ -30,6 +30,18 @@ const AdminNavbar = () => {
                             카테고리 관리
                         </NavLink>
                     </li>
+                    {/* 회원 관리 */}
+                    <li className="nav-item">
+                        <NavLink
+                            to="/admin/memberManager"
+                            end
+                            className={({ isActive }) =>
+                                `nav-link btn-sm border-0 ${isActive ? 'bg-theme-custom' : 'card-theme-custom'}`
+                            }
+                        >
+                            회원 관리
+                        </NavLink>
+                    </li>
                 </ul>
             </div>
         </div>

@@ -14,6 +14,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import java.io.IOException;
@@ -30,6 +31,9 @@ class JwtAuthenticationFilterTest {
 
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+
+    @Mock
+    private MemberRepository memberRepository;
 
     @Mock
     private FilterChain filterChain;
@@ -151,5 +155,67 @@ class JwtAuthenticationFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()
                 .getAuthorities().iterator().next().getAuthority())
                 .isEqualTo("ROLE_ADMIN");
+    }
+
+    // ── 실시간 정지 여부 검증 ──────────────────────────────────────────
+
+    @Test
+    @DisplayName("정지된 사용자의 토큰이면 403과 BANNED_USER 에러를 반환하고 필터 체인을 중단한다")
+    void doFilter_BannedUser_Returns403AndAborts() throws ServletException, IOException {
+        // given
+        request.addHeader("Authorization", "Bearer bannedToken");
+
+        given(jwtTokenProvider.validateToken("bannedToken")).willReturn(true);
+        given(jwtTokenProvider.getLoginId("bannedToken")).willReturn("bannedUser");
+
+        // DB 조회 시 정지된 사용자(isBanned = true) 상태 모킹
+        com.finance.finportfolio.domain.member.entity.Member mockMember = mock(
+                com.finance.finportfolio.domain.member.entity.Member.class);
+        given(mockMember.isBanned()).willReturn(true);
+        given(memberRepository.findByLoginId("bannedUser")).willReturn(java.util.Optional.of(mockMember));
+
+        // when
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // then
+        // 403 Forbidden 반환 확인
+        assertThat(response.getStatus()).isEqualTo(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+
+        // 응답 바디에 BANNED_USER 포함 확인
+        assertThat(response.getContentAsString()).contains("BANNED_USER");
+
+        // SecurityContext에 인증 정보가 저장되지 않아야 함
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+
+        // 필터 체인이 중단되어 다음 필터가 호출되지 않아야 함
+        verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("정지되지 않은 정상 사용자의 토큰이면 정상적으로 인증 정보가 저장되고 다음 필터로 진행한다")
+    void doFilter_NotBannedUser_SetsAuthenticationAndPassesThrough() throws ServletException, IOException {
+        // given
+        request.addHeader("Authorization", "Bearer normalToken");
+
+        given(jwtTokenProvider.validateToken("normalToken")).willReturn(true);
+        given(jwtTokenProvider.getLoginId("normalToken")).willReturn("normalUser");
+        given(jwtTokenProvider.getRole("normalToken")).willReturn("ROLE_USER");
+
+        // DB 조회 시 정상 사용자(isBanned = false) 상태 모킹
+        com.finance.finportfolio.domain.member.entity.Member mockMember = mock(
+                com.finance.finportfolio.domain.member.entity.Member.class);
+        given(mockMember.isBanned()).willReturn(false);
+        given(memberRepository.findByLoginId("normalUser")).willReturn(java.util.Optional.of(mockMember));
+
+        // when
+        jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
+
+        // then
+        // SecurityContext 인증 저장 확인
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("normalUser");
+
+        // 다음 필터로 정상 진행 확인
+        verify(filterChain, times(1)).doFilter(request, response);
     }
 }

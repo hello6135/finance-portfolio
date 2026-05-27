@@ -19,6 +19,7 @@ const authStore = {
 
     clearToken: () => {
         accessToken = null;
+        Cookies.remove('userNickname');
         Cookies.remove('isLoggedIn');
         Cookies.remove('userRole');
     },

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import java.io.IOException;
@@ -25,6 +27,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final MemberRepository memberRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,14 +39,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token)) {
             try {
                 if (jwtTokenProvider.validateToken(token)) {
+                    String loginId = jwtTokenProvider.getLoginId(token);
+
+                    // DB에서 실시간 정지 여부 검증
+                    boolean isBanned = memberRepository.findByLoginId(loginId)
+                            .map(Member::isBanned)
+                            .orElse(false);
+
+                    if (isBanned) {
+                        log.warn("정지된 사용자의 접근 차단: {}", loginId);
+                        sendErrorResponse(response, HttpServletResponse.SC_FORBIDDEN, "BANNED_USER");
+                        return; // 필터 체인 중단
+                    }
+
                     // 1. 인증 정보 설정 시 발생할 수 있는 예외 방지
                     setAuthentication(token);
                 }
             } catch (ExpiredJwtException e) {
                 log.warn("만료된 Access Token: {}", request.getRequestURI());
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"error\": \"ACCESS_TOKEN_EXPIRED\"}");
+                sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "ACCESS_TOKEN_EXPIRED");
                 return; // 만료 시 여기서 종료
             } catch (Exception e) {
                 // 2. 그 외 모든 예외는 로그를 남기고 인증되지 않은 상태로 진행 (500 에러 방어)
@@ -81,5 +95,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
+    }
+
+    // 예외 발생 시 일관된 JSON 응답을 전송하기 위한 헬퍼 메서드
+    private void sendErrorResponse(HttpServletResponse response, int status, String errorCode) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(String.format("{\"error\": \"%s\"}", errorCode));
     }
 }
