@@ -1,6 +1,7 @@
 package com.finance.finportfolio.domain.member.service;
 
 import com.finance.finportfolio.domain.member.dto.LoginResultDto;
+import com.finance.finportfolio.domain.member.dto.MemberAdminResponseDto;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
 import com.finance.finportfolio.domain.member.entity.Member;
@@ -302,5 +303,88 @@ class MemberServiceTest {
                 assertThatThrownBy(() -> memberService.reissue("refreshToken"))
                                 .isInstanceOf(IllegalStateException.class)
                                 .hasMessageContaining("로그인 상태가 아닙니다.");
+        }
+
+        // ── [관리자] 회원 관리 기능 ─────────────────────────────────────────
+
+        @Test
+        @DisplayName("전체 회원 페이징 조회 성공 - 엔티티가 DTO로 정확히 변환된다")
+        void getMembersForAdmin_Success() {
+                // given
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0,
+                                10);
+                Member member = createMember("testId");
+                org.springframework.data.domain.Page<Member> mockPage = new org.springframework.data.domain.PageImpl<>(
+                                List.of(member), pageable, 1);
+
+                given(memberRepository.findAll(pageable)).willReturn(mockPage);
+
+                // when
+                org.springframework.data.domain.Page<MemberAdminResponseDto> result = memberService
+                                .getMembersForAdmin(pageable);
+
+                // then
+                assertThat(result).isNotNull();
+                assertThat(result.getContent()).hasSize(1);
+
+                MemberAdminResponseDto dto = result.getContent().get(0);
+                assertThat(dto.id()).isEqualTo(member.getId());
+                assertThat(dto.loginId()).isEqualTo(member.getLoginId());
+                assertThat(dto.nickname()).isEqualTo(member.getNickname());
+                assertThat(dto.role()).isEqualTo(member.getRole());
+
+                verify(memberRepository, times(1)).findAll(pageable);
+        }
+
+        @Test
+        @DisplayName("사용자 정지 성공 - 계정이 정지 상태로 변경되고 Refresh Token이 즉시 삭제된다")
+        void updateBanStatus_Ban_Success() {
+                // given
+                Long memberId = 1L;
+                Member member = spy(createMember("testId")); // 내부 상태 변경(ban) 검증을 위해 spy 사용
+
+                given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+                // when
+                memberService.updateBanStatus(memberId, true);
+
+                // then
+                verify(member, times(1)).ban();
+                verify(refreshTokenRepository, times(1)).deleteByMember(member);
+                verify(member, never()).unban();
+        }
+
+        @Test
+        @DisplayName("사용자 정지 해제 성공 - 계정이 활성화 상태로 변경되고 토큰 삭제는 호출되지 않는다")
+        void updateBanStatus_Unban_Success() {
+                // given
+                Long memberId = 1L;
+                Member member = spy(createMember("testId"));
+
+                given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+                // when
+                memberService.updateBanStatus(memberId, false);
+
+                // then
+                verify(member, times(1)).unban();
+                verify(member, never()).ban();
+                verify(refreshTokenRepository, never()).deleteByMember(any());
+        }
+
+        @Test
+        @DisplayName("사용자 임시 잠금 수동 해제 성공 - 로그인 성공 처리 로직이 실행된다")
+        void releaseMemberLock_Success() {
+                // given
+                Long memberId = 1L;
+                Member member = spy(createMember("testId"));
+
+                given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+
+                // when
+                memberService.releaseMemberLock(memberId);
+
+                // then
+                verify(member, times(1)).loginSuccess(); // 실패 카운트 초기화 및 잠금 해제 검증
         }
 }

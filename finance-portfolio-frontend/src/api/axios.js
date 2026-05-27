@@ -63,6 +63,9 @@ const isTokenExpiredError = (error) =>
     error.response?.data?.error === 'ACCESS_TOKEN_EXPIRED' &&
     !error.config._retry;
 
+// 알림 중복 방지 전역 상태 제어 변수
+let isBannedAlertShowing = false;
+
 // 전역 에러 처리(각 코드에 맞게)
 const handleGlobalError = (error) => {
     const { status, data, headers } = error.response || {};
@@ -74,9 +77,28 @@ const handleGlobalError = (error) => {
     if (error.config?.url?.includes('/image/upload')) return;
 
     switch (status) {
-        case 403:
-            alert("권한이 없습니다.");
+        case 403: {
+            // 정지 유저 분기 처리
+            if (data?.error === 'BANNED_USER') {
+                if (!isBannedAlertShowing) {
+                    isBannedAlertShowing = true;
+                    alert("해당 계정은 정지되었습니다. 로그인 페이지로 이동합니다.");
+
+                    // 토큰 파기 및 강제 페이지 리다이렉트
+                    authStore.clearToken();
+                    history.push('/login');
+                }
+                break;
+            }
+
+            // 일반 권한 부족
+            if (!isBannedAlertShowing) {
+                isBannedAlertShowing = true;
+                alert("권한이 없습니다.");
+                setTimeout(() => { isBannedAlertShowing = false; }, 1000);
+            }
             break;
+        }
         case 429: {
             const retryAfter = Number.parseInt(headers?.['retry-after'] || '60', 10);
             history.push('/error?status=429', {

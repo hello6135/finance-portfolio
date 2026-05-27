@@ -5,7 +5,9 @@ import com.finance.finportfolio.domain.member.dto.LoginResultDto;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
+import com.finance.finportfolio.domain.member.entity.Member;
 import com.finance.finportfolio.domain.member.entity.Role;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.config.SecurityConfig;
 import com.finance.finportfolio.global.security.filter.IpRateLimitFilter;
@@ -33,12 +35,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Optional;
 
 @WebMvcTest(MemberController.class)
 @Import({ SecurityConfig.class, TokenCookieManager.class })
@@ -52,6 +57,9 @@ class MemberControllerTest {
 
     @MockitoBean
     private MemberService memberService;
+
+    @MockitoBean
+    private MemberRepository memberRepository;
 
     @MockitoSpyBean
     private TokenCookieManager tokenCookieManager;
@@ -78,6 +86,10 @@ class MemberControllerTest {
             chain.doFilter(req, res);
             return null;
         }).when(ipRateLimitFilter).doFilter(any(), any(), any());
+
+        Member mockMember = mock(Member.class);
+        given(mockMember.isBanned()).willReturn(false);
+        given(memberRepository.findByLoginId(any())).willReturn(Optional.of(mockMember));
     }
 
     @Test

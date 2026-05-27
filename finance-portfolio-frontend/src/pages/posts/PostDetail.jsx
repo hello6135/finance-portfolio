@@ -39,6 +39,7 @@ const PostDetail = () => {
                 navigate('/posts');
             } catch (error) {
                 console.error("삭제 중 오류 발생:", error);
+                alert("삭제에 실패했습니다.");
             }
         }
     };

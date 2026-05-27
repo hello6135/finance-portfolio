@@ -19,6 +19,7 @@ import ErrorPage from './pages/common/ErrorPage';
 import LoadingPage from './pages/common/LoadingPage';
 import AdminDashboard from './pages/admins/AdminDashboard';
 import AdminCategoryManager from './pages/admins/AdminCategoryManager';
+import AdminMemberManager from './pages/admins/AdminMemberManager';
 
 
 function App() {
@@ -65,6 +66,7 @@ function App() {
           <Route element={<AdminLayout />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/categoryManager" element={<AdminCategoryManager />} />
+            <Route path="/admin/memberManager" element={<AdminMemberManager />} />
           </Route>
         </Route>
 

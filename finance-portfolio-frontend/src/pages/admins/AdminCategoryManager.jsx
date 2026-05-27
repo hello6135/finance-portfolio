@@ -1,33 +1,41 @@
 import React, { useState, useEffect } from 'react';
-// 작성하신 API 함수들을 import 한다고 가정합니다.
 import { getCategories, createCategory, updateCategory, deleteCategory } from '../../api/categoryApi';
+import LoadingPage from '../common/LoadingPage';
 
 const AdminCategoryManager = () => {
     const [categories, setCategories] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false); // 버튼 중복 클릭 방지
 
     // 입력 폼 상태
     const [formData, setFormData] = useState({ name: '', sortOrder: 0 });
     const [editingId, setEditingId] = useState(null);
 
     // 카테고리 목록 GET
-    const fetchCategories = async () => {
-        setIsLoading(true);
+    const fetchCategories = async (showGlobalLoading = false) => {
+        if (showGlobalLoading) setIsInitialLoading(true);
         try {
             const data = await getCategories();
-            // order 순으로 정렬하여 표시
-            const sortedData = data.sort((a, b) => a.sortOrder - b.sortOrder);
+            // order 순으로 정렬하여 복사
+            const sortedData = [...data].sort((a, b) => a.sortOrder - b.sortOrder);
             setCategories(sortedData);
         } catch (error) {
             console.error("카테고리 로드 실패:", error);
             alert("카테고리 목록을 불러오는 데 실패했습니다.");
         } finally {
-            setIsLoading(false);
+            setIsInitialLoading(false);
         }
     };
 
+    // 메모리 누수 방지 및 초기 로드 트랙킹
     useEffect(() => {
-        fetchCategories();
+        let isMounted = true;
+        if (isMounted) {
+            fetchCategories(true);
+        }
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     // 입력 핸들러
@@ -39,24 +47,31 @@ const AdminCategoryManager = () => {
         }));
     };
 
+    // 폼 초기화
+    const handleResetForm = () => {
+        setFormData({ name: '', sortOrder: 0 });
+        setEditingId(null);
+    };
+
     // 생성 및 수정 처리
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.name.trim()) return;
+        if (!formData.name.trim() || isSubmitting) return;
 
+        setIsSubmitting(true);
         try {
             if (editingId) {
                 await updateCategory(editingId, formData);
             } else {
                 await createCategory(formData);
             }
-            // 폼 초기화 및 새로고침
-            setFormData({ name: '', sortOrder: 0 });
-            setEditingId(null);
-            fetchCategories();
+            handleResetForm();
+            await fetchCategories(); // 최신 목록 갱신
         } catch (error) {
             console.error("저장 실패:", error);
             alert("저장에 실패했습니다.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -66,40 +81,25 @@ const AdminCategoryManager = () => {
         setFormData({ name: category.name, sortOrder: category.sortOrder });
     };
 
+
     // 삭제 처리
     const handleDelete = async (id) => {
         if (!globalThis.confirm("정말 삭제하시겠습니까?")) return;
 
         try {
             await deleteCategory(id);
-            fetchCategories();
+            alert("삭제되었습니다.");
+            await fetchCategories();
         } catch (error) {
             console.error("삭제 실패:", error);
             alert("삭제에 실패했습니다.");
         }
     };
 
-    // 카테고리 목록 렌더
+    if (isInitialLoading) return <LoadingPage />;
+
     const renderContent = () => {
-        // 1. 로딩 중인 경우
-        if (isLoading) {
-            return (
-                <tr>
-                    <td colSpan="3" className="text-center py-4">로딩 중...</td>
-                </tr>
-            );
-        }
 
-        // 2. 데이터가 없는 경우
-        if (categories.length === 0) {
-            return (
-                <tr>
-                    <td colSpan="3" className="text-center py-4">등록된 카테고리가 없습니다.</td>
-                </tr>
-            );
-        }
-
-        // 3. 정상 데이터 출력
         return categories.map((category) => (
             <tr key={category.id}>
                 <td>{category.sortOrder}</td>
@@ -108,12 +108,14 @@ const AdminCategoryManager = () => {
                     <button
                         className="btn btn-outline-secondary btn-sm me-2"
                         onClick={() => handleEdit(category)}
+                        disabled={isSubmitting}
                     >
                         수정
                     </button>
                     <button
                         className="btn btn-outline-danger btn-sm"
                         onClick={() => handleDelete(category.id)}
+                        disabled={isSubmitting}
                     >
                         삭제
                     </button>
@@ -143,6 +145,7 @@ const AdminCategoryManager = () => {
                                 onChange={handleInputChange}
                                 placeholder="예: 공지사항"
                                 required
+                                disabled={isSubmitting}
                             />
                         </div>
                         <div className="col-md-3">
@@ -155,17 +158,27 @@ const AdminCategoryManager = () => {
                                 value={formData.sortOrder}
                                 onChange={handleInputChange}
                                 required
+                                disabled={isSubmitting}
                             />
                         </div>
                         <div className="col-md-4">
-                            <button type="submit" className={`btn ${editingId ? 'btn-warning' : 'btn-primary'} w-100`}>
-                                {editingId ? '수정 완료' : '새 카테고리 추가'}
+                            <button type="submit" className={`btn ${editingId ? 'btn-warning' : 'btn-primary'} w-100`} disabled={isSubmitting}>
+                                {(() => {
+                                    if (isSubmitting) {
+                                        return '처리 중...';
+                                    } else if (editingId) {
+                                        return '수정 완료';
+                                    } else {
+                                        return '새 카테고리 추가';
+                                    }
+                                })()}
                             </button>
                             {editingId && (
                                 <button
                                     type="button"
                                     className="btn btn-link btn-sm w-100 mt-1"
-                                    onClick={() => { setEditingId(null); setFormData({ name: '', sortOrder: 0 }); }}
+                                    onClick={handleResetForm}
+                                    disabled={isSubmitting}
                                 >
                                     취소
                                 </button>

@@ -3,6 +3,7 @@ package com.finance.finportfolio.domain.member.controller;
 import com.finance.finportfolio.domain.member.dto.LoginResultDto;
 import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
 import com.finance.finportfolio.domain.member.entity.Role;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.global.config.SecurityConfig;
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
@@ -43,6 +44,9 @@ class TokenReissueControllerTest {
 
         @MockitoBean
         private MemberService memberService;
+
+        @MockitoBean
+        private MemberRepository memberRepository;
 
         @MockitoSpyBean
         private TokenCookieManager tokenCookieManager;

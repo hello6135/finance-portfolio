@@ -1,6 +1,7 @@
 package com.finance.finportfolio.domain.member.service;
 
 import com.finance.finportfolio.domain.member.dto.LoginResultDto;
+import com.finance.finportfolio.domain.member.dto.MemberAdminResponseDto;
 import com.finance.finportfolio.domain.member.dto.MemberJoinRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberLoginRequestDto;
 import com.finance.finportfolio.domain.member.dto.MemberResponseDto;
@@ -13,7 +14,11 @@ import com.finance.finportfolio.global.error.exception.DuplicateResourceExceptio
 import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,14 +39,21 @@ public class MemberService {
         private final JwtTokenProvider jwtTokenProvider;
         private final LoginAttemptService loginAttemptService;
 
-        @Transactional(readOnly = true)
-        public long getTotalMemberCount() {
-                return memberRepository.count();
+        // ID 기반 회원 조회
+        private Member findMemberById(@NonNull Long memberId) {
+                return memberRepository.findById(memberId)
+                                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
         }
 
+        // LoginId 기반 회원 조회
         private Member findMemberByLoginId(String loginId) {
                 return memberRepository.findByLoginId(loginId)
                                 .orElseThrow(() -> new IllegalStateException("존재하지 않는 회원입니다."));
+        }
+
+        @Transactional(readOnly = true)
+        public long getTotalMemberCount() {
+                return memberRepository.count();
         }
 
         // ── 회원가입 ───────────────────────────────────────────────
@@ -174,5 +187,36 @@ public class MemberService {
                                 .refreshToken(newRefreshToken)
                                 .memberResponseDto(memberResponseDto)
                                 .build();
+        }
+
+        // [관리자] 전체 회원 조회(페이징)
+        @Transactional(readOnly = true)
+        public Page<MemberAdminResponseDto> getMembersForAdmin(@NonNull Pageable pageable) {
+                return memberRepository.findAll(pageable)
+                                .map(MemberAdminResponseDto::from);
+        }
+
+        // [관리자] 사용자 계정 수동 잠금, 잠금 해제
+        @Transactional
+        public void updateBanStatus(@NonNull Long memberId, boolean shouldBan) {
+
+                log.info("사용자 계정 수동 잠금:{},{}", memberId, shouldBan);
+                Member member = findMemberById(memberId);
+
+                if (shouldBan) {
+                        member.ban();
+                        // [보안 필수 조치] 사용자를 정지할 때 세션(Refresh Token)을 날려 즉시 튕겨냄
+                        refreshTokenRepository.deleteByMember(member);
+                } else {
+                        member.unban();
+                }
+        }
+
+        // [관리자] 사용자 임시 잠금(비밀번호 5회 오류) 수동 해제
+        @Transactional
+        public void releaseMemberLock(@NonNull Long memberId) {
+                Member member = findMemberById(memberId);
+
+                member.loginSuccess();
         }
 }

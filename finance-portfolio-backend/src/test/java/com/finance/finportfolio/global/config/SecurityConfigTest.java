@@ -6,6 +6,8 @@ import com.finance.finportfolio.domain.category.dto.CategoryRequestDto;
 import com.finance.finportfolio.domain.category.service.CategoryService;
 import com.finance.finportfolio.domain.member.controller.MemberController;
 import com.finance.finportfolio.domain.member.controller.TokenCookieManager;
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.member.service.MemberService;
 import com.finance.finportfolio.domain.post.controller.PostController;
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
@@ -14,6 +16,7 @@ import com.finance.finportfolio.global.security.jwt.JwtTokenProvider;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +35,14 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * SecurityConfig의 authenticationEntryPoint 동작 검증 테스트
@@ -66,6 +71,9 @@ class SecurityConfigTest {
         private MemberService memberService;
 
         @MockitoBean
+        private MemberRepository memberRepository;
+
+        @MockitoBean
         private CategoryService categoryService;
 
         @MockitoBean
@@ -79,6 +87,14 @@ class SecurityConfigTest {
 
         @Autowired
         private ObjectMapper objectMapper;
+
+        // JwtAuthenticationFilter 내부 DB 실시간 정지 여부 조회를 위한 공통 Mock 설정
+        @BeforeEach
+        void setUp() {
+                Member mockMember = mock(Member.class);
+                given(mockMember.isBanned()).willReturn(false); // 정지되지 않은 정상 사용자로 세팅
+                given(memberRepository.findByLoginId(any())).willReturn(Optional.of(mockMember));
+        }
 
         // CloudFrontHeaderFilter
         @Test

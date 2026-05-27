@@ -29,14 +29,8 @@ const Navbar = () => {
                 alert(errorMessage);
             }
         } finally {
-            // 로그아웃은 에러가 나도 클라이언트 상태는 정리
+            // 토큰 파기 및 강제 페이지 리다이렉트
             authStore.clearToken();
-
-            // 비보안 플래그 쿠키들 직접 제거 (클라이언트 사이드에서도 정리)
-            Cookies.remove('userNickname');
-            Cookies.remove('userRole');
-            Cookies.remove('isLoggedIn');
-
             navigate('/', { replace: true });
         }
     };
