@@ -104,6 +104,69 @@ class S3FileServiceImplTest {
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("허용되지 않는 파일 형식입니다.");
         }
+
+        @Test
+        @DisplayName("실제 파일 바이너리 형식(MIME)과 확장자가 일치하지 않으면 예외를 발생시킨다")
+        void uploadFileMimeAndExtensionMismatchExceptionTest() throws IOException {
+            // given: PNG 바이트를 가졌지만 파일명은 test.jpg인 경우
+            java.awt.image.BufferedImage bufferedImage = new java.awt.image.BufferedImage(1, 1,
+                    java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(bufferedImage, "png", baos);
+            byte[] validPngBytes = baos.toByteArray();
+
+            MockMultipartFile mismatchFile = new MockMultipartFile(
+                    "file", "test.jpg", "image/png", validPngBytes);
+
+            given(tika.detect(any(InputStream.class))).willReturn("image/png");
+
+            // when & then
+            assertThatThrownBy(() -> s3FileService.uploadFile(mismatchFile))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("실제 파일 형식과 확장자가 일치하지 않습니다.");
+        }
+
+        @Test
+        @DisplayName("파일에 확장자가 없는 경우 예외를 발생시킨다")
+        void uploadFileNoExtensionExceptionTest() throws IOException {
+            // given
+            java.awt.image.BufferedImage bufferedImage = new java.awt.image.BufferedImage(1, 1,
+                    java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(bufferedImage, "png", baos);
+            byte[] validPngBytes = baos.toByteArray();
+
+            MockMultipartFile noExtFile = new MockMultipartFile(
+                    "file", "noextension", "image/png", validPngBytes);
+
+            given(tika.detect(any(InputStream.class))).willReturn("image/png");
+
+            // when & then
+            assertThatThrownBy(() -> s3FileService.uploadFile(noExtFile))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("파일 확장자가 올바르지 않습니다.");
+        }
+
+        @Test
+        @DisplayName("파일명이 비어있거나 올바르지 않은 경우 예외를 발생시킨다")
+        void uploadFileBlankFilenameExceptionTest() throws IOException {
+            // given
+            java.awt.image.BufferedImage bufferedImage = new java.awt.image.BufferedImage(1, 1,
+                    java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(bufferedImage, "png", baos);
+            byte[] validPngBytes = baos.toByteArray();
+
+            MockMultipartFile blankNameFile = new MockMultipartFile(
+                    "file", "   ", "image/png", validPngBytes);
+
+            given(tika.detect(any(InputStream.class))).willReturn("image/png");
+
+            // when & then
+            assertThatThrownBy(() -> s3FileService.uploadFile(blankNameFile))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("올바르지 않은 파일명입니다.");
+        }
     }
 
     @Nested
