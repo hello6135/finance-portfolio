@@ -6,6 +6,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -60,6 +61,15 @@ public class S3FileServiceImpl implements FileService {
     private static final long MAX_FILE_SIZE = 1L * 1024 * 1024;
     private static final int MAX_PIXEL_SIZE = 1920;
 
+    // 허용되는 MIME 타입 및 확장자 리스트 (교차 검증 및 화이트리스트용)
+    private static final Map<String, List<String>> ALLOWED_MIME_EXTENSIONS = Map.of(
+            "image/png", List.of("png"),
+            "image/jpeg", List.of("jpg", "jpeg"),
+            "image/gif", List.of("gif"),
+            "image/webp", List.of("webp"),
+            "image/bmp", List.of("bmp")
+    );
+
     // 1차 이미지 유효성 체크
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
@@ -67,6 +77,29 @@ public class S3FileServiceImpl implements FileService {
         }
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new IllegalArgumentException("파일 용량이 너무 큽니다.");
+        }
+    }
+
+    // 파일명 확장자와 Tika가 감지한 MIME 타입 간의 교차 검증
+    private void validateImageMimeAndExtension(String originalFilename, String mimeType) {
+        if (originalFilename == null || originalFilename.isBlank()) {
+            throw new IllegalArgumentException("올바르지 않은 파일명입니다.");
+        }
+
+        if (!ALLOWED_MIME_EXTENSIONS.containsKey(mimeType)) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
+        }
+
+        int lastDotIndex = originalFilename.lastIndexOf('.');
+        if (lastDotIndex == -1 || lastDotIndex == originalFilename.length() - 1) {
+            throw new IllegalArgumentException("파일 확장자가 올바르지 않습니다.");
+        }
+
+        String extension = originalFilename.substring(lastDotIndex + 1).toLowerCase();
+        List<String> allowedExtensions = ALLOWED_MIME_EXTENSIONS.get(mimeType);
+
+        if (!allowedExtensions.contains(extension)) {
+            throw new IllegalArgumentException("실제 파일 형식과 확장자가 일치하지 않습니다.");
         }
     }
 
@@ -79,6 +112,7 @@ public class S3FileServiceImpl implements FileService {
     @Override
     public String uploadFile(MultipartFile file) {
 
+        // 1차 이미지 유효성 체크
         validateFile(file);
 
         // 2차 이미지 유효성 체크
@@ -89,19 +123,22 @@ public class S3FileServiceImpl implements FileService {
                 // S3Config의 tika 빈
                 mimeType = tika.detect(inputStream);
             }
-            if (!mimeType.startsWith("image/")) {
-                throw new IllegalArgumentException("허용되지 않는 파일 형식입니다.");
-            }
 
-            // 3. 해상도 검증(메모리 부하 방지)
+            // 실제 파일 바이너리(Tika)와 확장자 교차 검증
+            String originalFilename = file.getOriginalFilename();
+            validateImageMimeAndExtension(originalFilename, mimeType);
+
+            // 해상도 검증(메모리 부하 방지 및 파일명 의존성 제거)
+            // 사용자 지정 파일명 대신, 안전한 Tika 검증 기반 더미 파일명을 사용하여 Imaging 분석
+            String dummyFilename = "dummy." + ALLOWED_MIME_EXTENSIONS.get(mimeType).get(0);
             try (InputStream inputStream = file.getInputStream()) {
-                ImageInfo imageInfo = Imaging.getImageInfo(inputStream, file.getOriginalFilename());
+                ImageInfo imageInfo = Imaging.getImageInfo(inputStream, dummyFilename);
                 if (imageInfo.getWidth() > MAX_PIXEL_SIZE || imageInfo.getHeight() > MAX_PIXEL_SIZE) {
                     throw new IllegalArgumentException("이미지 해상도가 너무 높습니다.");
                 }
             }
 
-            String savedFileName = createFileName(file.getOriginalFilename());
+            String savedFileName = createFileName(originalFilename);
             return s3FileHandler.uploadFile(file, savedFileName, mimeType);
 
         } catch (IOException e) {
