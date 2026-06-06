@@ -12,7 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -67,8 +69,9 @@ class CommentControllerTest {
     @DisplayName("특정 게시글의 계층화된 댓글 목록을 정상 조회한다")
     void getComments_Success() throws Exception {
         // given
-        CommentResponseDto child = new CommentResponseDto(2L, "Child", "childUser", "Child Content", LocalDateTime.now(), List.of());
-        CommentResponseDto parent = new CommentResponseDto(1L, "Parent", "parentUser", "Parent Content", LocalDateTime.now(), List.of(child));
+        LocalDateTime fixedTime = LocalDateTime.of(2026, Month.JUNE, 6, 23, 0, 0);
+        CommentResponseDto child = new CommentResponseDto(2L, "Child", "childUser", "Child Content", fixedTime, List.of());
+        CommentResponseDto parent = new CommentResponseDto(1L, "Parent", "parentUser", "Parent Content", fixedTime, List.of(child));
         given(commentService.getCommentsByPost(100L)).willReturn(List.of(parent));
 
         // when & then
