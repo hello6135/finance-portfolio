@@ -95,6 +95,9 @@ public class SecurityConfig {
                                                 // 게시판
                                                 .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                                                 .requestMatchers("/api/posts/**").hasAnyRole(USER, ADMIN)
+                                                // 댓글
+                                                .requestMatchers(HttpMethod.GET, "/api/comments/**").permitAll()
+                                                .requestMatchers("/api/comments/**").hasAnyRole(USER, ADMIN)
                                                 .requestMatchers(HttpMethod.POST, "/api/image/upload")
                                                 .hasAnyRole(USER, ADMIN)
                                                 // 게시판 카테고리(관리는 ADMIN 제한)

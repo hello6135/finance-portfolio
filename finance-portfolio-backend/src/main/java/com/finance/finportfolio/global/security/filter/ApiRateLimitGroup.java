@@ -11,10 +11,12 @@ public enum ApiRateLimitGroup {
     // 이미지 S3 업로드, 미참조 이미지 삭제
     HIGH("고부하 리소스", 2, 15, Duration.ofMinutes(1), List.of(
             "/api/image/upload")),
-    // 게시글 조회, 금융 계산기
+    // 게시글 조회, 댓글, 금융 계산기
     MEDIUM("DB/UX 보호", 3, 30, Duration.ofMinutes(1), List.of(
             "/api/posts",
             "/api/posts/list",
+            "/api/comments",
+            "/api/comments/**",
             "/api/finance/fair")),
     LOW("일반 조회", 4, 150, Duration.ofMinutes(1), List.of(
             "/**"// 나머지 모든 경로
