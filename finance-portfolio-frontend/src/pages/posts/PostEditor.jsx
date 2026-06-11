@@ -13,7 +13,9 @@ import {
     Image,
     ImageUpload,
     Heading,
-    Autoformat
+    Autoformat,
+    CodeBlock,
+    Code
 } from 'ckeditor5';
 import 'ckeditor5/ckeditor5.css';
 
@@ -128,8 +130,8 @@ const PostEditor = () => {
                         }}
                         config={{
                             licenseKey: 'GPL',
-                            plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload, Autoformat, Heading],
-                            toolbar: ['heading', 'undo', 'redo', '|', 'bold', 'italic', '|', 'link', 'bulletedList', 'numberedList', '|', 'imageUpload'],
+                            plugins: [Essentials, Bold, Italic, Paragraph, Link, List, Image, ImageUpload, Autoformat, Heading, CodeBlock, Code],
+                            toolbar: ['heading', 'undo', 'redo', '|', 'bold', 'italic', 'code', '|', 'link', 'bulletedList', 'numberedList', '|', 'imageUpload', 'codeBlock'],
                             placeholder: "내용을 입력하세요..."
                         }}
                         onChange={(event, editor) => {
