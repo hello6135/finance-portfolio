@@ -55,7 +55,10 @@ public class S3FileServiceImpl implements FileService {
             // 테이블(표) 서식 보존을 위한 속성 추가 허용
             .addAttributes("table", "border", "cellspacing", "cellpadding")
             .addAttributes("td", "colspan", "rowspan")
-            .addAttributes("th", "colspan", "rowspan");
+            .addAttributes("th", "colspan", "rowspan")
+            // 코드 블록(pre, code) 클래스(언어 지정용) 허용
+            .addAttributes("pre", "class")
+            .addAttributes("code", "class");
 
     // 용량, 해상도 제한
     private static final long MAX_FILE_SIZE = 1L * 1024 * 1024;

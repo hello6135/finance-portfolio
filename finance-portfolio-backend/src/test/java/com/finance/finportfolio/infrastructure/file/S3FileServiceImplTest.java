@@ -220,6 +220,22 @@ class S3FileServiceImplTest {
                     .contains("img src=\"" + pureKey + "\"")
                     .doesNotContain("<script>"); // XSS 방어 살균 검증
         }
+
+        @Test
+        @DisplayName("본문을 저장용으로 전환 시 코드 블록(pre, code)의 class 속성을 유지한다")
+        void removeCdnUrlsCodeBlockClassTest() {
+            // given
+            String inputHtml = "<pre><code class=\"language-javascript\">console.log('test');</code></pre>";
+
+            // when
+            String result = s3FileService.removeCdnUrls(inputHtml);
+
+            // then
+            assertThat(result)
+                    .contains("<pre>")
+                    .contains("<code class=\"language-javascript\">")
+                    .contains("console.log('test');");
+        }
     }
 
     @Nested
