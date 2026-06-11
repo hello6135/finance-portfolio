@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { jwtDecode } from 'jwt-decode';
+import PropTypes from 'prop-types';
 
 import LoadingPage from '../common/LoadingPage';
 import { getPostById, deletePost } from '../../api/postApi';
@@ -161,6 +162,29 @@ const CommentNode = ({
     );
 };
 
+// 재귀적 구조 대응을 위한 PropTypes 정의
+const commentShape = {
+    id: PropTypes.number.isRequired,
+    content: PropTypes.string.isRequired,
+    authorLoginId: PropTypes.string,
+    authorNickname: PropTypes.string,
+    createdAt: PropTypes.string,
+};
+commentShape.children = PropTypes.arrayOf(PropTypes.shape(commentShape));
+
+CommentNode.propTypes = {
+    comment: PropTypes.shape(commentShape).isRequired,
+    currentLoginId: PropTypes.string,
+    onReply: PropTypes.func.isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired,
+    replyingId: PropTypes.number,
+    setReplyingId: PropTypes.func.isRequired,
+    editingId: PropTypes.number,
+    setEditingId: PropTypes.func.isRequired,
+    postAuthorNickname: PropTypes.string
+};
+
 const PostDetail = () => {
     const { id } = useParams();
     const [post, setPost] = useState(null);
@@ -225,22 +249,6 @@ const PostDetail = () => {
                 alert("삭제에 실패했습니다.");
             }
         }
-    };
-
-    // 댓글 총 수 계산 (재귀)
-    const countComments = (list) => {
-        let total = 0;
-        const countNodes = (nodes) => {
-            if (!nodes) return;
-            total += nodes.length;
-            nodes.forEach(node => {
-                if (node.children) {
-                    countNodes(node.children);
-                }
-            });
-        };
-        countNodes(list);
-        return total;
     };
 
     // 댓글 작성 핸들러
