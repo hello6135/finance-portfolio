@@ -43,7 +43,7 @@ A full-stack finance portfolio and career management application.
 
 ## 5. Testing & Quality
 - **Backend:** JUnit 5 for unit/integration tests. JaCoCo for coverage reporting.
-- **Frontend:** Vitest and React Testing Library.
+- **Frontend:** No separate test codes are written.
 - **Code Quality:** SonarQube (via SonarCloud) for static analysis and security scanning.
 
 ## 6. Workflow

@@ -8,6 +8,18 @@ import { getPostById, deletePost } from '../../api/postApi';
 import { getCommentsByPost, createComment, updateComment, deleteComment } from '../../api/commentApi';
 import authStore from '../../store/authStore';
 
+// 날짜 시간 포맷 헬퍼 함수 (예: 2026.06.11 21:34)
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}.${month}.${day} ${hours}:${minutes}`;
+};
+
 // 재귀형 댓글 노드 컴포넌트
 const CommentNode = ({ 
     comment, 
@@ -50,14 +62,7 @@ const CommentNode = ({
                     <span className="fw-bold me-2" style={{ fontSize: '0.95rem' }}>{comment.authorNickname}</span>
                     {isPostAuthor && <span className="badge bg-primary me-2" style={{ fontSize: '0.75rem' }}>작성자</span>}
                     <span className="text-muted small">
-                        {new Intl.DateTimeFormat('ko-KR', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false
-                        }).format(new Date(comment.createdAt))}
+                        {formatDate(comment.createdAt)}
                     </span>
                 </div>
                 <div className="d-flex gap-2">
@@ -300,58 +305,38 @@ const PostDetail = () => {
     return (
         <div className="container py-4">
             {/* 페이지 헤더 */}
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="mb-0">게시글 상세</h2>
-                <span className="text-muted">ID: {post.id}</span>
+            <div className="mb-4">
+                <h2 className="mb-0 fw-bold">{post.categoryName}</h2>
             </div>
 
-            <table className="table table-bordered" style={{ color: 'black', backgroundColor: 'white' }}>
-                <tbody>
-                    <tr>
-                        <th className="table-light" style={{ width: '20%' }}>카테고리</th>
-                        <td>{post.categoryName}</td>
-                    </tr>
-                    <tr>
-                        <th className="table-light" style={{ width: '20%' }}>작성자</th>
-                        <td>{post.author}</td>
-                    </tr>
-                    <tr>
-                        <th className="table-light" style={{ width: '20%' }}>제목</th>
-                        <td>{post.title}</td>
-                    </tr>
-                    <tr>
-                        <th className="table-light">내용</th>
-                        {/* dangerouslySetInnerHTML: 타임리프의 utext와 같은 기능
-                        dompurify를 통해 XSS 이중방어 */}
-                        <td
-                            className="post-content"
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
-                            style={{ minHeight: '200px' }}
-                        />
-                    </tr>
-                    <tr>
-                        <th className="table-light">작성일</th>
-                        <td>
-                            {new Intl.DateTimeFormat('ko-KR', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false // 24시간 형식
-                            }).format(new Date(post.createdAt))}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            {/* 게시글 상세 카드 */}
+            <div className="p-4 bg-white border rounded shadow-sm text-dark mb-4" style={{ textAlign: 'left' }}>
+                <div className="d-flex justify-content-between align-items-baseline mb-2">
+                    <h3 className="mb-0 fw-bold" style={{ fontSize: '1.5rem' }}>{post.title}</h3>
+                    <span className="text-muted small">{post.id}</span>
+                </div>
+                <div className="text-muted small mb-3">
+                    <span className="fw-bold text-dark me-1">{post.author}</span>
+                    <span className="text-muted mx-2" style={{ userSelect: 'none' }}>|</span>
+                    <span>{formatDate(post.createdAt)}</span>
+                </div>
+                <hr className="my-3" />
+                {/* dangerouslySetInnerHTML: 타임리프의 utext와 같은 기능
+                dompurify를 통해 XSS 이중방어 */}
+                <div
+                    className="post-content py-2"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
+                    style={{ minHeight: '200px' }}
+                />
+            </div>
 
-            <div className="mt-3 d-flex gap-2">
-                <button onClick={() => navigate('/posts')} className="btn btn-secondary">목록으로</button>
+            <div className="mt-3 d-flex gap-2 justify-content-end">
+                <button onClick={() => navigate('/posts')} className="btn btn-outline-secondary">목록으로</button>
                 {/* 권한이 있을 때만 수정/삭제 버튼 렌더링 */}
                 {canManage && (
                     <>
-                        <button onClick={() => navigate(`/editor/${id}`)} className="btn btn-warning">수정</button>
-                        <button onClick={onDelete} className="btn btn-danger">삭제</button>
+                        <button onClick={() => navigate(`/editor/${id}`)} className="btn btn-outline-warning">수정</button>
+                        <button onClick={onDelete} className="btn btn-outline-danger">삭제</button>
                     </>
                 )}
             </div>
@@ -359,12 +344,9 @@ const PostDetail = () => {
             {/* 댓글 영역 */}
             <hr className="my-5" />
             <div className="comment-section mt-4 mb-5 text-dark" style={{ textAlign: 'left' }}>
-                <h4 className="mb-4 fw-bold">💬 댓글 ({countComments(comments)})</h4>
-
                 {/* 댓글 목록 */}
                 {comments.length === 0 ? (
-                    <div className="text-muted p-4 bg-light border rounded text-center mb-4">
-                        등록된 댓글이 없습니다. 첫 댓글을 작성해 보세요!
+                    <div>
                     </div>
                 ) : (
                     <div className="mb-4">
@@ -393,7 +375,7 @@ const PostDetail = () => {
                         <textarea 
                             value={newCommentText} 
                             onChange={(e) => setNewCommentText(e.target.value)} 
-                            placeholder="댓글 내용을 입력하세요..." 
+                            placeholder="내용을 입력하세요..." 
                             className="form-control mb-3" 
                             rows="3"
                         />

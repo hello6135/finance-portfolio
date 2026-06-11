@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { getPostList } from '../../api/postApi';
+import { getCategories } from '../../api/categoryApi';
 import LoadingPage from '../common/LoadingPage';
 
 const PostList = () => {
@@ -12,6 +13,7 @@ const PostList = () => {
         totalElements: 0
     });
     const [loading, setLoading] = useState(true);
+    const [categoryName, setCategoryName] = useState('');
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -43,6 +45,27 @@ const PostList = () => {
         fetchPostList(0, 10);
     }, [fetchPostList]);
 
+    // 카테고리 이름 조회 및 세팅
+    useEffect(() => {
+        if (categoryId) {
+            getCategories()
+                .then((list) => {
+                    const matched = list.find(cat => String(cat.id) === String(categoryId));
+                    if (matched) {
+                        setCategoryName(matched.name);
+                    } else {
+                        setCategoryName('카테고리');
+                    }
+                })
+                .catch((err) => {
+                    console.error("카테고리 호출 실패:", err);
+                    setCategoryName('카테고리');
+                });
+        } else {
+            setCategoryName('');
+        }
+    }, [categoryId]);
+
     if (loading) return <LoadingPage />;
 
     return (
@@ -51,7 +74,7 @@ const PostList = () => {
             {/* 페이지 헤더 */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="mb-0">
-                    {categoryId ? (posts[0]?.categoryName || '카테고리') : '전체 글'}
+                    {categoryId ? (categoryName || posts[0]?.categoryName || '카테고리') : '전체 글'}
                 </h2>
                 <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>
             </div>
