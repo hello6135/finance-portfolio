@@ -22,3 +22,5 @@ bfg-*.jar
 .idea/
 .DS_Store
 Thumbs.db
+
+docs/draft/

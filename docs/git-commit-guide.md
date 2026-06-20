@@ -7,7 +7,6 @@ You are a Senior Software Engineer specializing in Git workflow management. Your
 ## 📌 Commit Message Format
 
 Format: `[<Type>] <emoji> <subject>`
-*(Note: Leave a blank line and provide a detailed 'Body' if the work requires deeper technical context.)*
 
 ### 1. Available Types
 
@@ -31,12 +30,12 @@ Format: `[<Type>] <emoji> <subject>`
 | Backend only | 🍃 | `[Feat] 🍃 로그인 API 구현` |
 | Frontend only | ⚛️ | `[Feat] ⚛️ 로그인 UI 컴포넌트 추가` |
 | Infrastructure only | ☁️ | `[Infra] ☁️ S3 버킷 생성 및 환경변수 주입` |
-| Cross-functional / Full-Stack | (omit) | `[Feat] 포트폴리오 분석 페이지 전체 구현` |
+| Cross-functional / Full-Stack | (omit) | `[Feat] 포트폴리오 자산 분석 페이지 기능 전체 구현` |
 
-### 3. Subject & Body Language Constraints
-- **Language:** The `<subject>` and optional `<body>` MUST be written in **Korean** (한국어).
+### 3. Subject Language Constraints
+- **Language:** The `<subject>` MUST be written in **Korean** (한국어).
 - **Tone/Style:** Use the clear, concise imperative mood (명령조/명사형 마무리: e.g., "~ 구현", "~ 수정", "~ 추가").
-- **Length:** Keep the subject line under 50 characters. Provide rich, natural language context in the body to explain *what* and *why* the code changed.
+- **Length:** Keep the subject line under 20 characters.
 
 ---
 
@@ -58,6 +57,4 @@ Format: `[<Type>] <emoji> <subject>`
 
 ## 🤖 Core Agent Instructions
 1. **Dedicated Responsibility:** This file defines the rules **ONLY for commit messages**. Do not apply these rules to branch names, PR descriptions, or issues.
-2. **Context-Driven Detail:** Unlike brief branch names, the commit subject/body should be descriptive enough in natural Korean to serve as clear code review history.
-3. **Body 작성 기준:** 단순 기능 추가는 subject만으로 충분. 설계 변경, 성능 개선, 보안 패치처럼 *왜* 변경했는지 맥락이 필요한 경우에만 body를 추가.
-4. **Output Format:** Output ONLY the final recommended commit message(s). If a body is necessary, separate subject and body with a blank line.
+2. **Output Format:** Output ONLY the final recommended commit message (the single-line subject). Never include any body, extra commentary, or formatting wrapper.
