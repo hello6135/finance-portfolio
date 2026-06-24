@@ -1,41 +1,185 @@
 package com.finance.finportfolio.global.error;
 
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.finance.finportfolio.global.error.exception.CloudFrontConfigurationException;
+import com.finance.finportfolio.global.error.exception.DuplicateResourceException;
+import com.finance.finportfolio.global.error.exception.FileStorageException;
+import com.finance.finportfolio.global.error.exception.RefreshTokenNotFoundException;
+
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@ControllerAdvice // 모든 컨트롤러의 예외를 여기서 캐치
+@RestControllerAdvice // 모든 컨트롤러의 예외를 여기서 캐치
 public class GlobalExceptionHandler {
 
-    // 내가 직접 던지는 IllegalArgumentException 처리 (예: 게시글 없음)
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
-        log.error("잘못된 인자 유입: {}", e.getMessage());
+    // -- 공통 메서드 --
 
+    // 공통 응답 생성 메서드
+    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String code, String message) {
         ErrorResponse response = ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .code("BAD_REQUEST")
-                .message(e.getMessage())
+                .status(status.value())
+                .code(code)
+                .message(message)
                 .build();
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, status);
     }
 
-    // 그 외 예상치 못한 모든 에러(500) 처리
+    // 메시지 빈 값 대비
+    // e.getMessage()로 에러 메시지 전달 받았으면 exceptionMessage, 아니면 defaultMessage 반환
+    private String resolveMessage(String exceptionMessage, String defaultMessage) {
+        return Optional.ofNullable(exceptionMessage)
+                .filter(msg -> !msg.isBlank())
+                .orElse(defaultMessage);
+    }
+
+    // -- 예외 핸들러 --
+
+    // 400 BAD_REQUEST
+    // INVALID_INPUT: 잘못된 인자
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+        String message = resolveMessage(e.getMessage(), "🛠입력 데이터가 올바르지 않습니다.");
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "INVALID_INPUT", message);
+    }
+
+    // 400 BAD_REQUEST
+    // ILLEGAL_STATE: 잘못된 상태
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequestException(IllegalStateException e) {
+        String message = resolveMessage(e.getMessage(), "🛠현재 요청을 처리할 수 없는 상태입니다.");
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "ILLEGAL_STATE", message);
+    }
+
+    // 400 BAD_REQUEST
+    // VALIDATION_ERROR: @Valid 검증 실패
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
+        // @Valid 조건에 적어놓은 message 가져옴(명시하지 않은 경우 Hibernate Validator에 내장된 기본 메시지)
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> String.format("[%s] %s", error.getField(), error.getDefaultMessage()))
+                .findFirst()
+                .orElse("🛠입력값이 올바르지 않습니다.");
+
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
+    }
+
+    // 400 BAD_REQUEST
+    // CKEditor 전용 포맷으로 처리해야함(Map<String, Object>)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "uploaded", false,
+                "status", HttpStatus.BAD_REQUEST.value(),
+                "code", "FILE_SIZE_LIMIT_EXCEEDED",
+                "error", Map.of("message", "파일 용량이 너무 큽니다. (최대 1MB)")));
+    }
+
+    // 401 UNAUTHORIZED
+    // 401: 인증 실패 통합 관리(아이디 조회 실패, 비밀번호 오입력 등 각종 로그인 실패)
+    @ExceptionHandler({
+            UsernameNotFoundException.class,
+            BadCredentialsException.class,
+            AuthenticationException.class })
+    public ResponseEntity<ErrorResponse> handleAuthException(Exception e) {
+        String defaultMsg = "🛠인증에 실패하였습니다.";
+        String code = "UNAUTHORIZED";
+
+        // 1순위: 가장 구체적인 '사용자 없음'
+        if (e instanceof UsernameNotFoundException) {
+            defaultMsg = "🛠존재하지 않는 사용자입니다.";
+            code = "USER_NOT_FOUND";
+        }
+        // 2순위: '비밀번호 틀림'
+        else if (e instanceof BadCredentialsException) {
+            defaultMsg = "🛠아이디 또는 비밀번호가 일치하지 않습니다.";
+            code = "BAD_CREDENTIALS";
+        }
+        // 3순위: 그 외 기타 인증 에러 (토큰 만료, 접근 거부 등)
+        // 여기서는 기본 설정된 defaultMsg와 code 반환.
+
+        String message = resolveMessage(e.getMessage(), defaultMsg);
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, code, message);
+    }
+
+    // 401 UNAUTHORIZED
+    // REFRESH_TOKEN_NOT_FOUND: 리프레쉬 토큰 없음
+    @ExceptionHandler(RefreshTokenNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRefreshTokenNotFoundException(RefreshTokenNotFoundException e) {
+        String message = resolveMessage(e.getMessage(), "🛠Refresh Token이 없습니다.");
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_NOT_FOUND", message);
+    }
+
+    // 401 UNAUTHORIZED
+    // EXPIRED_JWT: 리프레쉬 토큰 없음
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException e) {
+        String message = resolveMessage(e.getMessage(), "🛠토큰이 만료되었습니다.");
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "EXPIRED_TOKEN", message);
+    }
+
+    // 403 FORBIDDEN
+    // ACCESS_DENIED: 권한 부족
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
+        String message = resolveMessage(e.getMessage(), "🛠권한이 부족합니다.");
+        return buildErrorResponse(HttpStatus.FORBIDDEN, "ACCESS_DENIED", message);
+    }
+
+    // 429 TOO_MANY_REQUESTS
+    // ACCOUNT_LOCKED: 계정 잠금
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ErrorResponse> handleLockedException(LockedException e) {
+        String message = resolveMessage(e.getMessage(), "🛠계정이 잠겼습니다. 잠시 후 다시 시도해주세요.");
+        return buildErrorResponse(HttpStatus.TOO_MANY_REQUESTS, "ACCOUNT_LOCKED", message);
+    }
+
+    // 409 CONFLICT
+    // DUPLICATE_RESOURCE: 중복 아이디 커스텀 예외
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateException(DuplicateResourceException e) {
+        String message = resolveMessage(e.getMessage(), "🛠이미 존재하는 리소스입니다.");
+        return buildErrorResponse(HttpStatus.CONFLICT, "DUPLICATE_RESOURCE", message);
+    }
+
+    // 500 INTERNAL_SERVER_ERROR
+    // CloudFrontConfigurationException: CloudFront Header Filter 쪽 런타임 에러.
+    @ExceptionHandler(CloudFrontConfigurationException.class)
+    public ResponseEntity<ErrorResponse> handleCloudFrontConfigurationException(Exception e) {
+        log.error("CloudFront 설정 에러 발생!", e.getMessage(), e);
+        String message = resolveMessage(e.getMessage(), "시스템 보안 설정에 문제가 발생했습니다.");
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "CLOUDFRONT_CONFIG_ERROR", message);
+    }
+
+    // 500 INTERNAL_SERVER_ERROR
+    // STORAGE_ERROR: S3 파일 업로드 쪽 런타임 에러
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorageException(FileStorageException e) {
+        log.error("S3 파일 업로드 장애", e);
+        String message = resolveMessage(e.getMessage(), "파일 업로드 간 시스템 오류가 발생했습니다. 관리자에게 문의하세요.");
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE_ERROR", message);
+    }
+
+    // 500 INTERNAL_SERVER_ERROR
+    // INTERNAL_SERVER_ERROR: 그 외 예상치 못한 모든 에러(500) 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllException(Exception e) {
-        log.error("서버 내부 에러 발생!", e); // 스택 트레이스 전체 로그 기록
-
-        ErrorResponse response = ErrorResponse.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .code("INTERNAL_SERVER_ERROR")
-                .message("서버 이용에 불편을 드려 죄송합니다. 관리자에게 문의하세요.")
-                .build();
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("서버 내부 에러 발생!", e);
+        String message = resolveMessage(e.getMessage(), "예상치 못한 문제가 발생했습니다. 이용에 불편을 드려 죄송합니다.");
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", message);
     }
 }

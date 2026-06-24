@@ -1,5 +1,6 @@
 name: Backend Deploy to EC2 with Docker Image (Dev & Prod)
 
+# 배포환경(main)은 머지, 개발테스트(develop) 환경은 PR시 작동
 on:
   push:
     branches: "main"
@@ -9,22 +10,68 @@ on:
     branches: develop
     paths:
       - 'finance-portfolio-backend/**'
+  # 수동 실행 추가
   workflow_dispatch:
+
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+      with:
+          fetch-depth: 0
 
-    # 1. Docker Hub 로그인
+    # JDK 세팅 [SONAR]
+    - name: (Sonar) Set up JDK 21 
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        # [성능] gradle 캐싱 (1~2분)
+        cache: 'gradle'
+
+    # [SONAR][성능] 실행 엔진 및 플러그인 캐싱 (20초)
+    - name: (Sonar) Cache SonarCloud packages 
+      uses: actions/cache@v5
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    # [SONAR][배포]
+    - name: (Sonar) Code Quality Analysis
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        chmod +x gradlew
+
+        # 빌드 위치, 이하 옵션 설명
+        # [성능] 독립적인 프로젝트/모듈을 병렬로 빌드 - 모노레포에서 유리 (20초)
+        # [성능] Gradle의 원격 빌드 캐시 기능을 활성화, 중복 계산 최소화 (30초)
+        # [성능] 데몬 비활성화 (5초)
+        # [안정성] 자바 힙 메모리 2GB로 명시 - 메모리 부족 방지 
+        # [소나] 퀄리티 게이트 통과 대기
+        # [소나] 퀄리티 게이트 최대 대기 시간 설정
+
+        ./gradlew build sonar --info \
+        --parallel \
+        --build-cache \
+        -Dorg.gradle.daemon=false \
+        -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m" \
+        -Dsonar.qualitygate.wait=true \
+        -Dsonar.qualitygate.timeout=300
+      working-directory: ./finance-portfolio-backend
+
+    # [DOCKER] Hub 로그인
     - name: Login to Docker Hub
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 2. 브랜치에 따른 태그 결정
+    # 브랜치에 따른 태그 결정
     - name: Set Docker Tag
       run: |
         if [ "${{ github.ref }}" == "refs/heads/main" ]; then
@@ -33,28 +80,35 @@ jobs:
           echo "TAG=dev" >> $GITHUB_ENV
         fi
 
-    # 3. Docker 이미지 빌드 및 푸시
+    # [성능] Buildx: Docker에 type=gha 캐싱 등 확장 기능 추가
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    # [DOCKER] 이미지 빌드 복사 및 푸시
     - name: Build and Push Docker Image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v7
       with:
         context: ./finance-portfolio-backend
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/finance-portfolio:${{ env.TAG }}
+        # [성능] Buildx: Docker 레이어 캐시 (라이브러리 캐싱)
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
-    # [보안 추가] 4. GitHub Actions 서버의 공인 IP 가져오기
+    # [보안] GitHub Actions 서버의 공인 IP 가져오기
     - name: Get GitHub Actions IP
       id: ip
       run: echo "ipv4=$(curl -s https://api.ipify.org)" >> $GITHUB_OUTPUT
 
-    # [보안 추가] 5. AWS Credentials 설정 (보안 그룹 제어용)
+    # [보안] AWS Credentials 설정 (보안 그룹 제어용)
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-northeast-2 # 본인의 리전 확인
+        aws-region: ap-northeast-2
 
-    # [보안 추가] 6. EC2 보안 그룹에 22번 포트 임시 허용
+    # [보안] EC2 보안 그룹에 22번 포트 임시 허용
     - name: Add GitHub IP to Security Group
       run: |
         aws ec2 authorize-security-group-ingress \
@@ -63,7 +117,7 @@ jobs:
           --port 22 \
           --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
-    # 7. docker-compose.yml 파일을 EC2로 전송 (SCP)
+    # [배포] docker-compose.yml 파일을 EC2로 전송 (SCP)
     - name: Copy docker-compose.yml to EC2
       uses: appleboy/scp-action@master
       with:
@@ -74,7 +128,7 @@ jobs:
         target: "~/finance-portfolio"
         strip_components: 1
 
-    # 8. EC2에 접속해서 배포 실행 (SSH)
+    # [배포] EC2에 접속해서 배포 실행 (SSH)
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
       with:
@@ -85,30 +139,37 @@ jobs:
           mkdir -p ~/finance-portfolio
           cd ~/finance-portfolio
           
-          # 환경변수 파일(.env) 동적 생성 (S3 키 추가)
+          # 환경변수 파일(.env) 동적 생성
           cat <<EOF > .env
           DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           CF_SECRET_KEY=${{ secrets.CF_SECRET_KEY }}
+          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
           EOF
           
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
           docker-compose pull
           
           if [ "${{ env.TAG }}" == "latest" ]; then
-            docker-compose up -d app-prod db-prod
+            docker-compose up -d --force-recreate app-prod db-prod
           else
-            docker-compose up -d app-dev db-dev
+            docker-compose up -d --force-recreate app-dev db-dev
           fi
           
+          # [안정성] 디스크 용량 부족 방지
           docker image prune -f
 
-    # [보안 마무리] 9. 배포 완료 후 보안 그룹에서 IP 제거 (성공/실패 무관하게 실행)
+    # [보안] 배포 완료 후 보안 그룹에서 IP 제거
     - name: Remove GitHub IP from Security Group
-      if: always()
+      if: always() # 빌드 실패와 상관없이 무조건 실행
       run: |
+        if [ -z "${{ steps.ip.outputs.ipv4 }}" ]; then
+          echo "Warning: GitHub Actions IP를 가져오지 못했습니다. 보안 그룹 정리를 건너뜁니다."
+          exit 0
+        fi
+        
         aws ec2 revoke-security-group-ingress \
           --group-id ${{ secrets.AWS_SG_ID }} \
           --protocol tcp \

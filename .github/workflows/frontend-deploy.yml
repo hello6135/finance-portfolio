@@ -1,14 +1,16 @@
 name: Frontend Deploy to S3 (Dev & Prod)
 
+# 배포환경(main)은 머지, 개발테스트(develop) 환경은 PR시 작동
 on:
   push:
-    branches: [ "main" ] # main 머지 시 prod 배포
+    branches: [ "main" ] 
     paths:
       - 'finance-portfolio-frontend/**'
   pull_request:
-    branches: [ "develop" ] # develop PR 시 dev 배포 (빌드 테스트 및 배포)
+    branches: [ "develop" ] 
     paths:
       - 'finance-portfolio-frontend/**'
+  # 수동 실행 추가
   workflow_dispatch:
 
 jobs:
@@ -19,11 +21,11 @@ jobs:
         working-directory: ./finance-portfolio-frontend
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
-
-    # 1. 환경 변수 설정 (브랜치에 따라 목적지 S3와 CDN ID 결정)
+    
+    # [ENV] 환경 변수 설정 (브랜치에 따라 목적지 S3와 CDN ID 결정)
     - name: Set Environment Variables
       run: |
         if [ "${{ github.base_ref }}" == "develop" ] || [ "${{ github.ref }}" == "refs/heads/develop" ]; then
@@ -36,37 +38,60 @@ jobs:
           echo "VITE_API_BASE_URL=${{ secrets.PROD_API_URL }}" >> $GITHUB_ENV
         fi
 
-    # 2. Node.js 설정 및 빌드
+    # [NPM] Nodejs 셋업
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v5
       with:
         node-version: '20'
         cache: 'npm'
         cache-dependency-path: './finance-portfolio-frontend/package-lock.json'
 
+    # [NPM] 의존성 설치
     - name: Install dependencies
       run: npm install
 
-    - name: Build Project
-      run: |
-        # 빌드 시 환경별 API 주소 주입 (React 기준)
-        VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }} npm run build
+    # [NPM] 의존성 취약점이 발견되면 non-zero exit code를 반환하여 빌드 중단
+    - name: Security Audit (npm audit)
+      run: npm audit --audit-level=high
 
-    # 3. AWS 권한 설정
+    # [NPM] 빌드: 환경별 API 주소 주입 (React 기준)
+    - name: Build Project
+      run: VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }} npm run build        
+
+    # [SONAR] 소나 실행 엔진 캐싱 (성능: 빌드 시간 단축)
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    # [SONAR] 소나 분석
+    # 소나 퀄리티 게이트 300초 까지 대기 true
+    - name: Frontend SonarCloud Scan
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        npx sonarqube-scanner \
+          -Dproject.settings=sonar-project.properties \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.qualitygate.timeout=300
+
+    # [AWS] 권한 설정
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
-
-    # 4. S3에 빌드 결과물 업로드 (Sync)
+          
+    # [AWS] S3에 빌드 결과물 업로드 
+    # Sync: 차이점만 반영, --delete: 삭제된 구 파일은 삭제
     - name: Upload to S3
-      run: |
-        # dist/ 폴더 내용을 S3에 동기화, S3에만 있는 옛날 파일은 삭제(--delete)
-        aws s3 sync dist/ s3://${{ env.S3_BUCKET }} --delete
+      run: aws s3 sync dist/ s3://${{ env.S3_BUCKET }} --delete
 
-    # 5. CloudFront 캐시 무효화 (빌드 아티팩트 변경 시 캐시 삭제)
+    # [AWS] CloudFront 캐시 무효화 (빌드 시 캐시 삭제로 구 버전 호출 방지)
     - name: CloudFront Invalidation
       run: |
         aws cloudfront create-invalidation \

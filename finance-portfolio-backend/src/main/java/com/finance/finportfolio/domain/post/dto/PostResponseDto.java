@@ -1,37 +1,50 @@
 package com.finance.finportfolio.domain.post.dto;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
-import com.finance.finportfolio.domain.post.domain.Post;
-
-import lombok.Getter;
+import com.finance.finportfolio.domain.category.entity.Category;
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.post.entity.Post;
 
 // PostResponseDto - Post 엔티티 Get용 DTO
-@Getter
-public class PostResponseDto {
-    private final Long id;
-    private final String author;
-    private final String title;
-    private final String content;
-    private final boolean hasImage;
-    private final LocalDateTime createdAt;
+public record PostResponseDto(
+                Long id,
+                Long categoryId,
+                String categoryName,
+                String author,
+                String title,
+                String content,
+                boolean hasImage,
+                boolean isOwner,
+                LocalDateTime createdAt) {
+        // 원본 호출용
+        public static PostResponseDto from(Post post) {
+                return PostResponseDto.ofForJsoup(post, post.getContent(), null);
+        }
 
-    // Entity -> DTO 변환을 위한 생성자
-    public PostResponseDto(Post post) {
-        this.id = post.getId();
-        this.author = post.getAuthor();
-        this.title = post.getTitle();
-        this.content = null;
-        this.hasImage = post.isHasImage();
-        this.createdAt = post.getCreatedAt();
-    }
+        // 살균 Content 호출용
+        public static PostResponseDto ofForJsoup(Post post, String processedContent, String currentLoginId) {
+                boolean ownerCheck = Optional.ofNullable(post.getAuthor())
+                                .map(Member::getLoginId)
+                                .map(loginId -> loginId.equals(currentLoginId))
+                                .orElse(false);
 
-    public PostResponseDto(Post post, String processedContent) {
-        this.id = post.getId();
-        this.author = post.getAuthor();
-        this.title = post.getTitle();
-        this.content = processedContent;
-        this.hasImage = post.isHasImage();
-        this.createdAt = post.getCreatedAt();
-    }
+                return new PostResponseDto(
+                                post.getId(),
+                                Optional.ofNullable(post.getCategory())
+                                                .map(Category::getId)
+                                                .orElse(null),
+                                Optional.ofNullable(post.getCategory())
+                                                .map(Category::getName)
+                                                .orElse("미분류"),
+                                Optional.ofNullable(post.getAuthor())
+                                                .map(Member::getNickname)
+                                                .orElse("익명"),
+                                post.getTitle(),
+                                processedContent,
+                                post.isHasImage(),
+                                ownerCheck,
+                                post.getCreatedAt());
+        }
 }

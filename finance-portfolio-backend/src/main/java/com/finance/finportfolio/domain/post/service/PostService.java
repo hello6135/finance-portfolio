@@ -5,85 +5,127 @@ import java.util.Objects;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.safety.Safelist;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.finance.finportfolio.domain.post.domain.Post;
-import com.finance.finportfolio.domain.post.domain.PostRepository;
+import com.finance.finportfolio.domain.category.entity.Category;
+import com.finance.finportfolio.domain.category.repository.CategoryRepository;
+import com.finance.finportfolio.domain.member.entity.Member;
+import com.finance.finportfolio.domain.member.repository.MemberRepository;
 import com.finance.finportfolio.domain.post.dto.PostResponseDto;
 import com.finance.finportfolio.domain.post.dto.PostSaveRequestDto;
 import com.finance.finportfolio.domain.post.dto.PostUpdateRequestDto;
-import com.finance.finportfolio.infrastructure.file.FileService;
+import com.finance.finportfolio.domain.post.entity.Post;
+import com.finance.finportfolio.domain.post.repository.PostRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 // PostService - 게시판 로직 처리
 @Slf4j
-@Service
+@Service("postService")
 @Transactional
 @RequiredArgsConstructor
 public class PostService {
 
-    // jsoup 커스텀 설정 본문용(utext)
-    private static final Safelist HTML_SAFE_LIST = Safelist.relaxed()
-            .addAttributes("img", "style", "alt", "width", "height") // 이미지 관련 속성 허용
-            .addTags("hr", "br"); // 가로줄, 줄바꿈 명시적 허용
-
     private final PostRepository postRepository;
     private final FileService fileService;
+    private final CategoryRepository categoryRepository;
+    private final MemberRepository memberRepository;
 
-    // Jsoup 소독 메서드
-    private String cleanText(String text) {
-        return (text == null || text.isEmpty()) ? "" : Jsoup.clean(text, Safelist.none());
-    }
-
-    private String cleanHtml(String text) {
-        return (text == null || text.isEmpty()) ? "" : Jsoup.clean(text, HTML_SAFE_LIST);
-    }
-
+    // 실제 <img> 태그가 1개 이상 존재하는지 "객체" 단위로 확인
     private boolean checkImage(String htmlContent) {
         if (htmlContent == null || htmlContent.isEmpty())
             return false;
 
         Document doc = Jsoup.parseBodyFragment(htmlContent);
-        // 실제 <img> 태그가 1개 이상 존재하는지 "객체" 단위로 확인
         return !doc.select("img").isEmpty();
     }
 
-    // 모든 게시글 조회, return: 게시글 목록
+    // 작성자 체크
     @Transactional(readOnly = true)
-    public List<PostResponseDto> getAllPosts() {
+    public boolean isPostOwner(Long id, String memberId) {
+        if (id == null) {
+            return false;
+        }
+        return postRepository.findById(id)
+                .map(post -> {
+                    if (post.getAuthor() == null) {
+                        return false;
+                    }
+                    return post.getAuthor().getLoginId().equals(memberId);
+                })
+                .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getAllPostContents() {
         return postRepository.findAll().stream()
-                .map(PostResponseDto::new)
-                .toList(); // JDK 21 최신 문법
+                .map(Post::getContent)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public long getTotalPostCount() {
+        return postRepository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long s3ObjectCount() {
+        return fileService.s3ObjectCount();
+    }
+
+    // 게시글 페이지 조회(페이징), return: 게시글 목록
+    @Transactional(readOnly = true)
+    public Page<PostResponseDto> getPostList(int page, int size, Long categoryId) {
+        // 최신순 정렬을 포함한 Pageable 객체 생성 (0부터 시작)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
+        Page<Post> postPage;
+
+        if (categoryId != null && categoryId > 0) {
+            postPage = postRepository.findByCategoryId(categoryId, pageable);
+        } else {
+            postPage = postRepository.findAll(pageable);
+        }
+
+        // Entity를 DTO로 변환하여 반환
+        return postPage.map(PostResponseDto::from);
     }
 
     // ID로 게시글 조회, return: 게시글
     @Transactional(readOnly = true)
-    public PostResponseDto getPostById(Long id) {
+    public PostResponseDto getPostById(Long id, String currentLoginId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
         String processedContent = fileService.convertToCdnUrls(post.getContent());
 
-        return new PostResponseDto(post, processedContent);
+        return PostResponseDto.ofForJsoup(post, processedContent, currentLoginId);
     }
 
     // 게시글 저장, return: 저장된 게시글 ID
     @Transactional
-    public Long savePost(PostSaveRequestDto requestDto) {
-        // jsoup 살균과 Cdn삭제(키 추출)
-        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
+    public Long savePost(PostSaveRequestDto requestDto, String loginId) {
+
+        Member member = memberRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 카테고리 존재 여부 확인 및 조회
+        Category category = categoryRepository.findById(requestDto.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
+
+        // Cdn삭제(키 추출)
+        String cleanedContent = fileService.removeCdnUrls(requestDto.content());
         boolean hasImage = checkImage(cleanedContent);
 
-        Post post = Post.builder()
-                .author(cleanText(requestDto.author()))
-                .title(cleanText(requestDto.title()))
-                .content(cleanedContent)
-                .hasImage(hasImage)
-                .build();
+        Post post = requestDto.toEntity(category, member, cleanedContent, hasImage);
 
         return postRepository.save(post).getId();
     }
@@ -95,12 +137,15 @@ public class PostService {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 없습니다. id=" + id));
 
-        // jsoup 살균과 Cdn삭제(키 추출)
-        String cleanedContent = fileService.removeCdnUrls(cleanHtml(requestDto.content()));
+        // Cdn삭제(키 추출)
+        String cleanedContent = fileService.removeCdnUrls(requestDto.content());
         boolean hasImage = checkImage(cleanedContent);
 
+        Category category = categoryRepository.findById(requestDto.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리입니다. ID: " + requestDto.categoryId()));
+
         // 여기서 엔티티 값 바꿔서 스냅샷이랑 차이나게 -> 더티체킹으로 DB update
-        post.update(cleanText(requestDto.title()), cleanedContent, hasImage);
+        post.update(category, requestDto.title(), cleanedContent, hasImage);
     }
 
     // 게시글 삭제
@@ -116,18 +161,6 @@ public class PostService {
 
         // DB 게시글 삭제
         postRepository.delete(post);
-    }
-
-    // 미참조 이미지 파일 삭제 - 버튼 식(차후 정기 실행으로 변경)
-    @Transactional(readOnly = true)
-    public void cleanUpOrphanFiles() {
-        // DB에서 post의 모든 content 넘김
-        List<String> allPostContents = postRepository.findAll().stream()
-                .map(Post::getContent)
-                .filter(Objects::nonNull)
-                .toList();
-
-        fileService.cleanUpOrphanFiles(allPostContents);
     }
 
 }

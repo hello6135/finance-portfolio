@@ -1,0 +1,26 @@
+# Backend Exclusions
+finance-portfolio-backend/.gradle/
+finance-portfolio-backend/build/
+finance-portfolio-backend/src/main/resources/static
+
+# Frontend Exclusions
+finance-portfolio-frontend/node_modules/
+finance-portfolio-frontend/public/
+finance-portfolio-frontend/sonar-project.properties
+
+finance-portfolio-frontend/dist/
+finance-portfolio-frontend/.vite/
+
+# Common Exclusions
+.git/
+*.log
+.vscode/
+bfg-*.jar
+.env
+.env.*
+
+.idea/
+.DS_Store
+Thumbs.db
+
+docs/draft/

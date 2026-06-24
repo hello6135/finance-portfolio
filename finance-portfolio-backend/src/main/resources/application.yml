@@ -18,17 +18,28 @@ spring:
       filter:
         enabled: true
 
-  cloud:
-    aws:
-      region:
-        static: ap-northeast-2
-        instance-profile: false
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 2MB
+
+  thymeleaf:
+    check-template-location: false
+
+server:
+  error:
+    include-stacktrace: never      # 스택트레이스 노출 차단 (필수)
+    include-message: never         # 에러 메시지 노출 차단
+    include-exception: false       # 예외 클래스명 노출 차단
+    include-binding-errors: never  # 파라미터 바인딩 에러 노출 차단
+
+jwt:
+  secret: ${JWT_SECRET_KEY}  # 32자 이상
+  access-token-expiration: 900000       # 15분 (ms)
+  refresh-token-expiration: 604800000   # 7일 (ms)      
 
 cloudfront:
-  custom:
-    header:
-      name: X-Custom-Access-Key
-      value: ${CF_SECRET_KEY}
+  enabled: false
 ---
 spring:
   config:
@@ -47,16 +58,20 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/portfolio_db?serverTimezone=UTC
     username: root
-    password: password
+    password: ${LOCAL_DB_PW}
 
   cloud:
     aws:
+      region:
+        static: ap-northeast-2
       credentials:
         access-key: ${AWS_ACCESS_KEY_ID} 
         secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-local-9806
         cloudfront-domain: dt08rm0613jz4.cloudfront.net
+      ec2:
+        instance-id: i-0ad52267191315154
 ---
 spring:
   config:
@@ -70,9 +85,23 @@ spring:
 
   cloud:
     aws:
+      region:
+        static: ap-northeast-2
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID} 
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-dev-9806
         cloudfront-domain: d24842uv7pd3qd.cloudfront.net
+      ec2:
+        instance-id: i-0ad52267191315154
+
+cloudfront:
+  enabled: true
+  custom:
+    header:
+      name: X-Custom-Access-Key
+      value: ${CF_SECRET_KEY}
 ---
 spring:
   config:
@@ -90,6 +119,20 @@ spring:
 
   cloud:
     aws:
+      region:
+        static: ap-northeast-2
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID} 
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
       s3:
         bucket-name: finportfolio-s3-bucket-prod-9806
         cloudfront-domain: d2m4qtzslhorm2.cloudfront.net
+      ec2:
+        instance-id: i-0ad52267191315154
+
+cloudfront:
+  enabled: true
+  custom:
+    header:
+      name: X-Custom-Access-Key
+      value: ${CF_SECRET_KEY}
