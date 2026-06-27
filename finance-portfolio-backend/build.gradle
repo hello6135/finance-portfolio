@@ -109,7 +109,7 @@ jacocoTestReport {
 
 sonar {
     properties {
-		// SonarCloud API 프로젝트 키, 조직, 호스트 URL 설정
+		// SonarCloud API 프로젝트 키, 조직, 호스트 URL 설정 
         property "sonar.projectKey", "hello6135_finance-portfolio"
         property "sonar.organization", "ljh-finance"
         property "sonar.host.url", "https://sonarcloud.io"
