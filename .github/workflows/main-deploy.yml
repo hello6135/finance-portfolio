@@ -11,6 +11,7 @@ on:
     paths:
       - 'finance-portfolio-frontend/**'
       - 'finance-portfolio-backend/**'
+  workflow_dispatch:
 
 jobs:
   # PHASE 1: [작동여부판별] 모노레포의 프론트/백엔드 각 파트에 변경점이 있는지 체크
@@ -36,6 +37,7 @@ jobs:
     # push 이벤트에는 무조건 검증
     # PR 이벤트에는 변경점이 있는 파트만 검증
     if: |
+      github.event_name == 'workflow_dispatch' ||
       github.event_name == 'push' || 
       (github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true')
     uses: ./.github/workflows/frontend-ci.yml
@@ -44,6 +46,7 @@ jobs:
   ci-backend:
     needs: changes
     if: |
+      github.event_name == 'workflow_dispatch' ||
       github.event_name == 'push' || 
       (github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true')
     uses: ./.github/workflows/backend-ci.yml
@@ -51,20 +54,35 @@ jobs:
 
   # PHASE 3: [CD] 배포 단계 - 프론트: S3, 백엔드: EC2
   cd-frontend:
-    # CI 검증이 성공했을 때 작동
-    needs: [changes, ci-frontend]
+    needs: [changes, ci-frontend, ci-backend]
+    # CI 검증이 성공했을 때 작동 (백엔드 또한 성공하거나 스킵 되었어야 함)
     # push 이벤트에는 무조건 배포
     # PR 이벤트에는 develop 브랜치이고 변경점이 있는 파트만 배포
     if: |
-      github.event_name == 'push' ||
-      (github.event_name == 'pull_request' && github.base_ref == 'develop' &&  needs.changes.outputs.frontend == 'true')
+      always() &&
+      (needs.ci-frontend.result == 'success' || needs.ci-frontend.result == 'skipped') &&
+      needs.ci-backend.result != 'failure' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'push' ||
+        (github.event_name == 'pull_request' && github.base_ref == 'develop' && needs.changes.outputs.frontend == 'true')
+      )
     uses: ./.github/workflows/frontend-cd.yml
     secrets: inherit
 
   cd-backend:
-    needs: [changes, ci-backend]
+    needs: [changes, ci-backend, ci-frontend]
+    # CI 검증이 성공했을 때 작동 (프론트엔드 또한 성공하거나 스킵 되었어야 함)
+    # push 이벤트에는 무조건 배포
+    # PR 이벤트에는 develop 브랜치이고 변경점이 있는 파트만 배포
     if: |
-      github.event_name == 'push' ||
-      (github.event_name == 'pull_request' && github.base_ref == 'develop' &&  needs.changes.outputs.backend == 'true')
+      always() &&
+      (needs.ci-backend.result == 'success' || needs.ci-backend.result == 'skipped') &&
+      needs.ci-frontend.result != 'failure' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'push' ||
+        (github.event_name == 'pull_request' && github.base_ref == 'develop' &&  needs.changes.outputs.backend == 'true')
+      )
     uses: ./.github/workflows/backend-cd.yml
     secrets: inherit
