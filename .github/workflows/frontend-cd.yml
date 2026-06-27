@@ -1,0 +1,56 @@
+name: Frontend CD (Deploy to S3)
+
+# main-deploy.yml에서 호출될 시 작동
+on:
+  workflow_call:
+    
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    # 프론트 CI Job에서 압축 보관했던 빌드 결과물 다운로드
+    - name: Download Build Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: ./dist
+    
+    # [ENV] 환경 변수 설정 (브랜치에 따라 목적지 S3와 CDN ID 결정, main 브랜치: PROD, develop 브랜치: DEV)
+    # 검증되지 않은 브랜치에서 배포 시도 시 에러 발생
+    - name: Set Environment Variables
+      run: |
+        if [ "${{ github.base_ref }}" == "develop" ] || [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+          echo "Detected DEV Environment. Setting DEV variables..."
+          echo "S3_BUCKET=${{ secrets.DEV_S3_BUCKET_NAME }}" >> $GITHUB_ENV
+          echo "CF_ID=${{ secrets.DEV_CF_DISTRIBUTION_ID }}" >> $GITHUB_ENV
+        elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "Detected PROD Environment. Setting PROD variables..."
+          echo "S3_BUCKET=${{ secrets.PROD_S3_BUCKET_NAME }}" >> $GITHUB_ENV
+          echo "CF_ID=${{ secrets.PROD_CF_DISTRIBUTION_ID }}" >> $GITHUB_ENV
+        else
+          echo "CRITICAL ERROR: Unrecognized branch [${{ github.ref }}]. Variable injection blocked for safety."
+          exit 1
+        fi
+
+    # [AWS] 권한 설정
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v6
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+          
+    # [AWS] S3에 빌드 결과물 업로드 
+    # Sync: 차이점만 반영, --delete: 삭제된 구 파일은 삭제
+    - name: Upload to S3
+      run: aws s3 sync dist/ s3://${{ env.S3_BUCKET }} --delete
+
+    # [AWS] CloudFront 캐시 무효화 (빌드 시 캐시 삭제로 구 버전 호출 방지)
+    - name: CloudFront Invalidation
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ env.CF_ID }} \
+          --paths "/*"

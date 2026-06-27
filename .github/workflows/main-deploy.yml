@@ -1,0 +1,70 @@
+name: Main Pipeline (Monorepo CI/CD)
+
+on:
+  pull_request:
+    branches: [ "develop", "main" ]
+    paths:
+      - 'finance-portfolio-frontend/**'
+      - 'finance-portfolio-backend/**'
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'finance-portfolio-frontend/**'
+      - 'finance-portfolio-backend/**'
+
+jobs:
+  # PHASE 1: [작동여부판별] 모노레포의 프론트/백엔드 각 파트에 변경점이 있는지 체크
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'finance-portfolio-frontend/**'
+            backend:
+              - 'finance-portfolio-backend/**'
+
+  # PHASE 2: [CI] 검증 단계 - 빌드, 소나 스캔
+  ci-frontend:
+    needs: changes
+    # push 이벤트에는 무조건 검증
+    # PR 이벤트에는 변경점이 있는 파트만 검증
+    if: |
+      github.event_name == 'push' || 
+      (github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true')
+    uses: ./.github/workflows/frontend-ci.yml
+    secrets: inherit
+
+  ci-backend:
+    needs: changes
+    if: |
+      github.event_name == 'push' || 
+      (github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true')
+    uses: ./.github/workflows/backend-ci.yml
+    secrets: inherit
+
+  # PHASE 3: [CD] 배포 단계 - 프론트: S3, 백엔드: EC2
+  cd-frontend:
+    # CI 검증이 성공했을 때 작동
+    needs: [changes, ci-frontend]
+    # push 이벤트에는 무조건 배포
+    # PR 이벤트에는 develop 브랜치이고 변경점이 있는 파트만 배포
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.base_ref == 'develop' &&  needs.changes.outputs.frontend == 'true')
+    uses: ./.github/workflows/frontend-cd.yml
+    secrets: inherit
+
+  cd-backend:
+    needs: [changes, ci-backend]
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.base_ref == 'develop' &&  needs.changes.outputs.backend == 'true')
+    uses: ./.github/workflows/backend-cd.yml
+    secrets: inherit
