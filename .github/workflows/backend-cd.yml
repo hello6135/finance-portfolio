@@ -35,6 +35,7 @@ jobs:
       uses: docker/build-push-action@v7
       with:
         context: ./finance-portfolio-backend
+        file: ./finance-portfolio-backend/Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/finance-portfolio:${{ env.TAG }}
         # [성능] Buildx: Docker 레이어 캐시 (라이브러리 캐싱)
