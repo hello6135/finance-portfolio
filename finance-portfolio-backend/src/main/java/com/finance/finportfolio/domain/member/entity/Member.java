@@ -76,7 +76,7 @@ public class Member {
     public void checkLockStatus() {
         if (isLocked()) {
             ZoneId seoulZone = ZoneId.of("Asia/Seoul");
-            // 현재 시간을 시간대 인식 타입(ZonedDateTime)으로 생성
+            // 현재 시간을 시간대 인식 타입(ZonedDateTime)으로 생성 
             ZonedDateTime nowInSeoul = ZonedDateTime.now(seoulZone);
             // 기존 LocalDateTime 타입 필드에 서울 시간대(KST) 정보를 명시적으로 결합하여 ZonedDateTime으로 변환
             ZonedDateTime lockedUntilWithZone = this.lockedUntil.atZone(seoulZone);
