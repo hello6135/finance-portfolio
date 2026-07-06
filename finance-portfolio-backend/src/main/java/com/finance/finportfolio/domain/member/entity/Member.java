@@ -80,7 +80,7 @@ public class Member {
             ZonedDateTime nowInSeoul = ZonedDateTime.now(seoulZone);
             // 기존 LocalDateTime 타입 필드에 서울 시간대(KST) 정보를 명시적으로 결합하여 ZonedDateTime으로 변환
             ZonedDateTime lockedUntilWithZone = this.lockedUntil.atZone(seoulZone);
-            // 시간대 정보가 포함된 두 인자 간의 기간 계산 (소나 경고 해결)
+            // 시간대 정보가 포함된 두 인자 간의 기간 계산
             long remainingMinutes = Duration.between(nowInSeoul, lockedUntilWithZone).toMinutes();
             
             StringBuilder message = new StringBuilder("인증에 5회 이상 실패했습니다. ");
