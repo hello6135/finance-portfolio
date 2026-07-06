@@ -1,0 +1,87 @@
+name: Frontend CI (Verify & Build)
+
+# main-deploy.yml에서 호출될 시 작동
+on:
+  workflow_call:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./finance-portfolio-frontend
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    # [NPM] Nodejs 셋업
+    - name: Set up Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: './finance-portfolio-frontend/package-lock.json'
+
+    # [NPM] 의존성 설치
+    - name: Install dependencies
+      run: npm install
+
+    # [NPM] 의존성 취약점이 발견되면 경고 로그 출력 (빌드는 진행)
+    - name: Security Audit (npm audit)
+      run: |
+        npm audit --audit-level=high || echo "Warning: High-level NPM vulnerabilities found. Please review the log above."
+
+    # [SONAR] 소나 실행 엔진 캐싱 (성능: 빌드 시간 단축)
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v5
+      with:
+        path: ~/.sonar/cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    # [SONAR] 소나 분석
+    # 소나 퀄리티 게이트 300초 까지 대기 true
+    - name: Frontend SonarCloud Scan
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        npx sonarqube-scanner \
+          -Dproject.settings=sonar-project.properties \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.qualitygate.timeout=300
+
+    # 품질 게이트 통과 후 빌드 수행
+    # 검증되지 않은 브랜치에서 빌드 시도 시 에러 발생
+    - name: Build Project
+      run: |
+        # 브랜치명 추출 (PR일 경우 base_ref인 develop/main 사용, push일 경우 ref에서 브랜치명만 잘라냄)
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          TARGET_BRANCH="${{ github.base_ref }}"
+        else
+          TARGET_BRANCH="${{ github.ref_name }}"
+        fi
+
+        echo "Target Branch evaluated as: $TARGET_BRANCH"
+
+        # 추출한 대상 브랜치 기준으로 빌드 환경 분기
+        if [ "$TARGET_BRANCH" == "develop" ]; then
+          echo "Detected DEV Environment. Building with DEV_API_URL..."
+          VITE_API_BASE_URL=${{ secrets.DEV_API_URL }} npm run build
+        elif [ "$TARGET_BRANCH" == "main" ]; then
+          echo "Detected PROD Environment. Building with PROD_API_URL..."
+          VITE_API_BASE_URL=${{ secrets.PROD_API_URL }} npm run build
+        else
+          echo "CRITICAL ERROR: Unrecognized branch [$TARGET_BRANCH]. Build blocked for safety to prevent production environment contamination."
+          exit 1
+        fi
+
+    # 프론트 CD Job에서 사용할 수 있도록 빌드 결과물(dist) 임시 보존 (유지기간 1일)
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+          name: frontend-dist
+          path: ./finance-portfolio-frontend/dist/
+          retention-days: 1

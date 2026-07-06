@@ -107,21 +107,19 @@ jacocoTestReport {
     }
 }
 
-sonarqube {
+sonar {
     properties {
+		// SonarCloud API 프로젝트 키, 조직, 호스트 URL 설정 
+        property "sonar.projectKey", "hello6135_finance-portfolio"
+        property "sonar.organization", "ljh-finance"
+        property "sonar.host.url", "https://sonarcloud.io"
+		property "sonar.java.binaries", "build/classes/java/main"
+
+		// 테스트 커버리지 제외 경로 설정
         property "sonar.coverage.exclusions", "**/domain/post/**, **/domain/category/**, **/*Dto*, **/*Request*, **/*Response*, **/entity/**"
 
 		// 소스 코드와 테스트 코드의 경로를 명확히 분리 지정
         property "sonar.sources", "src/main/java"
         property "sonar.tests", "src/test/java"
-    }
-}
-
-sonar {
-    properties {
-        property "sonar.projectKey", "hello6135_finance-portfolio"
-        property "sonar.organization", "ljh-finance"
-        property "sonar.host.url", "https://sonarcloud.io"
-		property "sonar.java.binaries", "build/classes/java/main"
     }
 }
