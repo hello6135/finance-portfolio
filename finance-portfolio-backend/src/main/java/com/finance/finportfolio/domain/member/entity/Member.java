@@ -2,6 +2,8 @@ package com.finance.finportfolio.domain.member.entity;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.springframework.security.authentication.LockedException;
 
@@ -73,7 +75,14 @@ public class Member {
     // 잠금 상태 체크(검증 및 예외처리)
     public void checkLockStatus() {
         if (isLocked()) {
-            long remainingMinutes = Duration.between(LocalDateTime.now(), this.lockedUntil).toMinutes();
+            ZoneId seoulZone = ZoneId.of("Asia/Seoul");
+            // 현재 시간을 시간대 인식 타입(ZonedDateTime)으로 생성
+            ZonedDateTime nowInSeoul = ZonedDateTime.now(seoulZone);
+            // 기존 LocalDateTime 타입 필드에 서울 시간대(KST) 정보를 명시적으로 결합하여 ZonedDateTime으로 변환
+            ZonedDateTime lockedUntilWithZone = this.lockedUntil.atZone(seoulZone);
+            // 시간대 정보가 포함된 두 인자 간의 기간 계산 (소나 경고 해결)
+            long remainingMinutes = Duration.between(nowInSeoul, lockedUntilWithZone).toMinutes();
+            
             StringBuilder message = new StringBuilder("인증에 5회 이상 실패했습니다. ");
             if (remainingMinutes > 0) {
                 message.append(remainingMinutes).append("분 후에 다시 시도해주세요.");
