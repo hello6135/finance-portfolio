@@ -113,13 +113,13 @@ sonar {
         property "sonar.projectKey", "hello6135_finance-portfolio"
         property "sonar.organization", "ljh-finance"
         property "sonar.host.url", "https://sonarcloud.io"
-        property "sonar.java.binaries", "build/classes/java/main"
-        
-        // 소스 및 테스트 경로 설정
+		property "sonar.java.binaries", "build/classes/java/main"
+
+		// 테스트 커버리지 제외 경로 설정
+        property "sonar.coverage.exclusions", "**/domain/post/**, **/domain/category/**, **/*Dto*, **/*Request*, **/*Response*, **/entity/**"
+
+		// 소스 코드와 테스트 코드의 경로를 명확히 분리 지정
         property "sonar.sources", "src/main/java"
         property "sonar.tests", "src/test/java"
-        
-        // 커버리지 측정 제외 대상
-        property "sonar.coverage.exclusions", "**/domain/post/**, **/domain/category/**, **/*Dto*, **/*Request*, **/*Response*, **/entity/**"    
     }
 }
