@@ -22,17 +22,14 @@ jobs:
     # 검증되지 않은 브랜치에서 배포 시도 시 에러 발생
     - name: Set Environment Variables
       run: |
-        if [ "${{ github.base_ref }}" == "develop" ] || [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-          echo "Detected DEV Environment. Setting DEV variables..."
-          echo "S3_BUCKET=${{ secrets.DEV_S3_BUCKET_NAME }}" >> $GITHUB_ENV
-          echo "CF_ID=${{ secrets.DEV_CF_DISTRIBUTION_ID }}" >> $GITHUB_ENV
-        elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+        if [ "${{ github.ref }}" == "refs/heads/main" ]; then
           echo "Detected PROD Environment. Setting PROD variables..."
           echo "S3_BUCKET=${{ secrets.PROD_S3_BUCKET_NAME }}" >> $GITHUB_ENV
           echo "CF_ID=${{ secrets.PROD_CF_DISTRIBUTION_ID }}" >> $GITHUB_ENV
         else
-          echo "CRITICAL ERROR: Unrecognized branch [${{ github.ref }}]. Variable injection blocked for safety."
-          exit 1
+          echo "Detected Test/DEV Environment (${{ github.ref }}). Setting DEV variables..."
+          echo "S3_BUCKET=${{ secrets.DEV_S3_BUCKET_NAME }}" >> $GITHUB_ENV
+          echo "CF_ID=${{ secrets.DEV_CF_DISTRIBUTION_ID }}" >> $GITHUB_ENV
         fi
 
     # [AWS] 권한 설정
