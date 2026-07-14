@@ -126,7 +126,7 @@ const AdminDashboard = () => {
             {/* 통계 카드 섹션 */}
             <div className="row g-4 mb-5">
                 {stats.map((item, index) => (
-                    <div className="col-12 col-sm-6 col-lg-3" key={index}>
+                    <div className="col-12 col-sm-6 col-lg-3" key={item.id}>
                         <div className="card border-0 shadow-sm h-100">
                             <div className="card-body">
                                 <h6 className="card-subtitle mb-2 text-muted fw-bold">{item.title}</h6>
