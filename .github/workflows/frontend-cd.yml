@@ -18,8 +18,7 @@ jobs:
         name: frontend-dist
         path: ./dist
     
-    # [ENV] 환경 변수 설정 (브랜치에 따라 목적지 S3와 CDN ID 결정, main 브랜치: PROD, develop 브랜치: DEV)
-    # 검증되지 않은 브랜치에서 배포 시도 시 에러 발생
+    # [ENV] 환경 변수 설정 (브랜치에 따라 목적지 S3와 CDN ID 결정, main 브랜치: PROD, 이외 브랜치: DEV)
     - name: Set Environment Variables
       run: |
         if [ "${{ github.ref }}" == "refs/heads/main" ]; then
