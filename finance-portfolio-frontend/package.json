@@ -13,6 +13,7 @@
     "sonar": "sonar-scanner"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.1086.0",
     "@ckeditor/ckeditor5-react": "^11.0.1",
     "axios": "^1.13.5",
     "bootstrap": "^5.3.8",
