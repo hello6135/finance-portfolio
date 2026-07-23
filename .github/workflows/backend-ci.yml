@@ -17,11 +17,43 @@ jobs:
       run: |
         if [ "${{ github.base_ref }}" == "main" ] || [ "${{ github.ref }}" == "refs/heads/main" ]; then
           echo "TAG=latest" >> $GITHUB_ENV
+          echo "ENV_TYPE=prod" >> $GITHUB_ENV
         else
           echo "TAG=dev" >> $GITHUB_ENV
+          echo "ENV_TYPE=dev" >> $GITHUB_ENV
         fi
 
-    # JDK 세팅 [SONAR]
+    # [보안] AWS Credentials 설정 (CI 빌드 시 SSM 조회용)
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@f79bc868ee9ca4687c7db10f05fe6a46cdcda892 # v6
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-northeast-2
+
+    # [보안] SSM Parameter Store 환경변수 가져오기
+    - name: Export SSM Parameters to GITHUB_ENV
+      run: |
+        SSM_PATH="/finance-portfolio/${{ env.ENV_TYPE }}/backend/"
+        
+        while read -r name value; do
+          if [ -n "$name" ]; then
+            var_name=$(basename "$name")
+            
+            # 특수문자 및 줄바꿈 대응을 위한 Delimiter 설정
+            DELIMITER=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+            echo "${var_name}<<${DELIMITER}" >> $GITHUB_ENV
+            echo "${value}" >> $GITHUB_ENV
+            echo "${DELIMITER}" >> $GITHUB_ENV
+          fi
+        done < <(aws ssm get-parameters-by-path \
+          --path "$SSM_PATH" \
+          --with-decryption \
+          --region ap-northeast-2 \
+          --query "Parameters[*].[Name,Value]" \
+          --output text)
+
+    # [SONAR] JDK 세팅
     - name: (Sonar) Set up JDK 21 
       uses: actions/setup-java@v5
       with:
