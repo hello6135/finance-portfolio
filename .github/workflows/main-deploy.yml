@@ -12,6 +12,15 @@ on:
       - 'finance-portfolio-frontend/**'
       - 'finance-portfolio-backend/**'
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: '빌드 환경 수동 선택'
+        required: true
+        default: 'DEV'
+        type: choice
+        options:
+          - DEV
+          - PROD
 
 jobs:
   # PHASE 1: [작동여부판별] 모노레포의 프론트/백엔드 각 파트에 변경점이 있는지 체크
@@ -41,6 +50,8 @@ jobs:
       github.event_name == 'push' || 
       (github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true')
     uses: ./.github/workflows/frontend-ci.yml
+    with:
+      target_env: ${{ github.event.inputs.target_env || 'DEV' }}
     secrets: inherit
 
   ci-backend:
