@@ -7,6 +7,10 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    # [AWS] OIDC 토큰 발급 권한
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - uses: actions/checkout@v6
       with:
@@ -27,8 +31,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@f79bc868ee9ca4687c7db10f05fe6a46cdcda892 # v6
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::383423735758:role/GitHubActionsSSMDeployPolicy
         aws-region: ap-northeast-2
 
     # [보안] SSM Parameter Store 환경변수 가져오기
