@@ -7,6 +7,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # [AWS] OIDC 토큰 발급 권한
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
@@ -31,12 +35,11 @@ jobs:
           echo "CF_ID=${{ secrets.DEV_CF_DISTRIBUTION_ID }}" >> $GITHUB_ENV
         fi
 
-    # [AWS] 권한 설정
+    # [AWS] 권한 설정 (OIDC 토큰 기반 인증)
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@f79bc868ee9ca4687c7db10f05fe6a46cdcda892 # v6
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::383423735758:role/GitHubActionsSSMDeployPolicy
         aws-region: ap-northeast-2
           
     # [AWS] S3에 빌드 결과물 업로드 

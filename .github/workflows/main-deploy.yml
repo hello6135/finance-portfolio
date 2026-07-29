@@ -51,7 +51,7 @@ jobs:
       (github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true')
     uses: ./.github/workflows/frontend-ci.yml
     with:
-      target_env: ${{ github.event.inputs.target_env || 'DEV' }}
+      target_env: ${{ github.event_name == 'workflow_dispatch' && inputs.target_env || 'DEV' }}
     secrets: inherit
 
   ci-backend:
@@ -61,6 +61,9 @@ jobs:
       github.event_name == 'push' || 
       (github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true')
     uses: ./.github/workflows/backend-ci.yml
+    permissions:
+      id-token: write
+      contents: read
     secrets: inherit
 
   # PHASE 3: [CD] 배포 단계 - 프론트: S3, 백엔드: EC2
@@ -79,6 +82,9 @@ jobs:
         (github.event_name == 'pull_request' && github.base_ref == 'develop' && needs.changes.outputs.frontend == 'true')
       )
     uses: ./.github/workflows/frontend-cd.yml
+    permissions:
+      id-token: write
+      contents: read
     secrets: inherit
 
   cd-backend:
@@ -96,4 +102,7 @@ jobs:
         (github.event_name == 'pull_request' && github.base_ref == 'develop' &&  needs.changes.outputs.backend == 'true')
       )
     uses: ./.github/workflows/backend-cd.yml
+    permissions:
+      id-token: write
+      contents: read
     secrets: inherit

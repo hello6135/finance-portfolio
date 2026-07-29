@@ -7,6 +7,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # [AWS] OIDC 토큰 발급 권한
+    permissions:
+      id-token: write
+      contents: read
     steps:
     - uses: actions/checkout@v6
 
@@ -21,105 +25,95 @@ jobs:
           echo "ENV_TYPE=dev" >> $GITHUB_ENV
         fi
 
-    # [보안] GitHub Actions 서버의 공인 IP 가져오기
-    - name: Get GitHub Actions IP
-      id: ip
-      run: echo "ipv4=$(curl -s https://api.ipify.org)" >> $GITHUB_OUTPUT
-
-    # [보안] AWS Credentials 설정 (보안 그룹 제어용)
+    # [보안] AWS Credentials 설정 (보안 그룹 제어용, OIDC 토큰 기반 인증)
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@f79bc868ee9ca4687c7db10f05fe6a46cdcda892 # v6
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::383423735758:role/GitHubActionsSSMDeployPolicy
         aws-region: ap-northeast-2
 
-    # [보안] EC2 보안 그룹에 22번 포트 임시 허용
-    - name: Add GitHub IP to Security Group
+    # [배포] AWS SSM Run Command를 통한 EC2 **원격 배포**
+    - name: Deploy to EC2 via AWS SSM
       run: |
-        aws ec2 authorize-security-group-ingress \
-          --group-id ${{ secrets.AWS_SG_ID }} \
-          --protocol tcp \
-          --port 22 \
-          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        # docker-compose.yml 파일 내용을 읽어와 SSM 파라미터로 전달
+        # base64로 인코딩하여 개행/특수문자 이슈 방지
+        COMPOSE_BASE64=$(base64 -w 0 finance-portfolio-backend/docker-compose.yml)
 
-    # [배포] docker-compose.yml 파일을 EC2로 전송 (SCP)
-    - name: Copy docker-compose.yml to EC2
-      uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "finance-portfolio-backend/docker-compose.yml"
-        target: "~/finance-portfolio"
-        strip_components: 1
+        # 1. EC2에서 실행될 전체 배포 스크립트 생성 (모든 주석 및 로직 통합 관리)
+        cat << EOF > generated_deploy.sh
+        #!/usr/bin/env bash
+        set -e
 
-    # [배포] EC2에 접속해서 배포 실행 (SSH)
-    - name: Deploy to EC2
-      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          mkdir -p ~/finance-portfolio
-          cd ~/finance-portfolio
+        # [환경 설정] 배포 디렉토리 이동
+        # 절대 경로 사용하여 EC2 내부 경로 문제 방지
+        DEPLOY_DIR="/home/ubuntu/finance-portfolio"
+        mkdir -p \$DEPLOY_DIR
+        cd \$DEPLOY_DIR
 
-          # 기존 환경변수 파일 초기화
-          > .env 
+        # [보안] 기존 환경변수 파일 초기화
+        > .env
 
-          # (AWS) SSM Parameter Store 환경변수 수집
-          SSM_PATH="/finance-portfolio/${{ env.ENV_TYPE }}/backend/"
+        # [보안] AWS SSM Parameter Store에서 환경변수 수집
+        SSM_PATH="/finance-portfolio/${{ env.ENV_TYPE }}/backend/"
 
-          aws ssm get-parameters-by-path \
-            --path "$SSM_PATH" \
-            --with-decryption \
-            --region ap-northeast-2 \
-            --query "Parameters[*].[Name,Value]" \
-            --output text | while read -r name value; do
-              # 파라미터 키 이름에서 최하위 변수명만 추출 (ex: /.../DB_PASSWORD -> DB_PASSWORD)
-              var_name=$(basename "$name")
-              echo "${var_name}=${value}" >> .env
-          done
-          
-          # Docker 로그인 (SSM | GitHub Secretes)
-          DOCKER_USER=$(grep '^DOCKER_USERNAME=' .env | cut -d '=' -f2-)
-          DOCKER_PASS=$(grep '^DOCKER_PASSWORD=' .env | cut -d '=' -f2-)
-          
-          if [ -n "$DOCKER_USER" ] && [ -n "$DOCKER_PASS" ]; then
-            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-          fi
-          
-          # 브랜치에 따라 배포할 서비스 결정
-          if [ "${{ env.TAG }}" == "latest" ]; then
-            TARGET_SERVICES="app-prod db-prod"
-          else
-            TARGET_SERVICES="app-dev db-dev"
-          fi
-          
-          # [성능] 지정된 타깃 서비스의 이미지만 pull 진행
-          docker-compose pull $TARGET_SERVICES
-          
-          # 해당 서비스만 컨테이너 재생성 및 백그라운드 실행
-          docker-compose up -d --force-recreate $TARGET_SERVICES
+        aws ssm get-parameters-by-path \
+          --path "$SSM_PATH" \
+          --with-decryption \
+          --region ap-northeast-2 \
+          --query "Parameters[*].[Name,Value]" \
+          --output text | while read -r name value; do
+            # 파라미터 키 이름에서 최하위 변수명만 추출 (ex: /.../DB_PASSWORD -> DB_PASSWORD)
+            var_name=$(basename "$name")
+            echo "${var_name}=${value}" >> .env
+        done
 
-          # [보안] 임시 생성된 환경변수 파일 삭제
-          rm -f .env
-          
-          # [안정성] 디스크 용량 부족 방지
-          docker image prune -f
+        # [보안] Docker Hub 로그인 (SSM에서 수집한 계정 정보 활용)
+        DOCKER_USER=$(grep '^DOCKER_USERNAME=' .env | cut -d '=' -f2-)
+        DOCKER_PASS=$(grep '^DOCKER_PASSWORD=' .env | cut -d '=' -f2-)
 
-    # [보안] 배포 완료 후 보안 그룹에서 IP 제거
-    - name: Remove GitHub IP from Security Group
-      if: always() # 빌드 실패와 상관없이 무조건 실행
-      run: |
-        if [ -z "${{ steps.ip.outputs.ipv4 }}" ]; then
-          echo "Warning: GitHub Actions IP를 가져오지 못했습니다. 보안 그룹 정리를 건너뜁니다."
-          exit 0
+        if [ -n "$DOCKER_USER" ] && [ -n "$DOCKER_PASS" ]; then
+          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
         fi
-        
-        aws ec2 revoke-security-group-ingress \
-          --group-id ${{ secrets.AWS_SG_ID }} \
-          --protocol tcp \
-          --port 22 \
-          --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+        # [배포 Target] 브랜치 및 태그에 따라 배포 대상 서비스 결정
+        if [ "${{ env.TAG }}" == "latest" ]; then
+          TARGET_SERVICES="app-prod db-prod"
+        else
+          TARGET_SERVICES="app-dev db-dev"
+        fi
+
+        # [성능] 지정된 타깃 서비스의 이미지만 pull 진행
+        docker compose pull $TARGET_SERVICES
+
+        # [배포] 해당 서비스만 컨테이너 재생성 및 백그라운드 실행
+        docker compose up -d --force-recreate $TARGET_SERVICES
+
+        # [보안] 임시 생성된 환경변수 파일 삭제
+        rm -f .env
+
+        # [안정성] 디스크 용량 부족 방지 (미사용 이미지 정리)
+        docker image prune -f
+        EOF
+
+        # 2. 배포 스크립트 base64 인코딩
+        SCRIPT_BASE64=$(base64 -w 0 generated_deploy.sh)
+
+        # 3. AWS SSM을 통한 파일 복원 및 배포 실행
+        COMMAND_ID=$(aws ssm send-command \
+          --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+          --document-name "AWS-RunShellScript" \
+          --comment "Backend CD Deployment via SSM" \
+          --parameters "commands=[
+            'mkdir -p /home/ubuntu/finance-portfolio',
+            'echo \"$COMPOSE_BASE64\" | base64 -d > /home/ubuntu/finance-portfolio/docker-compose.yml',
+            'echo \"$SCRIPT_BASE64\" | base64 -d > /home/ubuntu/finance-portfolio/deploy_tmp.sh',
+            'bash /home/ubuntu/finance-portfolio/deploy_tmp.sh',
+            'rm -f /home/ubuntu/finance-portfolio/deploy_tmp.sh'
+          ]" \
+          --query "Command.CommandId" \
+          --output text)
+
+        # 4. [안정성] SSM 명령 수행 완료 대기
+        aws ssm wait command-executed \
+          --command-id "$COMMAND_ID" \
+          --instance-id "${{ secrets.EC2_INSTANCE_ID }}"
