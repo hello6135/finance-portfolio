@@ -57,22 +57,22 @@ jobs:
         SSM_PATH="/finance-portfolio/${{ env.ENV_TYPE }}/backend/"
 
         aws ssm get-parameters-by-path \
-          --path "$SSM_PATH" \
+          --path "\$SSM_PATH" \
           --with-decryption \
           --region ap-northeast-2 \
           --query "Parameters[*].[Name,Value]" \
           --output text | while read -r name value; do
             # 파라미터 키 이름에서 최하위 변수명만 추출 (ex: /.../DB_PASSWORD -> DB_PASSWORD)
-            var_name=$(basename "$name")
-            echo "${var_name}=${value}" >> .env
+            var_name=\$(basename "\$name")
+            echo "\${var_name}=\${value}" >> .env
         done
 
         # [보안] Docker Hub 로그인 (SSM에서 수집한 계정 정보 활용)
-        DOCKER_USER=$(grep '^DOCKER_USERNAME=' .env | cut -d '=' -f2-)
-        DOCKER_PASS=$(grep '^DOCKER_PASSWORD=' .env | cut -d '=' -f2-)
+        DOCKER_USER=\$(grep '^DOCKER_USERNAME=' .env | cut -d '=' -f2-)
+        DOCKER_PASS=\$(grep '^DOCKER_PASSWORD=' .env | cut -d '=' -f2-)
 
-        if [ -n "$DOCKER_USER" ] && [ -n "$DOCKER_PASS" ]; then
-          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+        if [ -n "\$DOCKER_USER" ] && [ -n "\$DOCKER_PASS" ]; then
+          echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
         fi
 
         # [배포 Target] 브랜치 및 태그에 따라 배포 대상 서비스 결정
@@ -83,10 +83,10 @@ jobs:
         fi
 
         # [성능] 지정된 타깃 서비스의 이미지만 pull 진행
-        docker compose pull $TARGET_SERVICES
+        docker compose pull \$TARGET_SERVICES
 
         # [배포] 해당 서비스만 컨테이너 재생성 및 백그라운드 실행
-        docker compose up -d --force-recreate $TARGET_SERVICES
+        docker compose up -d --force-recreate \$TARGET_SERVICES
 
         # [보안] 임시 생성된 환경변수 파일 삭제
         rm -f .env
