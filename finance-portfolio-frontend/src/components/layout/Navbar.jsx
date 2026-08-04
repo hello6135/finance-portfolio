@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router';
 import authStore from '../../store/authStore';
 import { logoutMember } from '../../api/memberApi';
 import Cookies from 'js-cookie';

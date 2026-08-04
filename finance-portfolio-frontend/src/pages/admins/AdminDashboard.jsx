@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { getAwsStatus, getDashboardSummary } from '../../api/adminApi';
 import { getCloudWatchLogs } from '../../api/cloudwatchApi';
 import LoadingPage from '../common/LoadingPage';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import DOMPurify from 'dompurify';
 import { jwtDecode } from 'jwt-decode';
 import PropTypes from 'prop-types';

@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router';
 
 
 // prop으로 값 수신

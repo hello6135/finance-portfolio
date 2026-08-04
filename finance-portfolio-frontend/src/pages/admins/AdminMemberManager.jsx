@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { getAdminMembers, toggleMemberBan, unlockMemberAccount } from '../../api/adminApi';
 import LoadingPage from '../common/LoadingPage';
 
