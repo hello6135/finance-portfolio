@@ -1,4 +1,5 @@
 import { CloudWatchLogsClient, FilterLogEventsCommand } from "@aws-sdk/client-cloudwatch-logs";
+import { cognitoCredentials, awsRegion } from "../config/awsConfig";
 
 
 /**
@@ -14,11 +15,8 @@ export const getCloudWatchLogs = async ({ level, search }) => {
 
     // AWS SDK 가이드라인에 따른 명시적 클라이언트 인스턴스화
     const cwlClient = new CloudWatchLogsClient({
-        region: "ap-northeast-2",
-        credentials: {
-            accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
-            secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY
-        }
+        region: awsRegion,
+        credentials: cognitoCredentials
     });
 
     // 검색식 스코프 빌드
@@ -32,22 +30,25 @@ export const getCloudWatchLogs = async ({ level, search }) => {
 
     const command = new FilterLogEventsCommand({
         logGroupName: "finance-portfolio-backend-log",
-        logStreamNames: [targetStreamName],
+        logStreamNames: targetStreamName ? [targetStreamName] : undefined,
         filterPattern: filterPattern || undefined,
         limit: 50
     });
 
     const response = await cwlClient.send(command);
-    
+
     // UI 데이터 정규화 및 추상화 매핑
-    return (response.events || []).map(event => {
+    return (response.events || []).map((event, index) => {
         const rawMessage = event.message || "";
         let detectedLevel = "INFO";
         if (rawMessage.includes("ERROR")) detectedLevel = "ERROR";
         else if (rawMessage.includes("WARN")) detectedLevel = "WARN";
 
+        // eventId가 없을 경우 timestamp + index로 고유 key 보장
+        const uniqueId = event.eventId || `${event.timestamp}-${index}`;
+
         return {
-            id: event.eventId,
+            id: uniqueId,
             timestamp: new Date(event.timestamp).toLocaleString('ko-KR'),
             message: rawMessage,
             level: detectedLevel
