@@ -10,7 +10,7 @@ const Navbar = () => {
 
     // 쿠키에서 실시간 닉네임 호출(메모리 상태와 무관), 디코딩 예외 대비
     const rawNickname = Cookies.get('userNickname') || '';
-    const nickname = rawNickname ? decodeURIComponent(rawNickname.replaceAll(/\+/g, ' ')) : '사용자';
+    const nickname = rawNickname ? decodeURIComponent(rawNickname.replaceAll('+', ' ')) : '사용자';
 
     const onLogout = async () => {
         try {
@@ -91,6 +91,7 @@ const Navbar = () => {
                                     {nickname}님
                                 </span>
                                 <button
+                                    type="button"
                                     onClick={onLogout}
                                     className="btn btn-outline-light btn-sm px-2 text-nowrap"
                                 >
@@ -99,6 +100,7 @@ const Navbar = () => {
                             </>
                         ) : (
                             <button
+                                type="button"
                                 onClick={() => navigate('/login')}
                                 className="btn btn-primary btn-sm px-2 text-nowrap"
                             >

@@ -118,7 +118,10 @@ const AdminDashboard = () => {
                 <div>
                     <h2 className="mb-0">관리자 대시보드</h2>
                 </div>
-                <button onClick={() => navigate('/')} className="btn btn-outline-secondary btn-sm">
+                <button 
+                    type="button"
+                    onClick={() => navigate('/')}
+                    className="btn btn-outline-secondary btn-sm">
                     사용자 메인으로
                 </button>
             </div>
@@ -155,6 +158,7 @@ const AdminDashboard = () => {
                         <small className="text-muted">AWS CloudWatch를 통해 프론트엔드에서 직접 로그 스트림을 필터링 및 수집합니다.</small>
                     </div>
                     <button 
+                        type="button"
                         onClick={fetchLogs} 
                         className="btn btn-sm btn-outline-dark"
                         disabled={logsLoading}

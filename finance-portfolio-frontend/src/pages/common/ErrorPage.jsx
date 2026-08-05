@@ -36,7 +36,10 @@ const ErrorPage = ({ status: propStatus, message: propMessage }) => {
                 <h1 className="display-1 fw-bold text-muted">{status}</h1>
                 <p className="fs-5 mb-4">{message}</p>
                 {subMessage && <p className="text-muted small mb-4">{subMessage}</p>}
-                <button onClick={() => navigate('/')} className="btn btn-primary">
+                <button 
+                    type="button"
+                    onClick={() => navigate('/')} 
+                    className="btn btn-primary">
                     홈으로
                 </button>
             </div>

@@ -78,57 +78,62 @@ const AdminMemberManager = () => {
     if (!memberPage?.content) return null;
 
     const renderContent = () => {
-        if (memberPage.content.length === 0) {
-            return (
-                <tr>
-                    <td colSpan="6" className="text-center py-4">가입된 회원이 없습니다.</td>
-                </tr>
-            );
-        }
+    if (memberPage.content.length === 0) {
+        return (
+            <tr>
+                <td colSpan="6" className="text-center py-4">가입된 회원이 없습니다.</td>
+            </tr>
+        );
+    }
 
-        return memberPage.content.map((member) => (
-            <tr key={member.id} className={member.isBanned ? 'table-light text-muted' : ''}>
-                <td>{member.id}</td>
-                <td>{member.loginId}</td>
-                <td><strong>{member.nickname}</strong></td>
-                <td>
-                    <span className={`badge ${member.role === 'ADMIN' ? 'bg-danger' : 'bg-primary'}`}>
-                        {member.role}
-                    </span>
-                </td>
-                <td>
-                    {member.loginFailCount >= 5 ? (
-                        <div className="d-flex align-items-center gap-2">
-                            <span className="badge bg-warning text-dark">잠김 ({member.loginFailCount}회)</span>
+    return (
+        <>
+            {memberPage.content.map((member) => (
+                <tr key={member.id} className={member.isBanned ? 'table-light text-muted' : ''}>
+                    <td>{member.id}</td>
+                    <td>{member.loginId}</td>
+                    <td><strong>{member.nickname}</strong></td>
+                    <td>
+                        <span className={`badge ${member.role === 'ADMIN' ? 'bg-danger' : 'bg-primary'}`}>
+                            {member.role}
+                        </span>
+                    </td>
+                    <td>
+                        {member.loginFailCount >= 5 ? (
+                            <div className="d-flex align-items-center gap-2">
+                                <span className="badge bg-warning text-dark">잠김 ({member.loginFailCount}회)</span>
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-warning"
+                                    onClick={() => handleUnlock(member.id)}
+                                    disabled={isSubmitting}
+                                >
+                                    해제
+                                </button>
+                            </div>
+                        ) : (
+                            <span className="text-secondary">{member.loginFailCount} / 5</span>
+                        )}
+                    </td>
+                    <td className="text-center">
+                        {member.role === 'ADMIN' ? (
+                            <span className="text-muted small">-</span>
+                        ) : (
                             <button
-                                className="btn btn-sm btn-outline-warning"
-                                onClick={() => handleUnlock(member.id)}
+                                type="button"
+                                className={`btn btn-sm ${member.isBanned ? 'btn-outline-success' : 'btn-outline-danger'}`}
+                                onClick={() => handleBanToggle(member.id, member.isBanned)}
                                 disabled={isSubmitting}
                             >
-                                해제
+                                {member.isBanned ? '정지 해제' : '회원 정지'}
                             </button>
-                        </div>
-                    ) : (
-                        <span className="text-secondary">{member.loginFailCount} / 5</span>
-                    )}
-                </td>
-                <td className="text-center">
-                    {/* [변경 사항] ADMIN 권한인 경우 정지/해제 제어 버튼 미출력 */}
-                    {member.role === 'ADMIN' ? (
-                        <span className="text-muted small">-</span>
-                    ) : (
-                        <button
-                            className={`btn btn-sm ${member.isBanned ? 'btn-outline-success' : 'btn-outline-danger'}`}
-                            onClick={() => handleBanToggle(member.id, member.isBanned)}
-                            disabled={isSubmitting}
-                        >
-                            {member.isBanned ? '정지 해제' : '회원 정지'}
-                        </button>
-                    )}
-                </td>
-            </tr>
-        ));
-    };
+                        )}
+                    </td>
+                </tr>
+            ))}
+        </>
+    );
+};
 
     return (
         <div className="container py-4">
@@ -160,6 +165,7 @@ const AdminMemberManager = () => {
                     <ul className="pagination shadow-sm">
                         <li className={`page-item ${currentPage === 0 ? 'disabled' : ''}`}>
                             <button
+                                type="button"
                                 className="page-link"
                                 onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                                 disabled={isSubmitting}
@@ -170,6 +176,7 @@ const AdminMemberManager = () => {
                         {[...new Array(memberPage.totalPages).keys()].map((pageIndex) => (
                             <li key={pageIndex} className={`page-item ${currentPage === pageIndex ? 'active' : ''}`}>
                                 <button
+                                    type="button"
                                     className="page-link"
                                     onClick={() => setCurrentPage(pageIndex)}
                                     disabled={isSubmitting}
@@ -180,6 +187,7 @@ const AdminMemberManager = () => {
                         ))}
                         <li className={`page-item ${currentPage === memberPage.totalPages - 1 ? 'disabled' : ''}`}>
                             <button
+                                type="button"
                                 className="page-link"
                                 onClick={() => setCurrentPage(prev => Math.min(memberPage.totalPages - 1, prev + 1))}
                                 disabled={isSubmitting}

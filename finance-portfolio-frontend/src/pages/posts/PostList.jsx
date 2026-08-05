@@ -76,7 +76,13 @@ const PostList = () => {
                 <h2 className="mb-0">
                     {categoryId ? (categoryName || posts[0]?.categoryName || '카테고리') : '전체 글'}
                 </h2>
-                <button onClick={() => navigate('/editor')} className="btn btn-warning">새 글</button>
+                <button 
+                    type="button"
+                    onClick={() => navigate('/editor')}
+                    className="btn btn-warning"
+                >
+                    새 글
+                </button>
             </div>
 
             {/* 페이지 바디: 테이블 */}
@@ -118,7 +124,13 @@ const PostList = () => {
                 <ul className="pagination justify-content-center">
                     {/* 이전 버튼 */}
                     <li className={`page-item ${pageInfo.currentPage === 0 ? 'disabled' : ''}`}>
-                        <button className="page-link" onClick={() => fetchPostList(pageInfo.currentPage - 1)}>이전</button>
+                        <button 
+                            type="button"
+                            className="page-link"
+                            onClick={() => fetchPostList(pageInfo.currentPage - 1)}
+                        >
+                            이전
+                        </button>
                     </li>
 
                     {/* 페이지 번호: 현재 페이지 기준 유동적 노출 */}
@@ -127,7 +139,11 @@ const PostList = () => {
                         if (i >= pageInfo.currentPage - 2 && i <= pageInfo.currentPage + 2) {
                             return (
                                 <li key={i} className={`page-item ${pageInfo.currentPage === i ? 'active' : ''}`}>
-                                    <button className="page-link" onClick={() => fetchPostList(i)}>
+                                    <button 
+                                        type="button"
+                                        className="page-link"
+                                        onClick={() => fetchPostList(i)}
+                                    >
                                         {i + 1}
                                     </button>
                                 </li>
@@ -138,7 +154,13 @@ const PostList = () => {
 
                     {/* 다음 버튼 */}
                     <li className={`page-item ${pageInfo.currentPage >= pageInfo.totalPages - 1 ? 'disabled' : ''}`}>
-                        <button className="page-link" onClick={() => fetchPostList(pageInfo.currentPage + 1)}>다음</button>
+                        <button 
+                            type="button"
+                            className="page-link"
+                            onClick={() => fetchPostList(pageInfo.currentPage + 1)}
+                        >
+                            다음
+                        </button>
                     </li>
                 </ul>
             </nav>

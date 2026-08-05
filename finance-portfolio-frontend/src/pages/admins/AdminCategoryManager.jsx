@@ -106,6 +106,7 @@ const AdminCategoryManager = () => {
                 <td><strong>{category.name}</strong></td>
                 <td className="text-center">
                     <button
+                        type="button"
                         className="btn btn-outline-secondary btn-sm me-2"
                         onClick={() => handleEdit(category)}
                         disabled={isSubmitting}
@@ -113,6 +114,7 @@ const AdminCategoryManager = () => {
                         수정
                     </button>
                     <button
+                        type="button"
                         className="btn btn-outline-danger btn-sm"
                         onClick={() => handleDelete(category.id)}
                         disabled={isSubmitting}

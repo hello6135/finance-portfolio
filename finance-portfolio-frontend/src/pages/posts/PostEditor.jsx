@@ -142,10 +142,21 @@ const PostEditor = () => {
                 </div>
 
                 <div className="d-flex gap-2">
-                    <button onClick={handleSave} className="btn btn-primary" disabled={loading}>
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        className="btn btn-primary"
+                        disabled={loading}
+                    >
                         {getButtonText()}
                     </button>
-                    <button onClick={() => navigate(-1)} className="btn btn-secondary">취소</button>
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="btn btn-secondary"
+                    >
+                        취소
+                    </button>
                 </div>
             </div>
         </div>

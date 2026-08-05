@@ -133,6 +133,7 @@ const JoinPage = () => {
                         <p className="text-center mb-0">
                             이미 계정이 있으신가요?{' '}
                             <button
+                            type="button"
                                 className="btn btn-link p-0 align-baseline"
                                 onClick={() => navigate('/login')}
                             >

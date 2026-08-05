@@ -102,6 +102,7 @@ const LoginPage = () => {
                         <p className="text-center mb-0" style={{ fontSize: '0.9rem' }}>
                             계정이 없으신가요?{' '}
                             <button
+                                type="button"
                                 className="btn btn-link p-0 align-baseline"
                                 onClick={() => navigate('/join')}
                             >
