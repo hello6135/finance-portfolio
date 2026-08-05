@@ -1,4 +1,4 @@
-import { fromCognitoIdentityPool } from "@aws-sdk/credential-providers";
+import { fromCognitoIdentityPool } from "@aws-sdk/credential-provider-cognito-identity";
 
 const region = import.meta.env.VITE_AWS_REGION || "ap-northeast-2";
 const identityPoolId = import.meta.env.VITE_AWS_COGNITO_IDENTITY_POOL_ID;
