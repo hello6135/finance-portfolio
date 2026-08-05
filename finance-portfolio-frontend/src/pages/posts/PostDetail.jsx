@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router';
 import DOMPurify from 'dompurify';
 import { jwtDecode } from 'jwt-decode';
 import PropTypes from 'prop-types';
@@ -69,6 +69,7 @@ const CommentNode = ({
                 <div className="d-flex gap-2">
                     {authStore.isLoggedIn() && (
                         <button 
+                            type="button"
                             onClick={() => {
                                 setReplyingId(replyingId === comment.id ? null : comment.id);
                                 setEditingId(null);
@@ -82,6 +83,7 @@ const CommentNode = ({
                     {canManage && (
                         <>
                             <button 
+                                type="button"
                                 onClick={() => {
                                     setEditingId(editingId === comment.id ? null : comment.id);
                                     setEditText(comment.content);
@@ -93,6 +95,7 @@ const CommentNode = ({
                                 수정
                             </button>
                             <button 
+                                type="button"
                                 onClick={() => onDelete(comment.id)} 
                                 className="btn btn-sm btn-outline-danger py-1 px-2"
                                 style={{ fontSize: '0.8rem' }}
@@ -113,8 +116,19 @@ const CommentNode = ({
                         rows="2"
                     />
                     <div className="d-flex gap-2 justify-content-end">
-                        <button onClick={handleEditSubmit} className="btn btn-sm btn-warning">수정 완료</button>
-                        <button onClick={() => setEditingId(null)} className="btn btn-sm btn-secondary">취소</button>
+                        <button
+                            type="button"
+                            onClick={handleEditSubmit}
+                            className="btn btn-sm btn-warning"
+                        >
+                            수정 완료
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="btn btn-sm btn-secondary"
+                        >
+                            취소</button>
                     </div>
                 </div>
             ) : (
@@ -132,8 +146,21 @@ const CommentNode = ({
                         rows="2"
                     />
                     <div className="d-flex gap-2 justify-content-end">
-                        <button onClick={handleReplySubmit} className="btn btn-sm btn-primary">등록</button>
-                        <button onClick={() => setReplyingId(null)} className="btn btn-sm btn-secondary">취소</button>
+                        <button
+                            type="button"
+                            
+                        onClick={handleReplySubmit}
+                            className="btn btn-sm btn-primary"
+                        >
+                            등록
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setReplyingId(null)}
+                            className="btn btn-sm btn-secondary"
+                        >
+                            취소
+                        </button>
                     </div>
                 </div>
             )}
@@ -339,12 +366,30 @@ const PostDetail = () => {
             </div>
 
             <div className="mt-3 d-flex gap-2 justify-content-end">
-                <button onClick={() => navigate('/posts')} className="btn btn-outline-secondary">목록으로</button>
+                <button
+                    type="button"
+                    onClick={() => navigate('/posts')}
+                    className="btn btn-outline-secondary"
+                >
+                    목록으로
+                </button>
                 {/* 권한이 있을 때만 수정/삭제 버튼 렌더링 */}
                 {canManage && (
                     <>
-                        <button onClick={() => navigate(`/editor/${id}`)} className="btn btn-outline-warning">수정</button>
-                        <button onClick={onDelete} className="btn btn-outline-danger">삭제</button>
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/editor/${id}`)}
+                            className="btn btn-outline-warning"
+                        >
+                            수정
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className="btn btn-outline-danger"
+                        >
+                            삭제
+                        </button>
                     </>
                 )}
             </div>
@@ -388,12 +433,26 @@ const PostDetail = () => {
                             rows="3"
                         />
                         <div className="d-flex justify-content-end">
-                            <button onClick={handleRootCommentSubmit} className="btn btn-primary px-4">댓글 등록</button>
+                            <button
+                                type="button"
+                                onClick={handleRootCommentSubmit}
+                                className="btn btn-primary px-4"
+                            >
+                                댓글 등록
+                            </button>
                         </div>
                     </div>
                 ) : (
                     <div className="p-4 bg-light border rounded text-center text-muted mt-4">
-                        댓글을 작성하려면 <button onClick={() => navigate('/login')} className="btn btn-link p-0 pb-1 align-baseline fw-bold">로그인</button>이 필요합니다.
+                        댓글을 작성하려면{' '}
+                        <button
+                            type="button"
+                            onClick={() => navigate('/login')}
+                            className="btn btn-link p-0 pb-1 align-baseline fw-bold"
+                        >
+                            로그인
+                        </button>
+                        {' '}이 필요합니다.
                     </div>
                 )}
             </div>

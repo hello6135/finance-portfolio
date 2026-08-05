@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router';
 
 
 // prop으로 값 수신
@@ -36,7 +36,10 @@ const ErrorPage = ({ status: propStatus, message: propMessage }) => {
                 <h1 className="display-1 fw-bold text-muted">{status}</h1>
                 <p className="fs-5 mb-4">{message}</p>
                 {subMessage && <p className="text-muted small mb-4">{subMessage}</p>}
-                <button onClick={() => navigate('/')} className="btn btn-primary">
+                <button 
+                    type="button"
+                    onClick={() => navigate('/')} 
+                    className="btn btn-primary">
                     홈으로
                 </button>
             </div>

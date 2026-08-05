@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router';
 import authStore from '../../store/authStore';
 
 // 인증 필요 라우트 접근시 동작
